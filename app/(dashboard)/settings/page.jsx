@@ -6,12 +6,12 @@ import ConnectedApps from '@/components/dashboard/ConnectedApps';
 import IntegrationSettings from '@/components/settings/IntegrationSettings';
 
 const PERSONALITY_OPTIONS = [
-  { id:'normal',       label:'Normal',       desc:'Helpful, balanced, warm',        emoji:'🤝', preview:'Haan yaar, batao kya chal raha hai. Main yahaan hoon.' },
-  { id:'motivational', label:'Motivational', desc:'High energy, hype man mode',     emoji:'🔥', preview:'BRO. Tu yeh kar sakta hai. I believe in you 1000%. Let's go!!' },
-  { id:'fun',          label:'Fun',          desc:'Humor, jokes, light-hearted',    emoji:'😄', preview:'Aye aye captain! Kya scene hai aaj? 😂 Kuch mast karte hain!' },
-  { id:'sarcastic',    label:'Sarcastic',    desc:'Brutally honest, pyaar se maar', emoji:'😏', preview:'Wah, kya plan hai. Ekdum genius. (Theek hai, sunao, kya karna hai)' },
-  { id:'coach',        label:'Coach',        desc:'Disciplined, no fluff, results', emoji:'💪', preview:'Goals set karo. Excuses band karo. Kaam shuru karo. Simple.' },
-  { id:'roast',        label:'Roast Mode',   desc:'Brutal honesty + dark humor + care',emoji:'🔥', preview:'Aye bhai, teri life ki story sun ke mujhe khud sad feel ho raha hai 😂 Chal theek karte hain!' },
+  { id:'normal',       label:'Normal',       desc:'Helpful, balanced, warm',        emoji:'🤝', preview:`Haan yaar, batao kya chal raha hai. Main yahaan hoon.` },
+  { id:'motivational', label:'Motivational', desc:'High energy, hype man mode',     emoji:'🔥', preview:`BRO. Tu yeh kar sakta hai. I believe in you 1000%. Let`s go!!' },
+  { id:'fun',          label:'Fun',          desc:'Humor, jokes, light-hearted',    emoji:'😄', preview:`Aye aye captain! Kya scene hai aaj? 😂 Kuch mast karte hain!` },
+  { id:'sarcastic',    label:'Sarcastic',    desc:'Brutally honest, pyaar se maar', emoji:'😏', preview:`Wah, kya plan hai. Ekdum genius. (Theek hai, sunao, kya karna hai)` },
+  { id:'coach',        label:'Coach',        desc:'Disciplined, no fluff, results', emoji:'💪', preview:`Goals set karo. Excuses band karo. Kaam shuru karo. Simple.` },
+  { id:'roast',        label:'Roast Mode',   desc:'Brutal honesty + dark humor + care',emoji:'🔥', preview:`Aye bhai, teri life ki story sun ke mujhe khud sad feel ho raha hai 😂 Chal theek karte hain!` },
 ];
 
 const API_ENDPOINTS = [
