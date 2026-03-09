@@ -1,0 +1,38 @@
+{
+  "name": "JARVIS — Personal AI",
+  "short_name": "JARVIS",
+  "description": "Aapka personal AI — chat, goals, analytics, creative studio. Hinglish mein.",
+  "start_url": "/?source=pwa",
+  "id": "jarvis-personal-ai",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#050810",
+  "theme_color": "#050810",
+  "orientation": "portrait-primary",
+  "lang": "hi",
+  "dir": "ltr",
+  "scope": "/",
+  "icons": [
+    { "src": "/icons/icon-72.png",  "sizes": "72x72",  "type": "image/png" },
+    { "src": "/icons/icon-96.png",  "sizes": "96x96",  "type": "image/png" },
+    { "src": "/icons/icon-128.png", "sizes": "128x128","type": "image/png" },
+    { "src": "/icons/icon-144.png", "sizes": "144x144","type": "image/png" },
+    { "src": "/icons/icon-152.png", "sizes": "152x152","type": "image/png" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192","type": "image/png","purpose": "any maskable" },
+    { "src": "/icons/icon-384.png", "sizes": "384x384","type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512","type": "image/png","purpose": "any maskable" }
+  ],
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "shortcuts": [
+    { "name": "Chat",     "short_name": "Chat",     "url": "/chat",      "description": "JARVIS se baat karo", "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "Goals",    "short_name": "Goals",    "url": "/goals",     "description": "Apne goals dekho",   "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "Studio",   "short_name": "Studio",   "url": "/studio",    "description": "Image, Video, Music", "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "Analytics","short_name": "Stats",    "url": "/analytics", "description": "Apni analytics dekho","icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] }
+  ],
+  "screenshots": [
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "JARVIS Chat" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide",   "label": "JARVIS Dashboard" }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": { "preferred_width": 400 }
+}
