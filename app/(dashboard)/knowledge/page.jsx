@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import { uploadDirect } from '@/lib/ai/media-client';
 import { useState, useEffect, useRef } from 'react';
 import { BookOpen, Plus, Search, Upload, FileText, Image as ImageIcon, Mic, Link as LinkIcon, X, ChevronDown, ChevronUp } from 'lucide-react';

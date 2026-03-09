@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { Trophy, Star, Zap, Flame, Target, Brain, TrendingUp, Award, Lock, RefreshCw } from 'lucide-react';
 
