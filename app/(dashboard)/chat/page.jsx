@@ -2,8 +2,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { clientSpeak, stopCurrentAudio, speakWithEmotion } from '@/lib/ai/media-client';
 import { useClientCache } from '@/lib/cache/client-cache';
-import { Send, Mic, MicOff, Volume2, VolumeX, Camera, X, Plus, ChevronDown, ChevronUp, Minimize2, Copy, Check, MessageSquare, Trash2, History, Search, Bookmark } from 'lucide-react';
+import { Send, Mic, MicOff, Volume2, VolumeX, Camera, X, Plus, ChevronDown, ChevronUp, Minimize2, Copy, Check, MessageSquare, Trash2, History, Search, Bookmark, Download, ChevronDoubleDown, Palette } from 'lucide-react';
 import FestivalBanner from '@/components/ui/FestivalBanner';
+import TypingDots from '@/components/chat/TypingDots';
+import MessageReactions from '@/components/chat/MessageReactions';
+import ErrorSuggestions from '@/components/chat/ErrorSuggestions';
+import { ThemeProvider, ThemeSwitcher, useTheme } from '@/components/ui/ThemeProvider';
 
 // ─── Constants ────────────────────────────────────────────────
 const MODES = [
@@ -215,6 +219,57 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp }) {
   const [feedback, setFeedback] = useState(null); // null | 'up' | 'down'
   const text = compressed || msg.content;
 
+  // Auto-generate conversation title after first exchange
+  async function generateTitle(cId, userMsg, aiReply) {
+    if (titleGenerated || !cId) return;
+    setTitleGenerated(true);
+    try {
+      const r = await fetch('/api/chat/title', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ conversationId: cId, firstMessage: userMsg, firstReply: aiReply })
+      });
+      const d = await r.json();
+      if (d.title) {
+        // Update sidebar conversation list with new title
+        setConvs(p => p.map(c => c.id===cId ? {...c, title: d.title} : c));
+      }
+    } catch { /* silent */ }
+  }
+
+  // Export chat as .txt file
+  function exportChat() {
+    if (!msgs.length) return;
+    const lines = msgs.map(m => {
+      const who  = m.role==='user' ? '👤 Tum' : '🤖 JARVIS';
+      const time = new Date(m.ts||Date.now()).toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'});
+      return `[${time}] ${who}:
+${m.content}
+`;
+    });
+    const separator = '─'.repeat(40);
+    const dateStr = new Date().toLocaleDateString('hi-IN');
+    const text = ['JARVIS Chat Export — ' + dateStr, separator, '', ...lines].join('\n');
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `jarvis-chat-${Date.now()}.txt`;
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  // Handle emoji reaction
+  function handleReaction(msgId, emoji) {
+    setReactions(p => ({ ...p, [msgId]: emoji }));
+  }
+
+  // Error recovery actions
+  async function handleErrorAction(action, originalMsg) {
+    setMsgError(null);
+    if (action==='retry') { await send(originalMsg); }
+    else if (action==='flash') { await send(originalMsg, 'flash'); }
+    else if (action==='free' || action==='offline') { await send(originalMsg, 'flash'); }
+    else if (action==='simplify') { taRef.current?.focus(); setInput(originalMsg); }
+  }
+
   async function sendFeedback(rating) {
     setFeedback(rating);
     try {
@@ -286,6 +341,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp }) {
                     className={`text-[10px] transition-colors ${feedback==='up'?'text-green-400':'text-slate-700 hover:text-green-400'}`}>👍</button>
                   <button onClick={()=>sendFeedback('down')} title="Not helpful"
                     className={`text-[10px] transition-colors ${feedback==='down'?'text-red-400':'text-slate-700 hover:text-red-400'}`}>👎</button>
+                  <MessageReactions messageId={msg.id} onReact={handleReaction}/>
                   <button onClick={async()=>{
                     await fetch('/api/messages/pin',{method:'POST',headers:{'Content-Type':'application/json'},
                       body:JSON.stringify({messageId:msg.id,content:msg.content,role:msg.role})});
@@ -314,20 +370,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp }) {
   );
 }
 
-function TypingDots({ mode }) {
-  const colors = { think:'bg-purple-400', deep:'bg-blue-400', flash:'bg-yellow-400', auto:'bg-cyan-400' };
-  const c = colors[mode]||colors.auto;
-  return (
-    <div className="flex justify-start mb-4 px-1 items-end gap-2.5">
-      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shrink-0 shadow-[0_0_14px_rgba(26,86,219,0.3)]">
-        <span className="text-white font-black text-[10px]">J</span>
-      </div>
-      <div className="flex gap-1.5 px-4 py-3 bg-white/[0.06] border border-white/[0.08] rounded-[20px_20px_20px_5px]">
-        {[0,1,2].map(i=><div key={i} className={`w-2 h-2 ${c} rounded-full`} style={{animation:`bounce 1.2s infinite ${i*0.15}s`}}/>)}
-      </div>
-    </div>
-  );
-}
+// TypingDots now imported from components/chat/TypingDots.jsx
 
 // ─── History Sidebar ──────────────────────────────────────────
 function HistorySidebar({ open, onClose, onLoad, onDelete }) {
@@ -425,7 +468,16 @@ export default function ChatPage() {
   const [resuming, setResuming] = useState(true);   // auto-resume last chat
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ]   = useState('');
+  const [titleGenerated, setTitleGenerated] = useState(false);  // auto-title
+  const [showScrollBtn, setShowScrollBtn]   = useState(false);  // scroll-to-bottom
+  const [msgError, setMsgError]             = useState(null);   // error recovery
+  const [lastUserMsg, setLastUserMsg]       = useState('');     // for retry
+  const [reactions, setReactions]           = useState({});     // {msgId: emoji}
+  const [theme, setTheme]                   = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('jarvis_theme') || 'dark' : 'dark'
+  );
   const endRef      = useRef(null);
+  const scrollRef   = useRef(null);  // scroll container
   const mediaRecRef = useRef(null);  // Groq Whisper STT
   const videoRef  = useRef(null);
   const canvasRef = useRef(null);
@@ -433,6 +485,20 @@ export default function ChatPage() {
   const srRef     = useRef(null);
   const taRef     = useRef(null);
   const msgRefs   = useRef({});
+
+  // ── Keyboard shortcuts ───────────────────────────────────────
+  useEffect(() => {
+    function onKey(e) {
+      // Ctrl/Cmd+K → focus input
+      if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); taRef.current?.focus(); }
+      // Ctrl/Cmd+E → export chat
+      if ((e.ctrlKey||e.metaKey) && e.key==='e' && msgs.length>0) { e.preventDefault(); exportChat(); }
+      // Escape → close panels
+      if (e.key==='Escape') { setSearchOpen(false); setHistoryOpen(false); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [msgs]);
 
   // ── AUTO-RESUME last conversation on mount ────────────────
   useEffect(()=>{
@@ -460,6 +526,15 @@ export default function ChatPage() {
   }, []);
 
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:'smooth'}); },[msgs, loading]);
+
+  // Scroll-to-bottom button visibility
+  useEffect(() => {
+    const el = document.querySelector('.jarvis-scroll');
+    if (!el) return;
+    const handler = () => setShowScrollBtn(el.scrollHeight - el.scrollTop - el.clientHeight > 200);
+    el.addEventListener('scroll', handler);
+    return () => el.removeEventListener('scroll', handler);
+  }, []);
   useEffect(()=>{
     if(!input.trim()||mode!=='auto'){setDetected(null);return;}
     setDetected(detectMode(input));
@@ -607,6 +682,8 @@ export default function ChatPage() {
     const b64=imgB64, prev=preview;
     setPreview(null); setImgB64(null); setDetected(null);
 
+    setLastUserMsg(msg);
+    setMsgError(null);
     const userMsg = {id:`u${Date.now()}`,role:'user',content:msg,cameraPreview:prev,ts:Date.now()};
     const aiId    = `a${Date.now()}`;
     const aiMsg   = {id:aiId,role:'assistant',content:'',streaming:true,thinking:null,ts:Date.now(),mode:finalMode};
@@ -689,6 +766,7 @@ export default function ChatPage() {
         if(d.conversationId) setConvId(d.conversationId);
       } catch {
         setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:'Network error — retry karo!',streaming:false}:m));
+        setMsgError('network');
       }
     } finally {
       setPhase('');
@@ -699,6 +777,8 @@ export default function ChatPage() {
       }
       // Generate follow-up suggestions after short delay
       if(fullText&&msg.length>8) {
+        // Auto-title (first message only)
+        if (!titleGenerated && convId) generateTitle(convId, msg, fullText);
         setTimeout(async()=>{
           const fups = await generateFollowUps(fullText, msg);
           if(fups.length>0) setMsgs(p=>p.map(m=>m.id===aiId?{...m,followUps:fups}:m));
@@ -776,7 +856,17 @@ export default function ChatPage() {
             {voiceOn||speaking?<Volume2 size={16}/>:<VolumeX size={16}/>}
           </button>
           <button onClick={()=>setSearchOpen(true)} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Search size={16}/></button>
-          <button onClick={()=>{setMsgs([]);setConvId(null);}} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Plus size={16}/></button>
+          <button onClick={()=>{
+            const ts=['dark','amoled','soft'];
+            const nt=ts[(ts.indexOf(theme)+1)%ts.length];
+            setTheme(nt); localStorage.setItem('jarvis_theme',nt);
+            const bgs={'dark':'#050810','amoled':'#000000','soft':'#1a1a2e'};
+            document.body.style.background=bgs[nt];
+          }} title={`Theme: ${theme==='dark'?'Dark Blue':theme==='amoled'?'AMOLED Black':'Soft Dark'}`}
+            className="p-2 rounded-xl text-slate-700 hover:text-purple-400 transition-colors text-sm">
+            {theme==='dark'?'🔵':theme==='amoled'?'⚫':'🌫'}
+          </button>
+          <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Plus size={16}/></button>
         </div>
       </div>
 
@@ -793,7 +883,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar">
+      <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar jarvis-scroll">
         {isEmpty ? (
           <div className="flex flex-col items-center gap-5 pt-8 pb-4">
             <div className="relative">
@@ -825,6 +915,12 @@ export default function ChatPage() {
                 : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)}/></div>
             ))}
             {loading&&<TypingDots mode={mode==='auto'?(detected||'flash'):mode}/>}
+            {/* Error recovery */}
+            {msgError && !loading && (
+              <div className="px-2 pb-2">
+                <ErrorSuggestions error={msgError} onAction={handleErrorAction} originalMsg={lastUserMsg}/>
+              </div>
+            )}
           </>
         )}
         <div ref={endRef}/>
@@ -839,6 +935,15 @@ export default function ChatPage() {
         </div>
       )}
 
+      {/* Scroll to bottom FAB */}
+      {showScrollBtn && (
+        <button
+          onClick={() => endRef.current?.scrollIntoView({behavior:'smooth'})}
+          className="absolute right-4 bottom-20 z-20 w-8 h-8 rounded-full bg-blue-600/90 flex items-center justify-center shadow-lg hover:bg-blue-500 transition-all border border-blue-400/30"
+        >
+          <ChevronDown size={16} className="text-white"/>
+        </button>
+      )}
       {/* Input */}
       <div className="px-3 pt-2.5 pb-3 border-t border-white/[0.06] shrink-0 safe-bottom">
         <div className="flex items-end gap-2">
@@ -849,6 +954,13 @@ export default function ChatPage() {
               rows={1} style={{resize:'none',minHeight:'22px',maxHeight:'88px',overflowY:'auto'}}
               className="flex-1 bg-transparent text-white text-sm placeholder-slate-700 outline-none leading-relaxed"/>
           </div>
+          {/* Export chat button */}
+          {msgs.length > 2 && (
+            <button onClick={exportChat} title="Chat export karo (Ctrl+E)"
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-white/[0.05] border border-white/[0.08] text-slate-600 hover:text-green-400 transition-all">
+              <Download size={14}/>
+            </button>
+          )}
           <button onClick={startCamera} className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${preview?'bg-green-600':'bg-white/[0.05] border border-white/[0.08] text-slate-600 hover:text-slate-300'}`}>
             <Camera size={15} className={preview?'text-white':''}/>
           </button>

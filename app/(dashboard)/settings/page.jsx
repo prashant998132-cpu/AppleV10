@@ -280,6 +280,36 @@ export default function SettingsPage() {
               </button>
             </div>
 
+            {/* Theme Section */}
+            <div className="glass-card p-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">🎨 Theme</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id:'dark',   label:'Dark Blue', emoji:'🔵', bg:'#050810', accent:'#1A56DB' },
+                  { id:'amoled', label:'AMOLED',    emoji:'⚫', bg:'#000000', accent:'#3b82f6' },
+                  { id:'soft',   label:'Soft Dark', emoji:'🌫', bg:'#1a1a2e', accent:'#6366f1' },
+                ].map(t => {
+                  const saved = typeof window!=='undefined' ? localStorage.getItem('jarvis_theme')||'dark' : 'dark';
+                  const active = saved === t.id;
+                  return (
+                    <button key={t.id}
+                      onClick={() => {
+                        localStorage.setItem('jarvis_theme', t.id);
+                        document.body.style.background = t.bg;
+                      }}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${active?'border-blue-500/40 bg-blue-600/15':'border-transparent bg-white/4 hover:border-white/10'}`}>
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{background:t.bg,border:`2px solid ${t.accent}`}}>
+                        {t.emoji}
+                      </div>
+                      <p className={`text-xs font-medium ${active?'text-blue-300':'text-slate-400'}`}>{t.label}</p>
+                      {active && <Check size={12} className="text-blue-400"/>}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-slate-600 mt-2 text-center">Chat mein header ke theme button se bhi change kar sakte ho</p>
+            </div>
+
             <div className="glass-card p-4">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Custom Instructions</p>
               <p className="text-xs text-slate-600 mb-2">JARVIS hamesha yeh dhyan rakhe — apne baare mein kuch specific batao</p>
