@@ -1,12 +1,17 @@
 // app/(dashboard)/layout.jsx
-import { redirect } from 'next/navigation';
 import { getUser, getSupabaseServer } from '@/lib/db/supabase';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import InstallBanner from '@/components/pwa/InstallBanner';
+import AuthGuard from '@/components/dashboard/AuthGuard';
 
 export default async function DashboardLayout({ children }) {
+  // Try server-side auth (cookie-based)
   const user = await getUser();
-  if (!user) redirect('/login');
+
+  // No server-side user → AuthGuard handles client-side session check
+  if (!user) {
+    return <AuthGuard>{children}</AuthGuard>;
+  }
 
   const supabase = await getSupabaseServer();
   const { data: profile } = await supabase

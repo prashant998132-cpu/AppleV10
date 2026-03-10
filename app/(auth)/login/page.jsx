@@ -32,8 +32,14 @@ export default function LoginPage() {
     setLoad(true); setError(''); setMsg('');
     try {
       if (mode === 'login') {
-        const { error } = await sb.auth.signInWithPassword({ email, password });
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // Set cookie so server-side layout can read session
+        if (data?.session?.access_token) {
+          const exp = data.session.expires_in || 3600;
+          document.cookie = `jarvis_token=${data.session.access_token}; path=/; max-age=${exp}; SameSite=Lax`;
+          document.cookie = `jarvis_uid=${data.user.id}; path=/; max-age=${exp}; SameSite=Lax`;
+        }
         router.push('/');
         router.refresh();
       } else if (mode === 'signup') {
