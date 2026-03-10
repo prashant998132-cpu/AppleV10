@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { clientSpeak, stopCurrentAudio, speakWithEmotion } from '@/lib/ai/media-client';
+import { useClientCache } from '@/lib/cache/client-cache';
 import { Send, Mic, MicOff, Volume2, VolumeX, Camera, X, Plus, ChevronDown, ChevronUp, Minimize2, Copy, Check, MessageSquare, Trash2, History, Search, Bookmark } from 'lucide-react';
 import FestivalBanner from '@/components/ui/FestivalBanner';
 
@@ -595,6 +596,9 @@ export default function ChatPage() {
   }
 
   // ── Main send function (streaming) ───────────────────────────
+  // ── Client-side cache ──────────────────────────────────
+  const { get: cacheGet, set: cacheSet } = useClientCache();
+
   async function send(text=input, modeOvr=null) {
     const msg=text?.trim(); if((!msg&&!imgB64)||loading) return;
     setInput(''); navigator.vibrate?.(15);
@@ -623,6 +627,20 @@ export default function ChatPage() {
 
     let fullText = '';
     try {
+      // ── Check client cache first (no API call if cached) ──
+      if (!imgB64 && finalMode !== 'deep') {
+        const cached = await cacheGet(msg);
+        if (cached) {
+          setMsgs(p => p.map(m => m.id === aiId
+            ? { ...m, content: cached, streaming: false }
+            : m
+          ));
+          setLoading(false);
+          if (tts) await clientSpeak(cached);
+          return;
+        }
+      }
+
       const history = msgs.slice(-12).map(m=>({role:m.role,content:m.content}));
       const res = await fetch('/api/chat/stream',{
         method:'POST', headers:{'Content-Type':'application/json'},
@@ -675,6 +693,10 @@ export default function ChatPage() {
     } finally {
       setPhase('');
       if(voiceOn&&fullText) speak(fullText);
+      // Save to client cache for repeat queries
+      if(fullText && msg.length > 8 && !imgB64) {
+        cacheSet(msg, fullText).catch(()=>{});
+      }
       // Generate follow-up suggestions after short delay
       if(fullText&&msg.length>8) {
         setTimeout(async()=>{
