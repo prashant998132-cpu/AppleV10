@@ -249,6 +249,31 @@ export default function SettingsPage() {
                   {notifEnabled ? 'Enabled ✓' : 'Enable'}
                 </button>
               </div>
+              {/* Daily Brief */}
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
+                <div>
+                  <p className="text-sm text-white">🌅 Daily Morning Brief</p>
+                  <p className="text-xs text-slate-500">Subah JARVIS ka greeting + goals reminder</p>
+                </div>
+                <button onClick={async () => {
+                  try {
+                    const r = await fetch('/api/daily-brief', { method: 'POST' });
+                    const d = await r.json();
+                    if (d.brief) alert('Brief bheja gaya: ' + d.brief.title);
+                  } catch { alert('Net check karo!'); }
+                }} className="px-3 py-1.5 rounded-xl text-xs font-medium bg-orange-600/20 text-orange-400 border border-orange-500/30 hover:bg-orange-600/30 transition-all">
+                  Test Brief
+                </button>
+              </div>
+              {/* Quick links */}
+              <div className="flex gap-2 mt-3 pt-3 border-t border-white/5">
+                <a href="/automation" className="flex-1 text-center py-2 text-xs text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-xl hover:bg-blue-500/20 transition-all">
+                  📱 Phone Control Setup
+                </a>
+                <a href="/pwa-guide" className="flex-1 text-center py-2 text-xs text-purple-400 bg-purple-500/10 border border-purple-500/20 rounded-xl hover:bg-purple-500/20 transition-all">
+                  📦 APK Guide
+                </a>
+              </div>
             </div>
           </div>
         )}

@@ -40,6 +40,33 @@ self.addEventListener('activate', e => {
 });
 
 // ─── FETCH ────────────────────────────────────────────────────
+
+// ─── OFFLINE SMART RESPONSES ─────────────────────────────────
+// Agar net nahi hai toh bhi JARVIS kuch basic cheezein answer kar sakta hai
+const OFFLINE_ANSWERS = [
+  { keys: ['time', 'samay', 'baje', 'clock', 'kitne baje'], fn: () => `Abhi ${new Date().toLocaleTimeString('hi-IN', {hour:'2-digit',minute:'2-digit'})} baje hain.` },
+  { keys: ['date', 'aaj', 'today', 'tareekh', 'din'], fn: () => `Aaj ${new Date().toLocaleDateString('hi-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'})} hai.` },
+  { keys: ['calculator', 'calculate', 'math', 'plus', 'minus', 'multiply', '+', '-', '*', '/'],
+    fn: (q) => { try { const expr = q.replace(/[^0-9+\-*/().%\s]/g,''); const r = Function('"use strict";return ('+expr+')')(); return `${expr} = ${r}`; } catch { return 'Calculation nahi kar paya. Net chahiye.'; } } },
+  { keys: ['hello', 'hi', 'namaste', 'hey', 'hii'], fn: () => 'Namaste! 👋 Abhi offline hoon, lekin main yahan hoon. Net aate hi full power mein wapas aaunga!' },
+  { keys: ['bmi', 'weight', 'height'], fn: () => 'BMI = Weight(kg) / Height(m)². Apna weight aur height batao toh main calculate kar sakta hoon offline bhi!' },
+  { keys: ['joke', 'funny', 'hasao', 'maza'], fn: () => 'Offline mode mein ek joke: "WiFi bola Modem se — tum sirf cable ho, main connection hoon!" 😄' },
+  { keys: ['jarvis', 'kaisa hai', 'how are you', 'theek hai'], fn: () => 'Main theek hoon! Thoda offline hoon abhi, lekin ready hoon. Net aao toh full power! 💪' },
+  { keys: ['weather', 'mausam', 'temperature', 'garmi', 'thandi'], fn: () => 'Weather ke liye internet chahiye. Abhi offline hoon.' },
+  { keys: ['help', 'kya kar', 'features', 'kya karta'], fn: () => 'Offline mein main kar sakta hoon: ⏰ Time/Date, 🧮 Calculator, 💬 Basic chat. Net aane pe: AI chat, weather, news, phone control sab!' },
+];
+
+function getOfflineAnswer(message) {
+  if (!message) return null;
+  const msg = message.toLowerCase();
+  for (const item of OFFLINE_ANSWERS) {
+    if (item.keys.some(k => msg.includes(k))) {
+      return item.fn(msg);
+    }
+  }
+  return null;
+}
+
 self.addEventListener('fetch', e => {
   const { request } = e;
   const url = new URL(request.url);
@@ -172,7 +199,18 @@ async function networkFirstAPI(request) {
     return response;
   } catch {
     const cached = await cache.match(request);
-    return cached || Response.json({ error: 'Offline', offline: true }, { status: 503 });
+    // Try offline smart answer for /api/chat
+    if (request.url.includes('/api/chat')) {
+      try {
+        const body = await request.clone().json();
+        const msg = body.message || '';
+        const answer = getOfflineAnswer(msg);
+        if (answer) {
+          return Response.json({ reply: answer, offline: true, model: 'offline' });
+        }
+      } catch {}
+    }
+    return cached || Response.json({ error: 'Offline', offline: true, reply: 'Main abhi offline hoon. Net check karo aur dobara try karo!' }, { status: 503 });
   }
 }
 

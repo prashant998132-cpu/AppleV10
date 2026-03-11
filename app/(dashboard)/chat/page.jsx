@@ -9,6 +9,7 @@ import MessageReactions from '@/components/chat/MessageReactions';
 import ErrorSuggestions from '@/components/chat/ErrorSuggestions';
 import { ThemeProvider, ThemeSwitcher, useTheme } from '@/components/ui/ThemeProvider';
 import { useWakeWord, WakeWordIndicator } from '@/components/chat/WakeWord';
+import DailyBrief from '@/components/chat/DailyBrief';
 
 // ─── Constants ────────────────────────────────────────────────
 const MODES = [
@@ -344,15 +345,25 @@ ${m.content}
                     className={`text-[10px] transition-colors ${feedback==='down'?'text-red-400':'text-slate-700 hover:text-red-400'}`}>👎</button>
                   <MessageReactions messageId={msg.id} onReact={handleReaction}/>
                   <button onClick={async()=>{
+                    const isPinned = pinnedIds.has(msg.id);
                     await fetch('/api/messages/pin',{method:'POST',headers:{'Content-Type':'application/json'},
-                      body:JSON.stringify({messageId:msg.id,content:msg.content,role:msg.role})});
-                  }} title="Pin karo" className="text-[10px] text-slate-700 hover:text-yellow-400 transition-colors">📌</button>
+                      body:JSON.stringify({messageId:msg.id,content:msg.content,role:msg.role,action:isPinned?'unpin':undefined})});
+                    if(isPinned){
+                      setPinnedIds(s=>{ const n=new Set(s); n.delete(msg.id); return n; });
+                      setPinnedMsgs(p=>p.filter(x=>x.message_id!==msg.id));
+                    } else {
+                      setPinnedIds(s=>new Set([...s,msg.id]));
+                      setPinnedMsgs(p=>[...p,{message_id:msg.id,content:msg.content,role:msg.role}]);
+                    }
+                    navigator.vibrate?.(40);
+                  }} title={pinnedIds.has(msg.id)?"Unpin karo":"Pin karo"}
+                  className={`text-[10px] transition-colors ${pinnedIds.has(msg.id)?'text-yellow-400':'text-slate-700 hover:text-yellow-400'}`}>📌</button>
                 </div>
               )}
             </>
           )}
           {msg.modelUsed && !isUser && <span className="text-[10px] text-slate-800 border border-white/5 px-1.5 py-0.5 rounded-full">{msg.modelUsed}</span>}
-          <span className="text-[10px] text-slate-800">{new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}{msg.timing?` · ${(msg.timing/1000).toFixed(1)}s`:''}</span>
+          <span className="text-[10px] text-slate-800 cursor-pointer hover:text-slate-500 transition-colors" title={new Date(msg.ts||Date.now()).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}>{new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}{msg.timing?` · ${(msg.timing/1000).toFixed(1)}s`:''}</span>
         </div>
 
         {/* Follow-up suggestions */}
@@ -474,6 +485,10 @@ export default function ChatPage() {
   const [msgError, setMsgError]             = useState(null);   // error recovery
   const [lastUserMsg, setLastUserMsg]       = useState('');     // for retry
   const [reactions, setReactions]           = useState({});     // {msgId: emoji}
+  const [pinnedMsgs, setPinnedMsgs]         = useState([]);     // pinned messages
+  const [pinsOpen, setPinsOpen]             = useState(false);  // pins panel open
+  const [pinnedIds, setPinnedIds]           = useState(new Set()); // fast lookup
+  const [refreshing, setRefreshing]         = useState(false);  // pull-to-refresh
   const [theme, setTheme]                   = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem('jarvis_theme') || 'dark' : 'dark'
   );
@@ -525,6 +540,39 @@ export default function ChatPage() {
       setResuming(false);
     })();
   }, []);
+
+  // Load pinned messages on mount
+  useEffect(() => {
+    fetch('/api/messages/pin').then(r=>r.json()).then(d=>{
+      if(d.pins) {
+        setPinnedMsgs(d.pins);
+        setPinnedIds(new Set(d.pins.map(p=>p.message_id)));
+      }
+    }).catch(()=>{});
+  }, []);
+
+  // Pull-to-refresh (mobile touch gesture)
+  useEffect(() => {
+    let startY = 0;
+    const el = document.querySelector('.jarvis-scroll');
+    if (!el) return;
+    const onTouchStart = (e) => { startY = e.touches[0].clientY; };
+    const onTouchEnd = (e) => {
+      const dy = e.changedTouches[0].clientY - startY;
+      if (dy > 80 && el.scrollTop === 0 && !refreshing) {
+        setRefreshing(true);
+        navigator.vibrate?.(50);
+        // Reload last conversation
+        setTimeout(() => setRefreshing(false), 1200);
+      }
+    };
+    el.addEventListener('touchstart', onTouchStart, { passive: true });
+    el.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [msgs]);
 
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:'smooth'}); },[msgs, loading]);
 
@@ -870,6 +918,42 @@ export default function ChatPage() {
       {/* History Sidebar */}
       <HistorySidebar open={historyOpen} onClose={()=>setHistoryOpen(false)} onLoad={loadConversation} onDelete={deleteConversation}/>
 
+      {/* Daily Morning Brief */}
+      <DailyBrief onBriefMessage={(msg) => {
+        const briefMsg = { id: `brief${Date.now()}`, role:'assistant', content: msg, ts: Date.now(), mode:'flash' };
+        setMsgs(p => p.length === 0 ? [briefMsg] : p);
+      }}/>
+
+      {/* Pinned Messages Panel */}
+      {pinsOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex flex-col" onClick={()=>setPinsOpen(false)}>
+          <div className="mt-auto bg-[#0d1117] border-t border-white/10 rounded-t-3xl p-5 max-h-[65vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold text-base">📌 Pinned Messages</h3>
+              <button onClick={()=>setPinsOpen(false)} className="text-slate-500 hover:text-white text-lg">✕</button>
+            </div>
+            {pinnedMsgs.length === 0
+              ? <p className="text-slate-600 text-sm text-center py-6">Koi pinned message nahi hai. 📌 dabao kisi message pe!</p>
+              : <div className="space-y-3">
+                  {pinnedMsgs.map((p,i) => (
+                    <div key={i} className="bg-white/[0.04] border border-yellow-500/20 rounded-xl p-3">
+                      <p className="text-[10px] text-yellow-500/60 mb-1">{p.role === 'user' ? '👤 Tumne' : '🤖 JARVIS'}</p>
+                      <p className="text-sm text-slate-300 leading-relaxed line-clamp-4">{p.content}</p>
+                    </div>
+                  ))}
+                </div>
+            }
+          </div>
+        </div>
+      )}
+
+      {/* Pull-to-refresh indicator */}
+      {refreshing && (
+        <div className="flex items-center justify-center py-2 text-xs text-blue-400 animate-pulse shrink-0">
+          <span className="mr-1">🔄</span> Refresh ho raha hai...
+        </div>
+      )}
+
       {/* Header */}
       <div className="px-3 py-2 flex items-center justify-between border-b border-white/[0.06] shrink-0">
         <div className="flex items-center gap-2.5">
@@ -888,7 +972,10 @@ export default function ChatPage() {
               </div>
             )}
             <div className="flex items-center gap-1.5">
-              <p className="text-[10px] text-slate-600">{phase||(listening?'🎤 Sun raha hoon...':speaking?'🔊 Bol raha hoon...':`${showM.label} · ready`)}</p>
+              <div className="flex items-center gap-1.5">
+                <WakeWordIndicator active={wakeWordOn} wakeDetected={wakeDetected}/>
+                <p className="text-[10px] text-slate-600">{phase||(listening?'🎤 Sun raha hoon...':speaking?'🔊 Bol raha hoon...':`${showM.label} · ready`)}</p>
+              </div>
               {convMode !== 'casual' && (
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-medium capitalize">{convMode}</span>
               )}
@@ -901,6 +988,11 @@ export default function ChatPage() {
             {voiceOn||speaking?<Volume2 size={16}/>:<VolumeX size={16}/>}
           </button>
           <button onClick={()=>setSearchOpen(true)} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Search size={16}/></button>
+          <button onClick={()=>setPinsOpen(true)}
+            className={`p-2 rounded-xl transition-colors text-sm ${pinnedMsgs.length>0?'text-yellow-500':'text-slate-700 hover:text-yellow-400'}`}
+            title="Pinned messages">
+            📌{pinnedMsgs.length>0&&<span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-yellow-500 rounded-full text-[8px] text-black font-bold flex items-center justify-center">{pinnedMsgs.length}</span>}
+          </button>
           {/* Wake Word toggle */}
           <button onClick={() => setWakeWordOn(w => !w)}
             title={wakeWordOn ? 'Wake Word ON — "Hey JARVIS"' : 'Wake Word OFF'}
