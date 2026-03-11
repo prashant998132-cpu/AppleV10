@@ -61,12 +61,9 @@ export default function DashboardClient({ children, user, profile }) {
         <div className="absolute inset-0 hud-grid opacity-100"/>
       </div>
 
-      {/* Header */}
-      <header className="relative z-20 glass border-b border-white/5 px-4 py-2.5 flex items-center justify-between shrink-0">
+      {/* Header — desktop only (mobile pages have their own headers) */}
+      <header className="hidden lg:flex relative z-20 glass border-b border-white/5 px-4 py-2.5 items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <button onClick={() => setSidebar(true)} className="text-slate-400 hover:text-white p-1 lg:hidden">
-            <Menu size={20}/>
-          </button>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-[0_0_15px_rgba(26,86,219,0.4)]">
               <span className="text-white font-black text-sm">J</span>

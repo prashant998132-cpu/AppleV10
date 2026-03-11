@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { clientSpeak, stopCurrentAudio, speakWithEmotion } from '@/lib/ai/media-client';
 import { useClientCache } from '@/lib/cache/client-cache';
-import { Send, Mic, MicOff, Volume2, VolumeX, Camera, X, Plus, ChevronDown, ChevronUp, Minimize2, Copy, Check, MessageSquare, Trash2, History, Search, Bookmark, Download, ChevronDoubleDown, Palette } from 'lucide-react';
+import { Send, Mic, MicOff, Volume2, VolumeX, Camera, X, Plus, ChevronDown, ChevronUp, Minimize2, Copy, Check, MessageSquare, Trash2, History, Search, Bookmark, Download, ChevronDoubleDown, Palette, LogOut } from 'lucide-react';
 import FestivalBanner from '@/components/ui/FestivalBanner';
 import TypingDots from '@/components/chat/TypingDots';
 import MessageReactions from '@/components/chat/MessageReactions';
@@ -291,7 +291,7 @@ ${m.content}
   }
 
   return (
-    <div className={`flex ${isUser?'justify-end':'justify-start'} mb-4 px-1 msg-in`}>
+    <div className={`flex ${isUser?'justify-end':'justify-start'} mb-3 px-1 msg-in`}>
       {!isUser && (
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center mr-2.5 mt-0.5 shrink-0 shadow-[0_0_14px_rgba(26,86,219,0.3)]">
           <span className="text-white font-black text-[10px]">J</span>
@@ -302,7 +302,7 @@ ${m.content}
         {msg.imageUrl && <div className="rounded-2xl overflow-hidden border border-white/10 mb-1 shadow-xl"><img src={msg.imageUrl} alt="" className="w-full max-w-[260px]"/></div>}
         {!isUser && <ThinkBubble tokens={msg.thinking}/>}
 
-        <div className={`px-4 py-3 text-sm leading-relaxed ${
+        <div className={`px-3.5 py-2.5 text-[13.5px] leading-relaxed ${
           isUser
             ? 'bg-gradient-to-br from-blue-600 to-blue-500 text-white rounded-[20px_20px_5px_20px] shadow-[0_4px_20px_rgba(59,130,246,0.22)]'
             : 'bg-white/[0.06] border border-white/[0.08] text-slate-100 rounded-[20px_20px_20px_5px]'
@@ -362,7 +362,13 @@ ${m.content}
               )}
             </>
           )}
-          {msg.modelUsed && !isUser && <span className="text-[10px] text-slate-800 border border-white/5 px-1.5 py-0.5 rounded-full">{msg.modelUsed}</span>}
+          {msg.modelUsed && !isUser && (
+            <span className={`text-[10px] border px-1.5 py-0.5 rounded-full ${
+              msg.modelUsed === 'offline' || msg.modelUsed === 'keyword-fallback'
+                ? 'text-orange-400/80 border-orange-500/20 bg-orange-500/5'
+                : 'text-slate-800 border-white/5'
+            }`}>{msg.modelUsed === 'keyword-fallback' ? '⚠️ offline mode' : msg.modelUsed}</span>
+          )}
           <span className="text-[10px] text-slate-800 cursor-pointer hover:text-slate-500 transition-colors" title={new Date(msg.ts||Date.now()).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}>{new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}{msg.timing?` · ${(msg.timing/1000).toFixed(1)}s`:''}</span>
         </div>
 
@@ -461,6 +467,18 @@ function DynamicGreeting() {
 
 // ─── Main Chat Page ───────────────────────────────────────────
 export default function ChatPage() {
+  // Logout
+  async function logout() {
+    try {
+      const { getSupabaseBrowser } = await import('@/lib/db/supabase');
+      const sb = getSupabaseBrowser();
+      await sb.auth.signOut();
+    } catch {}
+    document.cookie = 'jarvis_token=; path=/; max-age=0';
+    document.cookie = 'jarvis_uid=; path=/; max-age=0';
+    window.location.href = '/login';
+  }
+
   const [msgs, setMsgs]         = useState([]);
   const [input, setInput]       = useState('');
   const [loading, setLoading]   = useState(false);
@@ -957,7 +975,7 @@ export default function ChatPage() {
       {/* Header */}
       <div className="px-3 py-2 flex items-center justify-between border-b border-white/[0.06] shrink-0">
         <div className="flex items-center gap-2.5">
-          <button onClick={()=>setHistoryOpen(true)} className="p-1 text-slate-700 hover:text-slate-400 transition-colors lg:hidden">
+          <button onClick={()=>setHistoryOpen(true)} className="p-1.5 text-slate-600 hover:text-slate-300 transition-colors" title="Chat history">
             <History size={16}/>
           </button>
           <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-[0_0_18px_rgba(26,86,219,0.4)] ${loading||msgs.some(m=>m.streaming)?'animate-pulse':''}`}>
@@ -1010,6 +1028,7 @@ export default function ChatPage() {
             {theme==='dark'?'🔵':theme==='amoled'?'⚫':'🌫'}
           </button>
           <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Plus size={16}/></button>
+          <button onClick={logout} title="Logout" className="p-2 rounded-xl text-slate-700 hover:text-red-400 transition-colors lg:hidden"><LogOut size={15}/></button>
         </div>
       </div>
 
@@ -1027,7 +1046,7 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 no-scrollbar jarvis-scroll">
         {isEmpty ? (
-          <div className="flex flex-col items-center gap-5 pt-8 pb-4">
+          <div className="flex flex-col items-center gap-4 pt-6 pb-2">
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-blue-500/15 animate-ping opacity-40"/>
               <div className={`w-[72px] h-[72px] rounded-full flex items-center justify-center orb-pulse transition-all duration-500 ${
