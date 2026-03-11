@@ -871,7 +871,7 @@ export default function ChatPage() {
       <HistorySidebar open={historyOpen} onClose={()=>setHistoryOpen(false)} onLoad={loadConversation} onDelete={deleteConversation}/>
 
       {/* Header */}
-      <div className="px-4 py-2.5 flex items-center justify-between border-b border-white/[0.06] shrink-0">
+      <div className="px-3 py-2 flex items-center justify-between border-b border-white/[0.06] shrink-0">
         <div className="flex items-center gap-2.5">
           <button onClick={()=>setHistoryOpen(true)} className="p-1 text-slate-700 hover:text-slate-400 transition-colors lg:hidden">
             <History size={16}/>
@@ -921,20 +921,19 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Mode Bar */}
-      <div className="px-3 py-1.5 flex gap-1.5 overflow-x-auto shrink-0 border-b border-white/[0.06] no-scrollbar">
+      {/* Mode Bar — compact scrollable strip (no height waste) */}
+      <div className="px-3 py-1 flex gap-1 overflow-x-auto shrink-0 no-scrollbar">
         {MODES.map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)}
-            className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${mode===m.id?m.bg+' '+m.text:'bg-transparent border-transparent text-slate-700 hover:text-slate-400'}`}>
+            className={`shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${mode===m.id?m.bg+' '+m.text+' border-current/30':'bg-transparent border-transparent text-slate-700 hover:text-slate-500'}`}>
             {m.label}
-            {mode==='auto'&&detected===m.id&&m.id!=='auto'&&<span className="inline-block w-1.5 h-1.5 rounded-full bg-current animate-pulse ml-1.5"/>}
+            {mode==='auto'&&detected===m.id&&m.id!=='auto'&&<span className="inline-block w-1 h-1 rounded-full bg-current animate-pulse ml-1"/>}
           </button>
         ))}
-        {mode==='auto'&&detected&&<span className="shrink-0 self-center text-[10px] text-slate-800 ml-1">→ {MODES.find(m=>m.id===detected)?.label}</span>}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 no-scrollbar jarvis-scroll">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 no-scrollbar jarvis-scroll">
         {isEmpty ? (
           <div className="flex flex-col items-center gap-5 pt-8 pb-4">
             <div className="relative">
@@ -996,7 +995,7 @@ export default function ChatPage() {
         </button>
       )}
       {/* Input */}
-      <div className="px-3 pt-2.5 pb-3 border-t border-white/[0.06] shrink-0 safe-bottom">
+      <div className="px-3 pt-2 pb-2 border-t border-white/[0.06] shrink-0 safe-bottom">
         <div className="flex items-end gap-2">
           <div className="flex-1 bg-white/[0.05] border border-white/[0.08] rounded-[22px] flex items-end px-4 py-2.5 gap-2 focus-within:border-blue-500/35 transition-colors">
             <textarea ref={taRef} value={input} onChange={e=>setInput(e.target.value)}
