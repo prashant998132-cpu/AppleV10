@@ -8,6 +8,7 @@ import TypingDots from '@/components/chat/TypingDots';
 import MessageReactions from '@/components/chat/MessageReactions';
 import ErrorSuggestions from '@/components/chat/ErrorSuggestions';
 import { ThemeProvider, ThemeSwitcher, useTheme } from '@/components/ui/ThemeProvider';
+import { useWakeWord, WakeWordIndicator } from '@/components/chat/WakeWord';
 
 // ─── Constants ────────────────────────────────────────────────
 const MODES = [
@@ -674,6 +675,50 @@ export default function ChatPage() {
   // ── Client-side cache ──────────────────────────────────
   const { get: cacheGet, set: cacheSet } = useClientCache();
 
+  // ── Wake Word "Hey JARVIS" ────────────────────────────────────
+  const [wakeWordOn, setWakeWordOn] = useState(false);
+  const { listening: wakeListening, wakeDetected } = useWakeWord({
+    enabled: wakeWordOn,
+    onWake: () => {
+      // Activate mic for command
+      startVoice?.();
+      navigator.vibrate?.([100, 50, 100]);
+    },
+    onCommand: async (cmd) => {
+      // Direct command after wake word → check automation first
+      const automationResult = await tryAutomation(cmd);
+      if (!automationResult) {
+        // Not an automation command → send to AI
+        send(cmd);
+      }
+    },
+  });
+
+  // Try phone automation command
+  async function tryAutomation(text) {
+    try {
+      const r = await fetch('/api/automation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      const d = await r.json();
+      if (d.ok) {
+        // Show automation result in chat
+        const autoMsg = { id: `auto${Date.now()}`, role: 'assistant', content: `${d.message} 📱`, ts: Date.now(), mode: 'flash' };
+        setMsgs(p => [...p, autoMsg]);
+        navigator.vibrate?.(200);
+        return true;
+      }
+      if (d.setup_needed) {
+        const setupMsg = { id: `setup${Date.now()}`, role: 'assistant', content: `📱 MacroDroid setup nahi hua abhi. [Automation Setup](/automation) page pe jaao!`, ts: Date.now(), mode: 'flash' };
+        setMsgs(p => [...p, setupMsg]);
+        return true;
+      }
+    } catch { }
+    return false;
+  }
+
   async function send(text=input, modeOvr=null) {
     const msg=text?.trim(); if((!msg&&!imgB64)||loading) return;
     setInput(''); navigator.vibrate?.(15);
@@ -856,6 +901,12 @@ export default function ChatPage() {
             {voiceOn||speaking?<Volume2 size={16}/>:<VolumeX size={16}/>}
           </button>
           <button onClick={()=>setSearchOpen(true)} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Search size={16}/></button>
+          {/* Wake Word toggle */}
+          <button onClick={() => setWakeWordOn(w => !w)}
+            title={wakeWordOn ? 'Wake Word ON — "Hey JARVIS"' : 'Wake Word OFF'}
+            className={`p-2 rounded-xl transition-all text-sm ${wakeWordOn ? 'text-blue-400 bg-blue-500/15' : 'text-slate-700 hover:text-slate-400'}`}>
+            {wakeWordOn ? (wakeDetected ? '🎤' : '👂') : '🔇'}
+          </button>
           <button onClick={()=>{
             const ts=['dark','amoled','soft'];
             const nt=ts[(ts.indexOf(theme)+1)%ts.length];

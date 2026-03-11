@@ -14,6 +14,7 @@ const NAV = [
   { href: '/memory',     icon: Brain,         label: 'Memory'    },
   { href: '/knowledge',  icon: BookOpen,      label: 'Knowledge' },
   { href: '/profile',    icon: User,          label: 'Profile'   },
+  { href: '/automation', icon: Zap,           label: 'Automation'},
   { href: '/settings',   icon: Settings,      label: 'Settings'  },
 ];
 // Mobile bottom bar — only 5 most used (space limited)
