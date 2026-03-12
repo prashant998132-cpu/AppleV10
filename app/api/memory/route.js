@@ -1,6 +1,8 @@
 // app/api/memory/route.js
 import { getUser } from '@/lib/db/supabase';
 import { getMemories, saveMemory, deleteMemory, exportAllData, deleteAllUserData, saveFeedback } from '@/lib/db/queries';
+import { saveLearningPattern } from '@/lib/ai/self-learning';
+import { getSupabaseServer } from '@/lib/db/supabase';
 
 export async function GET(req) {
   const user = await getUser();
@@ -35,6 +37,11 @@ export async function POST(req) {
 
   // 👍👎 Feedback from chat Bubble component
   if (body.action === 'feedback') {
+    // Self-learning: analyze pattern and save
+    if (body.rating && body.userMessage && body.botReply) {
+      const db = await getSupabaseServer();
+      saveLearningPattern(user.id, body.userMessage, body.botReply, body.rating, db).catch(() => {});
+    }
     await saveFeedback(user.id, {
       messageId: body.messageId,
       rating: body.rating,       // 'up' | 'down'

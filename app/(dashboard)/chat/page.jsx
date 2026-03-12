@@ -13,6 +13,10 @@ import DailyBrief from '@/components/chat/DailyBrief';
 import WorkflowProgress from '@/components/chat/WorkflowProgress';
 import ClipboardMonitor from '@/components/chat/ClipboardMonitor';
 import SmartNotifications from '@/components/pwa/SmartNotifications';
+import ScreenOCR from '@/components/chat/ScreenOCR';
+import { puterFallbackChat } from '@/lib/ai/puter-client';
+import { useMultiDeviceSync, RemoteTypingIndicator } from '@/lib/sync/multi-device';
+import { detectTaskerCommand } from '@/lib/automation/tasker-bridge';
 import { detectWorkflow, generateAIPlan, executeWorkflow } from '@/lib/ai/task-planner';
 import { handleClientCommand } from '@/lib/automation/deep-links';
 import { getTimeContext, trackUsage, getFrequentCommands, getProactiveAlerts } from '@/lib/ai/smart-context';
@@ -282,7 +286,14 @@ ${m.content}
     setFeedback(rating);
     try {
       await fetch('/api/memory', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'feedback', messageId: msg.id, rating, content: msg.content }) });
+        body: JSON.stringify({
+          action: 'feedback',
+          messageId: msg.id,
+          rating,
+          content: msg.content,
+          botReply: msg.content,     // for self-learning
+          userMessage: lastUserMsg,  // for self-learning
+        }) });
     } catch {}
   }
 
@@ -513,6 +524,10 @@ export default function ChatPage() {
   const [pinsOpen, setPinsOpen]             = useState(false);  // pins panel open
   const [pinnedIds, setPinnedIds]           = useState(new Set()); // fast lookup
   const [refreshing, setRefreshing]         = useState(false);  // pull-to-refresh
+  // ── Screen OCR ────────────────────────────────────────────────
+  const [ocrOpen, setOcrOpen]               = useState(false);
+  // ── Remote typing (multi-device) ─────────────────────────────
+  const [remoteTyping, setRemoteTyping]     = useState(false);
   // ── Workflow / Task Planner ──────────────────────────────────
   const [activeWorkflow, setActiveWorkflow] = useState(null);  // current workflow
   const [stepStatuses, setStepStatuses]     = useState({});    // step progress
@@ -573,6 +588,19 @@ export default function ChatPage() {
       setResuming(false);
     })();
   }, []);
+
+  // Multi-device sync
+  const { broadcastMessage, broadcastTyping } = useMultiDeviceSync({
+    userId: userId,
+    conversationId: convId,
+    onNewMessage: (msg) => {
+      if (msg?.role === 'assistant') {
+        setMsgs(prev => prev.find(m => m.id === msg.id) ? prev : [...prev, { ...msg, fromRemote: true }]);
+      }
+    },
+    onRemoteTyping: (isTyping) => setRemoteTyping(isTyping),
+    enabled: true,
+  });
 
   // Smart context — time/device aware
   useEffect(() => {
@@ -952,8 +980,25 @@ export default function ChatPage() {
         setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:d.reply||'Error',streaming:false,agentsUsed:d.agentsUsed,modelUsed:d.modelUsed,timing:d.timing}:m));
         if(d.conversationId) setConvId(d.conversationId);
       } catch {
-        setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:'Network error — retry karo!',streaming:false}:m));
-        setMsgError('network');
+        // Network error → try Puter.js FREE AI as fallback
+        try {
+          setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:'⚡ Puter AI se try kar raha hoon...',streaming:true}:m));
+          const puterResult = await puterFallbackChat(
+            msg,
+            `Tu JARVIS hai — ${profile?.name || 'yaar'} ka personal AI. Hinglish mein reply karo. Short aur helpful.`,
+            msgs.slice(-4)
+          );
+          if (puterResult) {
+            fullText = puterResult.reply;
+            setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:puterResult.reply,streaming:false,modelUsed:`🆓 ${puterResult.model}`}:m));
+          } else {
+            setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:'Network error — retry karo!',streaming:false}:m));
+            setMsgError('network');
+          }
+        } catch {
+          setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:'Network error — retry karo!',streaming:false}:m));
+          setMsgError('network');
+        }
       }
     } finally {
       setPhase('');
@@ -1018,6 +1063,15 @@ export default function ChatPage() {
         setMsgs(p => p.length === 0 ? [briefMsg] : p);
       }}/>
       <SmartNotifications/>
+      {ocrOpen && (
+        <ScreenOCR
+          onSendWithImage={(text, imgB64) => {
+            if (imgB64) setImgB64(imgB64);
+            send(text);
+          }}
+          onClose={() => setOcrOpen(false)}
+        />
+      )}
       <ClipboardMonitor onSend={(text) => send(text)} enabled={true}/>
 
       {/* Pinned Messages Panel */}
@@ -1233,6 +1287,9 @@ export default function ChatPage() {
               <Download size={14}/>
             </button>
           )}
+          <button onClick={() => setOcrOpen(true)} title="Screen Reader" className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:text-purple-300 transition-all">
+            <span className="text-sm leading-none">🔍</span>
+          </button>
           <button onClick={startCamera} className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${preview?'bg-green-600':'bg-white/[0.05] border border-white/[0.08] text-slate-600 hover:text-slate-300'}`}>
             <Camera size={15} className={preview?'text-white':''}/>
           </button>

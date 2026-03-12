@@ -10,6 +10,8 @@ const PERSONALITY_OPTIONS = [
   { id:'motivational', label:'Motivational', desc:'High energy, hype man mode',     emoji:'🔥', preview:"BRO. Tu yeh kar sakta hai. I believe in you 1000%. Lets go!!" },
   { id:'fun',          label:'Fun',          desc:'Humor, jokes, light-hearted',    emoji:'😄', preview:"Aye aye captain! Kya scene hai aaj? Kuch mast karte hain!" },
   { id:'sarcastic',    label:'Sarcastic',    desc:'Brutally honest, pyaar se maar', emoji:'😏', preview:"Wah, kya plan hai. Ekdum genius. Theek hai, sunao, kya karna hai." },
+  { id:'study',        label:'Study Mode',   desc:'Academic partner — clear explanations', emoji:'📚', preview:"Chalao, concept clearly samjhate hain. Step by step. Examples bhi dunga." },
+  { id:'executive',    label:'Executive',    desc:'Professional, structured, business-ready', emoji:'💼', preview:"Analysis complete. Recommendation: Option A. Next step: Execute by Friday." },
   { id:'coach',        label:'Coach',        desc:'Disciplined, no fluff, results', emoji:'💪', preview:"Goals set karo. Excuses band karo. Kaam shuru karo. Simple." },
   { id:'roast',        label:'Roast Mode',   desc:'Brutal honesty + dark humor + care',emoji:'🔥', preview:"Aye bhai, teri life ki story sun ke mujhe khud sad feel ho raha hai 😂 Chal theek karte hain!" },
 ];

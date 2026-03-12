@@ -2,6 +2,7 @@
 import { getUser } from '@/lib/db/supabase';
 import { getProfile, buildMemoryContext, saveMemory, createConversation, saveMessage, updateConversation, addXP, checkAndAwardBadges, saveLLMLog, getGoals, searchKnowledge } from '@/lib/db/queries';
 import { buildSystemPrompt, analyzeImage, AGENTS, autoDetectConvMode } from '@/lib/ai/brain';
+import { saveLearningPattern, buildLearningContext } from '@/lib/ai/self-learning';
 import { reactAgent } from '@/lib/ai/react-agent';
 import { getKeys, APP } from '@/lib/config';
 import { offlineFallback } from '@/lib/ai/offline-fallback';
@@ -113,7 +114,10 @@ export async function POST(req) {
     return { emotion: 'neutral', urgency: 'low' };
   })();
 
-  const system  = buildSystemPrompt(profile, memCtx, profile.personality, quickEmotion);
+  // Load feedback patterns (self-learning)
+  const feedbackMems = await db.from('memories').select('key,value').eq('user_id', user.id).eq('category', 'feedback').order('importance', { ascending: false }).limit(10).then(r => r.data || []).catch(() => []);
+  const learningCtx = buildLearningContext(feedbackMems);
+  const system  = buildSystemPrompt(profile, memCtx + (learningCtx ? '\n' + learningCtx : ''), profile.personality, quickEmotion);
 
   // ── Dynamic temperature based on message intent ─────────────
   const msgLow = message.toLowerCase();
