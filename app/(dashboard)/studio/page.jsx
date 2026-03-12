@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { clientSpeak, clientImage, clientMusic, stopCurrentAudio, pollinationsUrl } from '@/lib/ai/media-client';
+import { puterGenerateImage, puterStream, PUTER_MODELS } from '@/lib/ai/puter-client';
 import { Image, Music, Video, Mic, Sparkles, Download, Share2, RefreshCw, Play, Pause, Volume2 } from 'lucide-react';
 // Browser-safe TTS helpers (no server imports in client components)
 function speakBrowser(text) {
@@ -23,6 +24,7 @@ const TABS = [
   { id:'video', icon:Video,  label:'Video',  emoji:'🎬' },
   { id:'music', icon:Music,  label:'Music',  emoji:'🎵' },
   { id:'tts',   icon:Mic,    label:'Voice',  emoji:'🎙️' },
+  { id:'ai',    icon:Sparkles,label:'AI Chat',emoji:'🤖' },
 ];
 
 const IMAGE_STYLES = ['realistic','anime','indian','cinematic','watercolor','thumbnail','instagram','logo','portrait','landscape'];
@@ -54,15 +56,11 @@ function ImageStudio({ puterReady }) {
     if (!prompt.trim()) return;
     setLoading(true); setError(''); setResult(null);
 
-    // Try Puter.js first (browser-side, no key, free)
-    if (puterReady && window.puter) {
-      try {
-        const img = await window.puter.ai.txt2img(`${prompt}, ${style}`);
-        if (img?.src) {
-          setResult(img.src); setProvider('Puter.js (Unlimited Free)'); setLoading(false); return;
-        }
-      } catch {}
-    }
+    // Try Puter.js with LATEST models (gpt-image-1.5 > dall-e-3 > flux)
+    try {
+      const imgUrl = await puterGenerateImage(`${prompt}, ${style}, high quality, detailed`);
+      if (imgUrl) { setResult(imgUrl); setProvider('🆓 Puter gpt-image-1.5'); setLoading(false); return; }
+    } catch {}
 
     // ✅ v8: clientImage returns Pollinations URL instantly (zero Vercel)
     // or calls /api/image which returns CDN URL (no base64 proxy)
@@ -436,6 +434,109 @@ function TTSStudio() {
 }
 
 // ─── MAIN STUDIO PAGE ────────────────────────────────────────
+
+// ─── AI STUDIO (Puter FREE Chat) ────────────────────────────────
+function AiStudio({ puterReady }) {
+  const [prompt, setPrompt]   = useState('');
+  const [result, setResult]   = useState('');
+  const [loading, setLoading] = useState(false);
+  const [model, setModel]     = useState('claude-sonnet-4');
+  const [mode, setMode]       = useState('write'); // write | summarize | translate | explain | code
+
+  const MODES = [
+    { id:'write',     label:'✍️ Write',      sys:'Tu ek expert writer hai. Hinglish mein likho.' },
+    { id:'summarize', label:'📋 Summarize',  sys:'Summarize karo concisely. Key points in Hinglish.' },
+    { id:'translate', label:'🌐 Translate',  sys:'Translate accurately. Keep meaning intact.' },
+    { id:'explain',   label:'🧠 Explain',    sys:'Simply explain like talking to a friend. Hinglish.' },
+    { id:'code',      label:'💻 Code',       sys:'You are an expert programmer. Write clean, commented code.' },
+    { id:'email',     label:'📧 Email',      sys:'Draft a professional email. Clear and concise.' },
+  ];
+
+  const currentMode = MODES.find(m => m.id === mode) || MODES[0];
+
+  async function generate() {
+    if (!prompt.trim() || loading) return;
+    setLoading(true); setResult('');
+
+    try {
+      const { puterStream } = await import('@/lib/ai/puter-client');
+      const systemPrompt = currentMode.sys;
+      let accumulated = '';
+
+      const res = await puterStream(
+        [{ role: 'user', content: prompt }],
+        systemPrompt,
+        (token, full) => { accumulated = full; setResult(full); },
+        model
+      );
+
+      if (!res) {
+        setResult('AI response nahi aya. Network check karo ya dobara try karo.');
+      }
+    } catch (e) {
+      setResult('Error: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Mode selector */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {MODES.map(m => (
+          <button key={m.id} onClick={() => setMode(m.id)}
+            className={`text-xs px-3 py-1.5 rounded-xl border whitespace-nowrap transition-all ${mode === m.id ? 'bg-blue-500/20 border-blue-500/40 text-blue-300' : 'bg-white/[0.03] border-white/[0.08] text-slate-500 hover:text-slate-300'}`}>
+            {m.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Model selector */}
+      <div>
+        <label className="text-[10px] text-slate-600 mb-1 block">AI Model (FREE)</label>
+        <select value={model} onChange={e => setModel(e.target.value)}
+          className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-slate-300 outline-none">
+          <option value="claude-sonnet-4">🤖 Claude Sonnet 4 (Best)</option>
+          <option value="google/gemini-2.5-flash">⚡ Gemini 2.5 Flash (Fast)</option>
+          <option value="gpt-5.2">🧠 GPT 5.2 (Smart)</option>
+          <option value="gpt-5-nano">🚀 GPT 5 Nano (Ultra Fast)</option>
+          <option value="openrouter:deepseek/deepseek-chat-v3-0324:free">🐋 DeepSeek V3 (Free)</option>
+        </select>
+      </div>
+
+      {/* Input */}
+      <textarea value={prompt} onChange={e => setPrompt(e.target.value)}
+        placeholder={`${currentMode.label} — kya chahiye?`}
+        className="w-full bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-blue-500/40 resize-none transition-all"
+        rows={4}
+        onKeyDown={e => { if (e.key === 'Enter' && e.ctrlKey) generate(); }}
+      />
+      <p className="text-[10px] text-slate-700 -mt-3">Ctrl+Enter to generate</p>
+
+      <button onClick={generate} disabled={!prompt.trim() || loading}
+        className="w-full py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-30 bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+        {loading ? '⏳ Generating...' : `✨ ${currentMode.label}`}
+      </button>
+
+      {/* Result */}
+      {result && (
+        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] text-blue-400">✅ {model}</span>
+            <button onClick={() => navigator.clipboard.writeText(result)} className="text-[10px] text-slate-500 hover:text-slate-300">Copy</button>
+          </div>
+          <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">{result}</p>
+        </div>
+      )}
+
+      {!puterReady && (
+        <p className="text-xs text-orange-400/70 text-center">⚠️ Puter.js load ho raha hai... thoda wait karo</p>
+      )}
+    </div>
+  );
+}
+
 export default function StudioPage() {
   const [tab, setTab]     = useState('image');
   const puterReady        = usePuter();
@@ -469,6 +570,7 @@ export default function StudioPage() {
           {tab === 'video' && <VideoStudio/>}
           {tab === 'music' && <MusicStudio/>}
           {tab === 'tts'   && <TTSStudio/>}
+          {tab === 'ai'    && <AiStudio puterReady={puterReady}/>}
         </div>
       </div>
     </div>

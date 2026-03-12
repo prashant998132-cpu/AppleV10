@@ -14,7 +14,7 @@ import WorkflowProgress from '@/components/chat/WorkflowProgress';
 import ClipboardMonitor from '@/components/chat/ClipboardMonitor';
 import SmartNotifications from '@/components/pwa/SmartNotifications';
 import ScreenOCR from '@/components/chat/ScreenOCR';
-import { puterFallbackChat } from '@/lib/ai/puter-client';
+import { puterFallbackChat, puterStream, puterSearchChat, puterGenerateImage, puterAnalyzeImage, backupChatToPuter, puterSet, puterGet, PUTER_MODELS } from '@/lib/ai/puter-client';
 import { useMultiDeviceSync, RemoteTypingIndicator } from '@/lib/sync/multi-device';
 import { detectTaskerCommand } from '@/lib/automation/tasker-bridge';
 import { detectWorkflow, generateAIPlan, executeWorkflow } from '@/lib/ai/task-planner';
@@ -843,6 +843,30 @@ export default function ChatPage() {
     trackUsage(msg);
     setFreqCmds(getFrequentCommands(4));
 
+    // 0. Puter Image Generation — "image banao X"
+    if (msg) {
+      const imgMatch = msg.match(/^(?:image|photo|picture|tasveer|banao|generate|create).*?(?:banao|of|ka|ki|bana|draw|make)(.+)|^(.+)(?:image|photo|tasveer|picture)\s*(?:banao|bana|generate)$/i);
+      const isImgReq = /^(image|photo|tasveer|picture) (?:banao|bana|generate|draw)/i.test(msg) || /(?:banao|bana|generate|draw).*(image|photo|tasveer|picture)/i.test(msg);
+      if (isImgReq) {
+        const prompt = msg.replace(/image|photo|tasveer|picture|banao|bana|generate|draw|create|make/gi, '').trim();
+        if (prompt.length > 2) {
+          const userMsg0 = {id:`u${Date.now()}`,role:'user',content:msg,ts:Date.now()};
+          const aiId0 = `a${Date.now()}`;
+          setMsgs(p=>[...p,userMsg0,{id:aiId0,role:'assistant',content:'🎨 Image generate kar raha hoon Puter AI se...',streaming:true,ts:Date.now()}]);
+          puterGenerateImage(prompt).then(imgUrl => {
+            if (imgUrl) {
+              setMsgs(p=>p.map(m=>m.id===aiId0?{...m,content:`![Generated](${imgUrl})
+
+✅ Image ready! Prompt: "${prompt}"`,streaming:false,modelUsed:'🎨 puter-image'}:m));
+            } else {
+              setMsgs(p=>p.map(m=>m.id===aiId0?{...m,content:'Image generate nahi ho paya — thodi der baad try karo.',streaming:false}:m));
+            }
+          }).catch(()=>{});
+          return;
+        }
+      }
+    }
+
     // 1. Try deep link first (open apps directly)
     if (msg) {
       const deepResult = handleClientCommand(msg);
@@ -860,7 +884,21 @@ export default function ChatPage() {
       if (autoResult) return;
     }
 
-    // 3. Detect workflow (multi-step task)
+    // 3. Puter Web Search — if looks like news/current event query
+    if (msg) {
+      const isSearchQuery = /\b(news|khabar|latest|aaj ka|today|current|price|kitna|rate|weather|mausam|score|result|winner|2025|2026)\b/i.test(msg);
+      if (isSearchQuery && !imgB64) {
+        // Try puter search in background, don't block main AI
+        puterSearchChat(msg, `Tu JARVIS hai. Hinglish mein reply. Web search results use karo.`).then(sr => {
+          if (sr && !fullText) {
+            setMsgs(p => p.map(m => m.id === aiId ? { ...m, content: sr.reply, streaming: false, modelUsed: '🔍 puter-search' } : m));
+            fullText = sr.reply;
+          }
+        }).catch(() => {});
+      }
+    }
+
+    // 4. Detect workflow (multi-step task)
     if (msg) {
       const workflow = detectWorkflow(msg);
       if (workflow) {
@@ -980,17 +1018,25 @@ export default function ChatPage() {
         setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:d.reply||'Error',streaming:false,agentsUsed:d.agentsUsed,modelUsed:d.modelUsed,timing:d.timing}:m));
         if(d.conversationId) setConvId(d.conversationId);
       } catch {
-        // Network error → try Puter.js FREE AI as fallback
+        // Network error → Puter.js FREE AI with STREAMING
         try {
-          setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:'⚡ Puter AI se try kar raha hoon...',streaming:true}:m));
-          const puterResult = await puterFallbackChat(
-            msg,
-            `Tu JARVIS hai — ${profile?.name || 'yaar'} ka personal AI. Hinglish mein reply karo. Short aur helpful.`,
-            msgs.slice(-4)
+          setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:'⚡ Puter AI loading...',streaming:true}:m));
+          const sysP = `Tu JARVIS hai — ${profile?.name || 'yaar'} ka personal AI dost. Hinglish mein reply karo. Concise aur helpful reh.`;
+
+          // Try streaming first (real-time tokens)
+          const streamResult = await puterStream(
+            msgs.slice(-4).map(m=>({role:m.role,content:m.content})).concat([{role:'user',content:msg}]),
+            sysP,
+            (token, accumulated) => {
+              setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:accumulated,streaming:true}:m));
+            }
           );
-          if (puterResult) {
-            fullText = puterResult.reply;
-            setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:puterResult.reply,streaming:false,modelUsed:`🆓 ${puterResult.model}`}:m));
+
+          if (streamResult) {
+            fullText = streamResult.reply;
+            setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:streamResult.reply,streaming:false,modelUsed:`🆓 ${streamResult.model}`}:m));
+            // Backup to Puter cloud
+            backupChatToPuter(convId, [...msgs, userMsg, {role:'assistant',content:streamResult.reply}]).catch(()=>{});
           } else {
             setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:'Network error — retry karo!',streaming:false}:m));
             setMsgError('network');
@@ -1006,6 +1052,8 @@ export default function ChatPage() {
       // Save to client cache for repeat queries
       if(fullText && msg.length > 8 && !imgB64) {
         cacheSet(msg, fullText).catch(()=>{});
+        // Also save to Puter KV for cross-device / offline access
+        puterSet(`last_reply_${Date.now()}`, { q: msg.slice(0,100), a: fullText.slice(0,500), ts: Date.now() }).catch(()=>{});
       }
       // Generate follow-up suggestions after short delay
       if(fullText&&msg.length>8) {
@@ -1270,6 +1318,8 @@ export default function ChatPage() {
           <ChevronDown size={16} className="text-white"/>
         </button>
       )}
+      {/* Remote typing indicator */}
+      <RemoteTypingIndicator isTyping={remoteTyping}/>
       {/* Input */}
       <div className="px-3 pt-2 pb-2 border-t border-white/[0.06] shrink-0 safe-bottom">
         <div className="flex items-end gap-2">

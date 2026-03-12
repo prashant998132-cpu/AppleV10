@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BarChart2, Target, Brain, Zap, TrendingUp, MessageSquare, BookOpen, Calendar, ChevronRight, RefreshCw, Flame } from 'lucide-react';
+import { BarChart2, Target, Brain, Zap, TrendingUp, MessageSquare, BookOpen, Calendar, ChevronRight, RefreshCw, Flame, Cpu, Wifi } from 'lucide-react';
+import { isPuterAvailable } from '@/lib/ai/puter-client';
 import { LineChart, Line, ResponsiveContainer, Tooltip, AreaChart, Area } from 'recharts';
 import Link from 'next/link';
 
@@ -14,9 +15,13 @@ export default function DashboardPage() {
   const [logData, setLogData]   = useState({ mood: 7, energy: 7, productivity: 7, focusHours: 2, notes: '' });
   const [saving, setSaving]     = useState(false);
   const [genReport, setGenReport] = useState(false);
+  const [puterOn, setPuterOn]   = useState(false);
   const router = useRouter();
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    isPuterAvailable().then(setPuterOn).catch(() => {});
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -173,6 +178,25 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* AI System Status */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className={`rounded-2xl border p-3 text-center ${puterOn ? 'bg-green-500/5 border-green-500/20' : 'bg-white/[0.03] border-white/[0.06]'}`}>
+            <div className="text-lg mb-0.5">{puterOn ? '🟢' : '🔴'}</div>
+            <p className="text-[10px] text-slate-500">Puter AI</p>
+            <p className={`text-[11px] font-bold ${puterOn ? 'text-green-400' : 'text-slate-600'}`}>{puterOn ? 'FREE' : 'Off'}</p>
+          </div>
+          <Link href="/chat" className="rounded-2xl border bg-blue-500/5 border-blue-500/20 p-3 text-center hover:bg-blue-500/10 transition-all">
+            <div className="text-lg mb-0.5">💬</div>
+            <p className="text-[10px] text-slate-500">Chat</p>
+            <p className="text-[11px] font-bold text-blue-400">Open</p>
+          </Link>
+          <Link href="/studio" className="rounded-2xl border bg-purple-500/5 border-purple-500/20 p-3 text-center hover:bg-purple-500/10 transition-all">
+            <div className="text-lg mb-0.5">🎨</div>
+            <p className="text-[10px] text-slate-500">Studio</p>
+            <p className="text-[11px] font-bold text-purple-400">Free</p>
+          </Link>
+        </div>
 
         {/* Proactive Suggestions */}
         {proactive.length > 0 && (

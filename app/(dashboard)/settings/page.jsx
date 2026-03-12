@@ -276,6 +276,14 @@ export default function SettingsPage() {
                   📦 APK Guide
                 </a>
               </div>
+              <div className="flex gap-2 mt-2">
+                <a href="/widget" className="flex-1 text-center py-2 text-xs text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-xl hover:bg-cyan-500/20 transition-all">
+                  📱 Home Widget Setup
+                </a>
+                <a href="/studio" className="flex-1 text-center py-2 text-xs text-pink-400 bg-pink-500/10 border border-pink-500/20 rounded-xl hover:bg-pink-500/20 transition-all">
+                  🤖 AI Studio (Free)
+                </a>
+              </div>
             </div>
           </div>
         )}

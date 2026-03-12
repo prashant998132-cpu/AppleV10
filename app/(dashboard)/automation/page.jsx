@@ -1,4 +1,5 @@
 'use client';
+import { TASKER_COMMANDS } from '@/lib/automation/tasker-bridge';
 export const dynamic = 'force-dynamic';
 // app/(dashboard)/automation/page.jsx — MacroDroid Setup Guide
 
@@ -30,6 +31,12 @@ const ACTIONS = [
     { action: 'take_screenshot',label: 'Screenshot',    trigger: 'jarvis_screenshot' },
     { action: 'lock_phone',     label: 'Lock Phone',    trigger: 'jarvis_lock' },
     { action: 'dnd_on',         label: 'DND On',        trigger: 'jarvis_dnd_on' },
+  ]},
+  { category: '🧠 Smart Modes', items: [
+    { action: 'study_mode',  label: 'Study Mode',  trigger: 'jarvis_studymode',  desc: 'DND + Brightness min + Focus' },
+    { action: 'sleep_mode',  label: 'Sleep Mode',  trigger: 'jarvis_sleepmode',  desc: 'DND + WiFi off + Dim' },
+    { action: 'drive_mode',  label: 'Drive Mode',  trigger: 'jarvis_drivemode',  desc: 'BT on + Maps + DND' },
+    { action: 'gym_mode',    label: 'Gym Mode',    trigger: 'jarvis_gymmode',    desc: 'Music + DND + Timer' },
   ]},
   { category: '🎵 Media', items: [
     { action: 'play_music',  label: 'Play',  trigger: 'jarvis_play' },

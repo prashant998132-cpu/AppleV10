@@ -14,6 +14,7 @@
 // ══════════════════════════════════════════════════════════════
 
 import { useState, useRef, useCallback } from 'react';
+import { puterAnalyzeImage } from '@/lib/ai/puter-client';
 import { Camera, X, Scan, Type, FileText, Loader } from 'lucide-react';
 
 const OCR_SUGGESTIONS = [
@@ -38,28 +39,22 @@ export default function ScreenOCR({ onSendWithImage, onClose }) {
     setMode('processing');
     setError('');
 
-    // Create preview
+    // Read file as base64 + auto-extract text via Puter Vision
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target.result);
-      setImageData(e.target.result.split(',')[1]); // base64 only
+    reader.onload = async (e) => {
+      const dataUrl = e.target.result;
+      const base64 = dataUrl.split(',')[1];
+      setImagePreview(dataUrl);
+      setImageData(base64);
+      setMode('preview');
+
+      // Puter Vision — auto-extract text & describe image
+      try {
+        const extracted = await puterAnalyzeImage(dataUrl, 'Extract all visible text from this image exactly. Then briefly describe what you see. Reply in Hinglish or English.');
+        if (extracted) setExtractedText(extracted);
+      } catch {}
     };
     reader.readAsDataURL(file);
-
-    // Try browser OCR first (fast, offline)
-    let text = '';
-    try {
-      if ('createImageBitmap' in window) {
-        // Try basic extraction via canvas if available
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-        await new Promise(r => img.onload = r);
-        // We'll let AI do the OCR via vision
-      }
-    } catch {}
-
-    setExtractedText(text);
-    setMode('preview');
   }, []);
 
   const handleCameraCapture = () => {

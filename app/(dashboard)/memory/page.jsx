@@ -1,4 +1,5 @@
 'use client';
+import { puterSaveFile, puterListFiles } from '@/lib/ai/puter-client';
 import { useState, useEffect } from 'react';
 import { Brain, Plus, Search, Trash2, Tag, X, RefreshCw } from 'lucide-react';
 
@@ -15,6 +16,18 @@ const CAT_COLOR = {
   general:'text-slate-400 bg-slate-500/10',
 };
 
+async function backupMemoriesToPuter(memories) {
+  if (!memories?.length) return false;
+  try {
+    await puterSaveFile(`memories/backup_${new Date().toISOString().slice(0,10)}.json`, {
+      backedUpAt: new Date().toISOString(),
+      count: memories.length,
+      memories,
+    });
+    return true;
+  } catch { return false; }
+}
+
 export default function MemoryPage() {
   const [memories, setMemories]   = useState([]);
   const [loading, setLoad]        = useState(true);
@@ -23,7 +36,9 @@ export default function MemoryPage() {
   const [addOpen, setAddOpen]     = useState(false);
   const [newMem, setNewMem]       = useState({ category:'general', key:'', value:'', importance:5, tags:'' });
   const [saving, setSaving]       = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting]   = useState(false);
+  const [puterBacking, setPuterBacking] = useState(false);
+  const [puterDone, setPuterDone]     = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => { load(); }, [cat]);
@@ -89,6 +104,18 @@ export default function MemoryPage() {
             <button onClick={exportData} disabled={exporting}
               className="px-3 py-2 glass-card text-xs text-slate-400 hover:text-white rounded-xl transition-colors">
               {exporting ? '...' : 'Export'}
+            </button>
+            <button
+              onClick={async () => {
+                setPuterBacking(true);
+                const ok = await backupMemoriesToPuter(memories);
+                setPuterDone(ok);
+                setPuterBacking(false);
+                setTimeout(() => setPuterDone(false), 3000);
+              }}
+              disabled={puterBacking}
+              className="px-3 py-2 glass-card text-xs text-cyan-400 hover:text-cyan-300 rounded-xl transition-colors border border-cyan-500/20">
+              {puterBacking ? '⏳' : puterDone ? '✅ Saved' : '☁️ Puter'}
             </button>
             <button onClick={() => setAddOpen(true)}
               className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-xl text-xs font-medium">

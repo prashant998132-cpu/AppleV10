@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, LogOut, Zap, Bell, Sparkles, User } from 'lucide-react';
+import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, LogOut, Zap, Bell, Sparkles, User, Smartphone } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/db/supabase';
 
 const NAV = [
@@ -15,6 +15,7 @@ const NAV = [
   { href: '/knowledge',  icon: BookOpen,      label: 'Knowledge' },
   { href: '/profile',    icon: User,          label: 'Profile'   },
   { href: '/automation', icon: Zap,           label: 'Automation'},
+  { href: '/widget',     icon: Smartphone,    label: 'Widget'    },
   { href: '/settings',   icon: Settings,      label: 'Settings'  },
 ];
 // Mobile bottom bar — only 5 most used (space limited)
