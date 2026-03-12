@@ -10,6 +10,10 @@ import ErrorSuggestions from '@/components/chat/ErrorSuggestions';
 import { ThemeProvider, ThemeSwitcher, useTheme } from '@/components/ui/ThemeProvider';
 import { useWakeWord, WakeWordIndicator } from '@/components/chat/WakeWord';
 import DailyBrief from '@/components/chat/DailyBrief';
+import WorkflowProgress from '@/components/chat/WorkflowProgress';
+import { detectWorkflow, generateAIPlan, executeWorkflow } from '@/lib/ai/task-planner';
+import { handleClientCommand } from '@/lib/automation/deep-links';
+import { getTimeContext, trackUsage, getFrequentCommands, getProactiveAlerts } from '@/lib/ai/smart-context';
 
 // ─── Constants ────────────────────────────────────────────────
 const MODES = [
@@ -507,6 +511,15 @@ export default function ChatPage() {
   const [pinsOpen, setPinsOpen]             = useState(false);  // pins panel open
   const [pinnedIds, setPinnedIds]           = useState(new Set()); // fast lookup
   const [refreshing, setRefreshing]         = useState(false);  // pull-to-refresh
+  // ── Workflow / Task Planner ──────────────────────────────────
+  const [activeWorkflow, setActiveWorkflow] = useState(null);  // current workflow
+  const [stepStatuses, setStepStatuses]     = useState({});    // step progress
+  const [workflowDone, setWorkflowDone]     = useState(false);
+  const [workflowResult, setWorkflowResult] = useState('');
+  // ── Smart Context ────────────────────────────────────────────
+  const [timeCtx, setTimeCtx]               = useState(null);
+  const [proAlerts, setProAlerts]           = useState([]);
+  const [freqCmds, setFreqCmds]             = useState([]);
   const [theme, setTheme]                   = useState(() =>
     typeof window !== 'undefined' ? localStorage.getItem('jarvis_theme') || 'dark' : 'dark'
   );
@@ -557,6 +570,13 @@ export default function ChatPage() {
       } catch {}
       setResuming(false);
     })();
+  }, []);
+
+  // Smart context — time/device aware
+  useEffect(() => {
+    setTimeCtx(getTimeContext());
+    setFreqCmds(getFrequentCommands(4));
+    getProactiveAlerts().then(setProAlerts).catch(()=>{});
   }, []);
 
   // Load pinned messages on mount
@@ -788,6 +808,60 @@ export default function ChatPage() {
   async function send(text=input, modeOvr=null) {
     const msg=text?.trim(); if((!msg&&!imgB64)||loading) return;
     setInput(''); navigator.vibrate?.(15);
+
+    // Track usage for smart suggestions
+    trackUsage(msg);
+    setFreqCmds(getFrequentCommands(4));
+
+    // 1. Try deep link first (open apps directly)
+    if (msg) {
+      const deepResult = handleClientCommand(msg);
+      if (deepResult) {
+        const deepMsg = {id:`dl${Date.now()}`,role:'assistant',content:`${deepResult} 📱`,ts:Date.now(),mode:'flash'};
+        const userMsg2 = {id:`u${Date.now()}`,role:'user',content:msg,ts:Date.now()};
+        setMsgs(p=>[...p,userMsg2,deepMsg]);
+        return;
+      }
+    }
+
+    // 2. Try MacroDroid automation
+    if (msg) {
+      const autoResult = await tryAutomation(msg);
+      if (autoResult) return;
+    }
+
+    // 3. Detect workflow (multi-step task)
+    if (msg) {
+      const workflow = detectWorkflow(msg);
+      if (workflow) {
+        // Show workflow in chat
+        const userMsg3 = {id:`u${Date.now()}`,role:'user',content:msg,ts:Date.now()};
+        setMsgs(p=>[...p,userMsg3]);
+        setActiveWorkflow(workflow);
+        setStepStatuses({});
+        setWorkflowDone(false);
+        setWorkflowResult('');
+        // Execute workflow
+        executeWorkflow({
+          workflow,
+          message: msg,
+          agents: null,
+          groqKey: null, // will use API route
+          onProgress: (stepId, status, result) => {
+            setStepStatuses(prev => ({ ...prev, [stepId]: { status, result } }));
+          },
+          onComplete: (result) => {
+            setWorkflowDone(true);
+            setWorkflowResult(result);
+            if (result) {
+              const wfMsg = {id:`wf${Date.now()}`,role:'assistant',content:result,ts:Date.now(),mode:'deep'};
+              setMsgs(p=>[...p,wfMsg]);
+            }
+          },
+        });
+        return;
+      }
+    }
     const activeMode = modeOvr||mode;
     const finalMode  = activeMode==='auto'?(detected||'flash'):activeMode;
     const b64=imgB64, prev=preview;
@@ -1060,13 +1134,36 @@ export default function ChatPage() {
             </div>
             <FestivalBanner />
             <DynamicGreeting/>
+            {/* Proactive Alerts */}
+            {proAlerts.map((alert, i) => (
+              <div key={i} className="w-full max-w-[300px] bg-orange-500/10 border border-orange-500/20 rounded-xl px-3 py-2 flex items-center gap-2">
+                <span>{alert.icon}</span>
+                <p className="text-xs text-orange-300 flex-1">{alert.message}</p>
+              </div>
+            ))}
+            {/* Smart time-based suggestions */}
             <div className="grid grid-cols-2 gap-2 w-full max-w-[300px]">
-              {QUICK.map(q=>(
-                <button key={q.t} onClick={()=>send(q.t)} className="text-left glass-card px-3 py-2.5 hover:border-blue-500/25 hover:bg-blue-500/5 transition-all text-xs text-slate-400 hover:text-slate-200 rounded-xl">
-                  <span className="text-base mr-1.5">{q.i}</span>{q.t}
+              {(timeCtx?.suggestions || QUICK.map(q=>({icon:q.i, text:q.t, cmd:q.t}))).map((q,i)=>(
+                <button key={i} onClick={()=>send(q.cmd||q.t)}
+                  className="text-left glass-card px-3 py-2.5 hover:border-blue-500/25 hover:bg-blue-500/5 transition-all text-xs text-slate-400 hover:text-slate-200 rounded-xl">
+                  <span className="text-base mr-1.5">{q.icon}</span>{q.text}
                 </button>
               ))}
             </div>
+            {/* Frequent commands */}
+            {freqCmds.length > 0 && (
+              <div className="w-full max-w-[300px]">
+                <p className="text-[10px] text-slate-700 mb-1.5 text-center">⚡ Frequent commands</p>
+                <div className="flex flex-wrap gap-1.5 justify-center">
+                  {freqCmds.map((f, i) => (
+                    <button key={i} onClick={()=>send(f.cmd)}
+                      className="text-[11px] text-slate-500 border border-white/5 bg-white/[0.03] rounded-full px-2.5 py-1 hover:text-slate-300 hover:border-white/10 transition-all">
+                      {f.text.slice(0, 24)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -1076,6 +1173,16 @@ export default function ChatPage() {
                 : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)}/></div>
             ))}
             {loading&&<TypingDots mode={mode==='auto'?(detected||'flash'):mode}/>}
+            {/* Workflow Progress */}
+            {activeWorkflow && (
+              <WorkflowProgress
+                workflow={activeWorkflow}
+                stepStatuses={stepStatuses}
+                isComplete={workflowDone}
+                finalResult={workflowResult}
+                onDismiss={() => { setActiveWorkflow(null); setStepStatuses({}); }}
+              />
+            )}
             {/* Error recovery */}
             {msgError && !loading && (
               <div className="px-2 pb-2">
