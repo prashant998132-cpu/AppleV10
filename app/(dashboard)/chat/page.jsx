@@ -11,6 +11,8 @@ import { ThemeProvider, ThemeSwitcher, useTheme } from '@/components/ui/ThemePro
 import { useWakeWord, WakeWordIndicator } from '@/components/chat/WakeWord';
 import DailyBrief from '@/components/chat/DailyBrief';
 import WorkflowProgress from '@/components/chat/WorkflowProgress';
+import ClipboardMonitor from '@/components/chat/ClipboardMonitor';
+import SmartNotifications from '@/components/pwa/SmartNotifications';
 import { detectWorkflow, generateAIPlan, executeWorkflow } from '@/lib/ai/task-planner';
 import { handleClientCommand } from '@/lib/automation/deep-links';
 import { getTimeContext, trackUsage, getFrequentCommands, getProactiveAlerts } from '@/lib/ai/smart-context';
@@ -1015,6 +1017,8 @@ export default function ChatPage() {
         const briefMsg = { id: `brief${Date.now()}`, role:'assistant', content: msg, ts: Date.now(), mode:'flash' };
         setMsgs(p => p.length === 0 ? [briefMsg] : p);
       }}/>
+      <SmartNotifications/>
+      <ClipboardMonitor onSend={(text) => send(text)} enabled={true}/>
 
       {/* Pinned Messages Panel */}
       {pinsOpen && (

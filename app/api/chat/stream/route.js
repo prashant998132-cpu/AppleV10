@@ -99,7 +99,21 @@ export async function POST(req) {
   }
 
   const memCtx  = await buildMemoryContext(user.id, message, keys.GEMINI_API_KEY, keys.HUGGINGFACE_TOKEN).catch(() => '');
-  const system  = buildSystemPrompt(profile, memCtx, profile.personality);
+
+  // ── Fast emotion + intent detection (no API — regex based) ───
+  const msgL = message.toLowerCase();
+  const quickEmotion = (() => {
+    if (/\b(sad|dukhi|akela|bura|hurt|cry|rona|depression|alone)\b/.test(msgL)) return { emotion: 'sad', urgency: 'medium' };
+    if (/\b(gussa|frustrated|irritated|bakwas|nonsense|stupid|stupid)\b/.test(msgL)) return { emotion: 'frustrated', urgency: 'medium' };
+    if (/\b(anxious|scared|darr|tension|stress|worried|ghabra)\b/.test(msgL)) return { emotion: 'anxious', urgency: 'medium' };
+    if (/\b(excited|amazing|great|awesome|yay|wohoo|zabardast|mast|dhamaka)\b/.test(msgL)) return { emotion: 'excited', urgency: 'low' };
+    if (/\b(thaka|tired|neend|so ja|exhausted|drained|bore)\b/.test(msgL)) return { emotion: 'tired', urgency: 'low' };
+    if (/\b(urgent|jaldi|asap|abhi|turant|immediately|help.*fast|fast.*help)\b/.test(msgL)) return { emotion: 'neutral', urgency: 'high' };
+    if (/\b(motivat|inspired|karna chahta|achieve|goal|target)\b/.test(msgL)) return { emotion: 'motivated', urgency: 'low' };
+    return { emotion: 'neutral', urgency: 'low' };
+  })();
+
+  const system  = buildSystemPrompt(profile, memCtx, profile.personality, quickEmotion);
 
   // ── Dynamic temperature based on message intent ─────────────
   const msgLow = message.toLowerCase();
