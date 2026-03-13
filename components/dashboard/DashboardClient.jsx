@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, LogOut, Zap, Bell, Sparkles, User, Smartphone } from 'lucide-react';
+import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, LogOut, Zap, Bell, Sparkles, User, Smartphone, Phone } from 'lucide-react';
 import { getSupabaseBrowser } from '@/lib/db/supabase';
 
 const NAV = [
@@ -22,8 +22,8 @@ const NAV = [
 const MOBILE_NAV = [
   { href: '/',        icon: Zap,           label: 'Home'     },
   { href: '/chat',    icon: MessageSquare, label: 'Chat'     },
+  { href: '/phone',   icon: Phone,         label: 'Phone'    },
   { href: '/studio',  icon: Sparkles,      label: 'Studio'   },
-  { href: '/profile', icon: User,          label: 'Profile'  },
   { href: '/settings',icon: Settings,      label: 'Settings' },
 ];
 

@@ -1,7 +1,7 @@
 {
   "name": "JARVIS — Personal AI",
   "short_name": "JARVIS",
-  "description": "Aapka personal AI — chat, goals, analytics, creative studio. Hinglish mein.",
+  "description": "Aapka personal AI — phone control, chat, automation. Free forever.",
   "start_url": "/?source=pwa",
   "id": "jarvis-personal-ai",
   "display": "standalone",
@@ -24,10 +24,33 @@
   ],
   "categories": ["productivity", "utilities", "lifestyle"],
   "shortcuts": [
-    { "name": "Chat",     "short_name": "Chat",     "url": "/chat",      "description": "JARVIS se baat karo", "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
-    { "name": "Goals",    "short_name": "Goals",    "url": "/goals",     "description": "Apne goals dekho",   "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
-    { "name": "Studio",   "short_name": "Studio",   "url": "/studio",    "description": "Image, Video, Music", "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
-    { "name": "Analytics","short_name": "Stats",    "url": "/analytics", "description": "Apni analytics dekho","icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] }
+    { "name": "Chat",         "short_name": "Chat",    "url": "/chat",      "description": "JARVIS se baat karo",      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "Phone Control","short_name": "Phone",   "url": "/phone",     "description": "Phone control karo",       "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "Studio",       "short_name": "Studio",  "url": "/studio",    "description": "Image, Video, Music",      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "Automation",   "short_name": "Auto",    "url": "/automation","description": "MacroDroid + Tasker",     "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "Goals",        "short_name": "Goals",   "url": "/goals",     "description": "Apne goals dekho",        "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }] }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text":  "text",
+      "url":   "url"
+    }
+  },
+  "protocol_handlers": [
+    { "protocol": "web+jarvis", "url": "/?intent=%s" }
+  ],
+  "file_handlers": [
+    {
+      "action": "/studio",
+      "accept": {
+        "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp"],
+        "text/*":  [".txt", ".md"],
+        "application/pdf": [".pdf"]
+      }
+    }
   ],
   "screenshots": [
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "JARVIS Chat" },

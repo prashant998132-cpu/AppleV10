@@ -269,3 +269,49 @@ self.addEventListener('message', e => {
     e.source?.postMessage({ type: 'VERSION', version: VERSION });
   }
 });
+
+// ─── PERIODIC BACKGROUND SYNC ────────────────────────────────
+self.addEventListener('periodicsync', e => {
+  if (e.tag === 'jarvis-daily-refresh') {
+    e.waitUntil(
+      fetch('/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: 'daily refresh ping' }] })
+      }).catch(() => {})
+    );
+  }
+});
+
+// ─── BACKGROUND FETCH ────────────────────────────────────────
+self.addEventListener('backgroundfetchsuccess', e => {
+  e.waitUntil(
+    (async () => {
+      const cache = await caches.open('jarvis-bg-fetch');
+      const records = await e.registration.matchAll();
+      await Promise.all(records.map(async record => {
+        const response = await record.responseReady;
+        await cache.put(record.request, response);
+      }));
+      await e.updateUI({ title: 'JARVIS: Download complete!' });
+    })()
+  );
+});
+
+// ─── SHARE TARGET (POST method) ──────────────────────────────
+// Note: GET method is handled by /share page directly
+// POST method would need this:
+self.addEventListener('fetch', e => {
+  if (e.request.url.includes('/share') && e.request.method === 'POST') {
+    e.respondWith(
+      (async () => {
+        const formData = await e.request.formData();
+        const title = formData.get('title') || '';
+        const text  = formData.get('text')  || '';
+        const url   = formData.get('url')   || '';
+        const params = new URLSearchParams({ title, text, url });
+        return Response.redirect(`/share?${params}`, 303);
+      })()
+    );
+  }
+});
