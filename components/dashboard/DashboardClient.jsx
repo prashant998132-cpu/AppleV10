@@ -15,6 +15,7 @@ const NAV = [
   { href: '/knowledge',  icon: BookOpen,      label: 'Knowledge' },
   { href: '/profile',    icon: User,          label: 'Profile'   },
   { href: '/automation', icon: Zap,           label: 'Automation'},
+  { href: '/phone',      icon: Phone,         label: 'Phone'     },
   { href: '/widget',     icon: Smartphone,    label: 'Widget'    },
   { href: '/settings',   icon: Settings,      label: 'Settings'  },
 ];
