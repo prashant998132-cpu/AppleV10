@@ -7,7 +7,7 @@ import FestivalBanner from '@/components/ui/FestivalBanner';
 import TypingDots from '@/components/chat/TypingDots';
 import MessageReactions from '@/components/chat/MessageReactions';
 import ErrorSuggestions from '@/components/chat/ErrorSuggestions';
-import { ThemeProvider, ThemeSwitcher, useTheme, THEMES } from '@/components/ui/ThemeProvider';
+import { ThemeProvider, ThemeSwitcher, useTheme } from '@/components/ui/ThemeProvider';
 import { useWakeWord, WakeWordIndicator } from '@/components/chat/WakeWord';
 import DailyBrief from '@/components/chat/DailyBrief';
 import WorkflowProgress from '@/components/chat/WorkflowProgress';
@@ -902,7 +902,7 @@ export default function ChatPage() {
         if (result.handled) {
           const cmdReply = { id: `cmd${Date.now()}`, role: 'assistant', content: result.response, streaming: false, ts: Date.now(), mode: 'flash', modelUsed: '⚡ instant' };
           setMsgs(p => [...p, cmdReply]);
-          if (tts) speak(result.response);
+          speak(result.response);
           return;
         }
         // Not handled by command engine — remove user msg, fall through to AI
@@ -956,7 +956,7 @@ export default function ChatPage() {
     if (msg) {
       const isSearchQuery = /\b(news|khabar|latest|aaj ka|today|current|price|kitna|rate|weather|mausam|score|result|winner|2024|2025|2026|abhi|live)\b/i.test(msg);
       if (isSearchQuery && !imgB64) {
-        puterSearchChat(msg, `Tu JARVIS hai — ${profile?.name||'yaar'} ka personal AI. Web search results use kar. Hinglish mein concise reply de.`).then(sr => {
+        puterSearchChat(msg, `Tu JARVIS hai — ${typeof localStorage !== 'undefined' ? (localStorage.getItem('jarvis_ai_name') || 'yaar') : 'yaar'} ka personal AI. Web search results use kar. Hinglish mein concise reply de.`).then(sr => {
           if (sr?.reply) {
             // Always update — puter has live data, overwrite server response
             setMsgs(p => p.map(m => m.id === aiId
@@ -1035,7 +1035,7 @@ export default function ChatPage() {
             : m
           ));
           setLoading(false);
-          if (tts) await clientSpeak(cached);
+          await clientSpeak(cached).catch(()=>{});
           return;
         }
       }
@@ -1090,7 +1090,7 @@ export default function ChatPage() {
         // Network error → Puter.js FREE AI with STREAMING
         try {
           setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:'⚡ Puter AI loading...',streaming:true}:m));
-          const sysP = `Tu JARVIS hai — ${profile?.name || 'yaar'} ka personal AI dost. Hinglish mein reply karo. Concise aur helpful reh.`;
+          const sysP = `Tu JARVIS hai — ${typeof localStorage !== 'undefined' ? (localStorage.getItem('jarvis_ai_name') || 'yaar') : 'yaar'} ka personal AI dost. Hinglish mein reply karo. Concise aur helpful reh.`;
 
           // Try streaming first (real-time tokens)
           const streamResult = await puterStream(

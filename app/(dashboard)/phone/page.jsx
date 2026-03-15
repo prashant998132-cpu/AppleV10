@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 // Smart Phone Control — Voice, Real-time, AI NLP, Alternatives everywhere
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { settings as jarvisSettings, savePhoneEvent, getPhoneEvents } from '@/lib/storage/unified';
+// Storage imported dynamically in useEffect to avoid SSR issues
 import {
   Smartphone, Wifi, WifiOff, Bluetooth, Volume2, VolumeX,
   Sun, Moon, Camera, MessageSquare, Phone, PhoneOff,
@@ -215,10 +215,10 @@ export default function PhonePage() {
       ]);
       setModules({ na, mb });
       setReady(true);
-      const id = jarvisSettings.macrodroidId() || '';
+      const id = localStorage.getItem('macrodroid_device_id') || '';
       setDeviceId(id);
       setNoIdWarn(!id);
-      setAutoReply(jarvisSettings.autoReply());
+      setAutoReply(localStorage.getItem('jarvis_autoreply') === 'true');
       setAiReply(localStorage.getItem('jarvis_autoreply_ai') === 'true');
       if (na?.checkAllAPIs) setApiCaps(na.checkAllAPIs());
       if (na?.getBatteryInfo) na.getBatteryInfo().then(b => b && setBattery(b));

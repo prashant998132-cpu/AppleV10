@@ -62,12 +62,14 @@ export function ThemeProvider({ children }) {
       const id = e.detail?.theme;
       if (id && THEMES[id]) {
         setThemeState(id);
-        applyTheme(id, customAccent);
+        const currentAccent = localStorage.getItem('jarvis_custom_accent') || null;
+        applyTheme(id, currentAccent);
+        localStorage.setItem('jarvis_theme', id);
       }
     };
     window.addEventListener('jarvis-theme-change', handler);
     return () => window.removeEventListener('jarvis-theme-change', handler);
-  }, []);
+  }, []); // eslint-disable-line
 
   function applyTheme(themeId, accent = null) {
     const t = THEMES[themeId] || THEMES.dark;
@@ -90,7 +92,7 @@ export function ThemeProvider({ children }) {
     root.style.setProperty('--subtext', t.subtext);
     root.style.setProperty('--msg-user', t.msgUser);
     root.style.setProperty('--msg-ai', t.msgAI);
-    document.body.style.backgroundColor = t.bg;
+    if (document.body) document.body.style.backgroundColor = t.bg;
   }
 
   function setTheme(id) {
