@@ -7,7 +7,7 @@ import FestivalBanner from '@/components/ui/FestivalBanner';
 import TypingDots from '@/components/chat/TypingDots';
 import MessageReactions from '@/components/chat/MessageReactions';
 import ErrorSuggestions from '@/components/chat/ErrorSuggestions';
-import { ThemeProvider, ThemeSwitcher, useTheme } from '@/components/ui/ThemeProvider';
+import { ThemeProvider, ThemeSwitcher, useTheme, THEMES } from '@/components/ui/ThemeProvider';
 import { useWakeWord, WakeWordIndicator } from '@/components/chat/WakeWord';
 import DailyBrief from '@/components/chat/DailyBrief';
 import WorkflowProgress from '@/components/chat/WorkflowProgress';
@@ -17,6 +17,7 @@ import ScreenOCR from '@/components/chat/ScreenOCR';
 import { puterFallbackChat, puterStream, puterSearchChat, puterGenerateImage, puterAnalyzeImage, backupChatToPuter, puterSet, puterGet, PUTER_MODELS } from '@/lib/ai/puter-client';
 import { useMultiDeviceSync, RemoteTypingIndicator } from '@/lib/sync/multi-device';
 import { detectTaskerCommand } from '@/lib/automation/tasker-bridge';
+import { parseCommand, executeCommand, CMD_HELP, QUICK_COMMANDS } from '@/lib/commands/chat-engine';
 import { detectWorkflow, generateAIPlan, executeWorkflow } from '@/lib/ai/task-planner';
 import { handleClientCommand } from '@/lib/automation/deep-links';
 import { getTimeContext, trackUsage, getFrequentCommands, getProactiveAlerts } from '@/lib/ai/smart-context';
@@ -27,6 +28,20 @@ const MODES = [
   { id:'flash', label:'⚡ Flash', bg:'bg-yellow-500/15 border-yellow-500/40', text:'text-yellow-400' },
   { id:'think', label:'🧠 Think', bg:'bg-purple-500/15 border-purple-500/40', text:'text-purple-400' },
   { id:'deep',  label:'🔬 Deep',  bg:'bg-blue-500/15 border-blue-500/40',    text:'text-blue-400'   },
+];
+
+// JARVIS Quick Commands — chat se directly karo
+const JARVIS_QUICK_CMDS = [
+  { emoji:'📸', label:'Instagram', cmd:'Instagram kholo' },
+  { emoji:'💬', label:'WhatsApp',  cmd:'WhatsApp kholo' },
+  { emoji:'▶️', label:'YouTube',  cmd:'YouTube kholo' },
+  { emoji:'🎵', label:'Spotify',   cmd:'Spotify kholo' },
+  { emoji:'🟢', label:'Green',     cmd:'Theme green karo' },
+  { emoji:'⚫', label:'AMOLED',    cmd:'Theme AMOLED karo' },
+  { emoji:'📋', label:'Routine',   cmd:'Mera daily routine dikhao' },
+  { emoji:'🔦', label:'Torch',     cmd:'Torch on karo' },
+  { emoji:'📚', label:'Study',     cmd:'Study mode on karo' },
+  { emoji:'🔍', label:'Help',      cmd:'commands dikhao' },
 ];
 
 // Time-aware quick starters — evaluated at render time
@@ -857,6 +872,44 @@ export default function ChatPage() {
     trackUsage(msg);
     setFreqCmds(getFrequentCommands(4));
 
+    // ── STEP 0: Chat Command Engine — highest priority ────────
+    // Handles: app open, theme change, WhatsApp msg, routine, alarm, search, settings
+    if (msg && !imgB64) {
+      const parsed = parseCommand(msg);
+      if (parsed.type !== null) {
+        // Show user message first
+        const userCmdMsg = { id: `u${Date.now()}`, role: 'user', content: msg, ts: Date.now() };
+        setMsgs(p => [...p, userCmdMsg]);
+
+        // Special: "jarvis help" or "commands dikhao"
+        if (/^(help|commands|kya kya kar sakta|list commands|chat commands)/i.test(msg.trim())) {
+          const helpMsg = { id: `h${Date.now()}`, role: 'assistant', content: CMD_HELP, streaming: false, ts: Date.now(), mode: 'flash' };
+          setMsgs(p => [...p, helpMsg]);
+          return;
+        }
+
+        const result = await executeCommand(parsed, {
+          setTheme: (id) => {
+            // Try to use ThemeProvider if available
+            if (typeof localStorage !== 'undefined') localStorage.setItem('jarvis_theme', id);
+            window.dispatchEvent(new CustomEvent('jarvis-theme-change', { detail: { theme: id } }));
+          },
+          navigate: (path) => {
+            if (typeof window !== 'undefined') window.location.href = path;
+          },
+        });
+
+        if (result.handled) {
+          const cmdReply = { id: `cmd${Date.now()}`, role: 'assistant', content: result.response, streaming: false, ts: Date.now(), mode: 'flash', modelUsed: '⚡ instant' };
+          setMsgs(p => [...p, cmdReply]);
+          if (tts) speak(result.response);
+          return;
+        }
+        // Not handled by command engine — remove user msg, fall through to AI
+        setMsgs(p => p.filter(m => m.id !== userCmdMsg.id));
+      }
+    }
+
     // 0. Puter Image Generation — "image banao X"
     if (msg) {
       const imgMatch = msg.match(/^(?:image|photo|picture|tasveer|banao|generate|create).*?(?:banao|of|ka|ki|bana|draw|make)(.+)|^(.+)(?:image|photo|tasveer|picture)\s*(?:banao|bana|generate)$/i);
@@ -1084,6 +1137,7 @@ export default function ChatPage() {
   }
 
   const QUICK = getQuickStarters(); // re-evaluated each render
+  const [showCmdChips, setShowCmdChips] = useState(false);
   const curM  = MODES.find(m=>m.id===mode)||MODES[0];
   const showM = mode==='auto'&&detected ? MODES.find(m=>m.id===detected)||curM : curM;
   const isEmpty = msgs.length===0;
@@ -1214,22 +1268,27 @@ export default function ChatPage() {
             {wakeWordOn ? (wakeDetected ? '🎤' : '👂') : '🔇'}
           </button>
           <button onClick={()=>{
-            const ts=['dark','amoled','soft'];
+            const ts=['dark','amoled','soft','green','purple','sunset'];
+            const ei={'dark':'🔵','amoled':'⚫','soft':'🌫','green':'🟢','purple':'💜','sunset':'🌅'};
+            const bgs={'dark':'#050810','amoled':'#000000','soft':'#1a1a2e','green':'#020d05','purple':'#0a0010','sunset':'#0f0a00'};
+            const acs={'dark':'#1A56DB','amoled':'#3b82f6','soft':'#6366f1','green':'#00cc44','purple':'#9333ea','sunset':'#f97316'};
             const nt=ts[(ts.indexOf(theme)+1)%ts.length];
             setTheme(nt); localStorage.setItem('jarvis_theme',nt);
-            const bgs={'dark':'#050810','amoled':'#000000','soft':'#1a1a2e'};
             document.body.style.background=bgs[nt];
-          }} title={`Theme: ${theme==='dark'?'Dark Blue':theme==='amoled'?'AMOLED Black':'Soft Dark'}`}
+            document.documentElement.style.setProperty('--accent', acs[nt]);
+            document.documentElement.style.setProperty('--bg', bgs[nt]);
+            window.dispatchEvent(new CustomEvent('jarvis-theme-change',{detail:{theme:nt}}));
+          }} title={`Theme: ${theme} (tap to cycle)`}
             className="p-2 rounded-xl text-slate-700 hover:text-purple-400 transition-colors text-sm">
-            {theme==='dark'?'🔵':theme==='amoled'?'⚫':'🌫'}
+            {{'dark':'🔵','amoled':'⚫','soft':'🌫','green':'🟢','purple':'💜','sunset':'🌅'}[theme]||'🎨'}
           </button>
           <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Plus size={16}/></button>
           <button onClick={logout} title="Logout" className="p-2 rounded-xl text-slate-700 hover:text-red-400 transition-colors lg:hidden"><LogOut size={15}/></button>
         </div>
       </div>
 
-      {/* Mode Bar — compact scrollable strip (no height waste) */}
-      <div className="px-3 py-1 flex gap-1 overflow-x-auto shrink-0 no-scrollbar">
+      {/* Mode Bar + Quick Cmd toggle */}
+      <div className="px-3 py-1 flex gap-1 overflow-x-auto shrink-0 no-scrollbar items-center">
         {MODES.map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)}
             className={`shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${mode===m.id?m.bg+' '+m.text+' border-current/30':'bg-transparent border-transparent text-slate-700 hover:text-slate-500'}`}>
@@ -1237,7 +1296,22 @@ export default function ChatPage() {
             {mode==='auto'&&detected===m.id&&m.id!=='auto'&&<span className="inline-block w-1 h-1 rounded-full bg-current animate-pulse ml-1"/>}
           </button>
         ))}
+        <button onClick={()=>setShowCmdChips(v=>!v)}
+          className={`shrink-0 ml-auto px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${showCmdChips?'bg-yellow-500/15 border-yellow-500/30 text-yellow-400':'bg-transparent border-transparent text-slate-600 hover:text-yellow-400'}`}
+          title="Quick commands">⚡ Cmds</button>
       </div>
+
+      {/* Quick Command Chips — chat se directly actions */}
+      {showCmdChips && (
+        <div className="px-2 py-1.5 flex gap-1.5 overflow-x-auto shrink-0 no-scrollbar border-b border-white/5">
+          {JARVIS_QUICK_CMDS.map(q => (
+            <button key={q.cmd} onClick={()=>send(q.cmd)}
+              className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70 text-[11px] hover:bg-white/10 hover:text-white active:scale-95 transition-all">
+              <span>{q.emoji}</span><span>{q.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 no-scrollbar jarvis-scroll">
@@ -1263,6 +1337,18 @@ export default function ChatPage() {
                 <p className="text-xs text-orange-300 flex-1">{alert.message}</p>
               </div>
             ))}
+            {/* App Quick Launch — tap to open */}
+            <div className="w-full max-w-[300px]">
+              <p className="text-[10px] text-slate-700 mb-1.5 text-center">📱 Tap karo — app khulega</p>
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                {[{e:'📸',l:'Instagram',cmd:'Instagram kholo'},{e:'💬',l:'WhatsApp',cmd:'WhatsApp kholo'},{e:'▶️',l:'YouTube',cmd:'YouTube kholo'},{e:'🎵',l:'Spotify',cmd:'Spotify kholo'},{e:'🗺️',l:'Maps',cmd:'Maps kholo'},{e:'🔦',l:'Torch',cmd:'Torch on karo'},{e:'📚',l:'Study',cmd:'Study mode on karo'},{e:'📋',l:'Routine',cmd:'Mera daily routine dikhao'}].map(a=>(
+                  <button key={a.cmd} onClick={()=>send(a.cmd)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/8 text-white/55 text-[11px] hover:bg-blue-500/10 hover:border-blue-500/20 hover:text-white active:scale-95 transition-all">
+                    {a.e} {a.l}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Smart time-based suggestions */}
             <div className="grid grid-cols-2 gap-2 w-full max-w-[300px]">
               {(timeCtx?.suggestions || QUICK.map(q=>({icon:q.i, text:q.t, cmd:q.t}))).map((q,i)=>(

@@ -56,6 +56,17 @@ export function ThemeProvider({ children }) {
     setThemeState(saved);
     setCustomAccentState(savedAccent);
     applyTheme(saved, savedAccent);
+
+    // Listen for external theme change (from chat commands)
+    const handler = (e) => {
+      const id = e.detail?.theme;
+      if (id && THEMES[id]) {
+        setThemeState(id);
+        applyTheme(id, customAccent);
+      }
+    };
+    window.addEventListener('jarvis-theme-change', handler);
+    return () => window.removeEventListener('jarvis-theme-change', handler);
   }, []);
 
   function applyTheme(themeId, accent = null) {
