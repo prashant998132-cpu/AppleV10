@@ -28,31 +28,10 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-title" content="JARVIS"/>
         {/* iOS splash screens */}
         <link rel="apple-touch-startup-image" href="/icons/icon-512.png"/>
+        {/* Anti-flash theme script — must be in head, runs before paint */}
+        <script dangerouslySetInnerHTML={{__html: `try{var th=localStorage.getItem('jarvis_theme')||'dark';var ac=localStorage.getItem('jarvis_custom_accent');var fs=localStorage.getItem('jarvis_font_size');var bgs={dark:'#050810',amoled:'#000000',soft:'#1a1a2e',green:'#020d05',purple:'#0a0010',sunset:'#0f0a00'};var acs={dark:'#1A56DB',amoled:'#3b82f6',soft:'#6366f1',green:'#00cc44',purple:'#9333ea',sunset:'#f97316'};var bg=bgs[th]||'#050810';document.documentElement.style.setProperty('--bg',bg);document.documentElement.style.setProperty('--accent',ac||(acs[th]||'#1A56DB'));document.documentElement.style.backgroundColor=bg;if(fs){var sz={small:'13px',normal:'14px',large:'16px',xlarge:'18px'};if(sz[fs])document.documentElement.style.fontSize=sz[fs];}}catch(e){}`}} />
       </head>
-      <script dangerouslySetInnerHTML={{__html: `
-  try {
-    const theme = localStorage.getItem('jarvis_theme') || 'dark';
-    const accent = localStorage.getItem('jarvis_custom_accent');
-    const fs = localStorage.getItem('jarvis_font_size');
-    const themes = {
-      dark: {bg:'#050810',accent:'#1A56DB'},
-      amoled: {bg:'#000000',accent:'#3b82f6'},
-      soft: {bg:'#1a1a2e',accent:'#6366f1'},
-      green: {bg:'#020d05',accent:'#00cc44'},
-      purple: {bg:'#0a0010',accent:'#9333ea'},
-      sunset: {bg:'#0f0a00',accent:'#f97316'},
-    };
-    const t = themes[theme] || themes.dark;
-    document.documentElement.style.setProperty('--accent', accent || t.accent);
-    document.documentElement.style.setProperty('--bg', t.bg);
-    document.body.style.backgroundColor = t.bg;
-    if (fs) {
-      const sizes = {small:'13px',normal:'14px',large:'16px',xlarge:'18px'};
-      if (sizes[fs]) document.documentElement.style.fontSize = sizes[fs];
-    }
-  } catch(e) {}
-`}} />
-<body className="bg-[#050810] text-slate-100 antialiased overflow-hidden h-screen w-screen">
+      <body className="bg-[#050810] text-slate-100 antialiased overflow-hidden h-screen w-screen">
         {children}
 
         {/* PWA: SW + Install Banner + Update Detection */}
