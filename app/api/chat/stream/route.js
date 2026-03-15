@@ -16,8 +16,16 @@ export const runtime = 'nodejs';
 
 export async function POST(req) {
   const reqStart = Date.now(); // LLM latency tracking
-  const user = await getUser();
-  if (!user) return new Response('Unauthorized', { status: 401 });
+  let user = await getUser().catch(() => null);
+  // If no Supabase configured — use guest mode (still works with Puter.js AI)
+  if (!user) {
+    const { SUPABASE_ENABLED } = await import('@/lib/db/supabase');
+    if (!SUPABASE_ENABLED) {
+      user = { id: 'guest_local', email: 'guest@jarvis.local', guest: true };
+    } else {
+      return new Response('Unauthorized', { status: 401 });
+    }
+  }
 
   const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto' } = await req.json();
   if (!message?.trim() && !imageBase64) return new Response('Empty', { status: 400 });

@@ -604,7 +604,14 @@ export default function ChatPage() {
     })();
   }, []);
 
-  // Multi-device sync
+  // Get userId safely — from cookie or guest fallback
+  const userId = (() => {
+    if (typeof document === 'undefined') return null;
+    const uidCookie = document.cookie.split(';').find(c => c.trim().startsWith('jarvis_uid='));
+    return uidCookie ? uidCookie.split('=')[1]?.trim() : 'guest_local';
+  })();
+
+  // Multi-device sync — safe, works without Supabase
   const { broadcastMessage, broadcastTyping } = useMultiDeviceSync({
     userId: userId,
     conversationId: convId,

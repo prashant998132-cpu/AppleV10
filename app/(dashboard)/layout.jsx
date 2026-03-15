@@ -8,7 +8,22 @@ export default async function DashboardLayout({ children }) {
   // Try server-side auth (cookie-based)
   const user = await getUser();
 
-  // No server-side user → AuthGuard handles client-side session check
+  // Check if Supabase is configured
+  const { SUPABASE_ENABLED } = await import('@/lib/db/supabase');
+
+  // No Supabase configured = guest mode, allow direct access
+  if (!user && !SUPABASE_ENABLED) {
+    return (
+      <>
+        <DashboardClient user={{ id:'guest_local', email:'guest@jarvis.local', guest:true }} profile={null}>
+          {children}
+        </DashboardClient>
+        <InstallBanner />
+      </>
+    );
+  }
+
+  // Supabase configured but no user → AuthGuard for login
   if (!user) {
     return <AuthGuard>{children}</AuthGuard>;
   }
