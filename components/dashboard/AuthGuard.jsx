@@ -22,8 +22,11 @@ export default function AuthGuard({ children }) {
         const { data: { session } } = await sb.auth.getSession();
 
         if (!session?.access_token) {
-          setState('unauthed');
-          router.replace('/login');
+          // No Supabase session — use local guest mode (no login needed)
+          const localUser = { id: 'local-user-jarvis', email: 'local@jarvis.app', user_metadata: { name: 'Pranshu' } };
+          setUser(localUser);
+          setProfile({ name: 'Pranshu', personality: 'normal', city: 'Rewa', language: 'hinglish' });
+          setState('authed');
           return;
         }
 
@@ -42,8 +45,11 @@ export default function AuthGuard({ children }) {
         setProfile(p || null);
         setState('authed');
       } catch {
-        setState('unauthed');
-        router.replace('/login');
+        // Any error → local guest mode (never crash, never redirect to login)
+        const localUser = { id: 'local-user-jarvis', email: 'local@jarvis.app', user_metadata: { name: 'Pranshu' } };
+        setUser(localUser);
+        setProfile({ name: 'Pranshu', personality: 'normal', city: 'Rewa', language: 'hinglish' });
+        setState('authed');
       }
     }
     check();

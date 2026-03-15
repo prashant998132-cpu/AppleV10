@@ -1,43 +1,29 @@
-// app/(dashboard)/layout.jsx
-import { getUser, getSupabaseServer } from '@/lib/db/supabase';
+// app/(dashboard)/layout.jsx — No login required
+import { getUser, getSupabaseServer, LOCAL_USER } from '@/lib/db/supabase';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import InstallBanner from '@/components/pwa/InstallBanner';
-import AuthGuard from '@/components/dashboard/AuthGuard';
 
 export default async function DashboardLayout({ children }) {
-  // Try server-side auth (cookie-based)
+  // getUser() now returns LOCAL_USER when Supabase not configured
+  // So this NEVER returns null — no login redirect ever
   const user = await getUser();
+  const finalUser = user || LOCAL_USER;
 
-  // Check if Supabase is configured
-  const { SUPABASE_ENABLED } = await import('@/lib/db/supabase');
-
-  // No Supabase configured = guest mode, allow direct access
-  if (!user && !SUPABASE_ENABLED) {
-    return (
-      <>
-        <DashboardClient user={{ id:'guest_local', email:'guest@jarvis.local', guest:true }} profile={null}>
-          {children}
-        </DashboardClient>
-        <InstallBanner />
-      </>
-    );
-  }
-
-  // Supabase configured but no user → AuthGuard for login
-  if (!user) {
-    return <AuthGuard>{children}</AuthGuard>;
-  }
-
-  const supabase = await getSupabaseServer();
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('name,personality,city,language')
-    .eq('id', user.id)
-    .single();
+  // Try to get profile (silent fail if no Supabase)
+  let profile = { name: 'Pranshu', personality: 'normal', city: 'Rewa', language: 'hinglish' };
+  try {
+    const supabase = await getSupabaseServer();
+    const { data: p } = await supabase
+      .from('profiles')
+      .select('name,personality,city,language')
+      .eq('id', finalUser.id)
+      .single();
+    if (p) profile = p;
+  } catch {}
 
   return (
     <>
-      <DashboardClient user={user} profile={profile}>
+      <DashboardClient user={finalUser} profile={profile}>
         {children}
       </DashboardClient>
       <InstallBanner />

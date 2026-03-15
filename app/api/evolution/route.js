@@ -6,14 +6,14 @@ import { generateEvolutionInsight } from '@/lib/ai/brain';
 
 export async function GET() {
   const user = await getUser();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const insights = await getEvolutionInsights(user.id, 5);
   return Response.json({ insights });
 }
 
 export async function POST() {
   const user = await getUser();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const keys = getKeys();
   try {
     const analytics = await getAnalyticsData(user.id);
