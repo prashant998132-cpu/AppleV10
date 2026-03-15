@@ -34,10 +34,14 @@ const MUSIC_GENRES = ['hindi_film','hindi_happy','hindi_sad','motivational','lof
 function usePuter() {
   const [puterReady, setPuterReady] = useState(false);
   useEffect(() => {
+    // Only load Puter if user opted in — prevents auto-popup crash
     if (window.puter) { setPuterReady(true); return; }
+    const enabled = typeof localStorage !== 'undefined' && localStorage.getItem('jarvis_puter_enabled') === 'true';
+    if (!enabled) return; // Don't auto-load — user must enable
     const s = document.createElement('script');
     s.src = 'https://js.puter.com/v2/';
-    s.onload = () => setPuterReady(true);
+    s.onload = () => setPuterReady(!!window.puter);
+    s.onerror = () => {}; // Silent fail
     document.head.appendChild(s);
   }, []);
   return puterReady;
@@ -106,8 +110,18 @@ function ImageStudio({ puterReady }) {
         {loading ? <><RefreshCw size={16} className="animate-spin"/>Generating...</> : <><Sparkles size={16}/>Generate Image</>}
       </button>
 
-      {puterReady && (
-        <p className="text-xs text-green-400 text-center">✓ Puter.js ready — unlimited free generation</p>
+      {puterReady ? (
+        <p className="text-xs text-green-400 text-center">✅ Puter AI ready — Free unlimited generation</p>
+      ) : (
+        <div className="text-center">
+          <p className="text-xs text-white/40 mb-2">Puter AI se free image generation karo</p>
+          <button onClick={() => {
+            if (typeof localStorage !== 'undefined') localStorage.setItem('jarvis_puter_enabled', 'true');
+            window.location.reload();
+          }} className="text-xs px-3 py-1.5 bg-green-600/80 text-white rounded-lg hover:bg-green-600 active:scale-95 transition-all">
+            ✅ Enable Free AI
+          </button>
+        </div>
       )}
 
       {error && <p className="text-xs text-red-400 bg-red-500/10 rounded-xl p-3">{error}</p>}
@@ -531,7 +545,15 @@ function AiStudio({ puterReady }) {
       )}
 
       {!puterReady && (
-        <p className="text-xs text-orange-400/70 text-center">⚠️ Puter.js load ho raha hai... thoda wait karo</p>
+        <div className="text-center p-4">
+          <p className="text-xs text-white/40 mb-3">🆓 Puter AI = Free unlimited image generation</p>
+          <button onClick={() => {
+            if (typeof localStorage !== 'undefined') localStorage.setItem('jarvis_puter_enabled', 'true');
+            window.location.reload();
+          }} className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 active:scale-95 transition-all">
+            ✅ Enable Free Puter AI
+          </button>
+        </div>
       )}
     </div>
   );

@@ -963,7 +963,9 @@ export default function ChatPage() {
     if (msg) {
       const isSearchQuery = /\b(news|khabar|latest|aaj ka|today|current|price|kitna|rate|weather|mausam|score|result|winner|2024|2025|2026|abhi|live)\b/i.test(msg);
       if (isSearchQuery && !imgB64) {
-        puterSearchChat(msg, `Tu JARVIS hai — ${typeof localStorage !== 'undefined' ? (localStorage.getItem('jarvis_ai_name') || 'yaar') : 'yaar'} ka personal AI. Web search results use kar. Hinglish mein concise reply de.`).then(sr => {
+        // Only run puter search if user has Puter enabled
+        const _puterEnabled = typeof localStorage !== 'undefined' && localStorage.getItem('jarvis_puter_enabled') === 'true';
+        (_puterEnabled ? puterSearchChat(msg, `Tu JARVIS hai — ${typeof localStorage !== 'undefined' ? (localStorage.getItem('jarvis_ai_name') || 'yaar') : 'yaar'} ka personal AI. Web search results use kar. Hinglish mein concise reply de.`) : Promise.resolve(null)).then(sr => {
           if (sr?.reply) {
             // Always update — puter has live data, overwrite server response
             setMsgs(p => p.map(m => m.id === aiId
@@ -1129,7 +1131,7 @@ export default function ChatPage() {
       if(fullText && msg.length > 8 && !imgB64) {
         cacheSet(msg, fullText).catch(()=>{});
         // Also save to Puter KV for cross-device / offline access
-        puterSet(`last_reply_${Date.now()}`, { q: msg.slice(0,100), a: fullText.slice(0,500), ts: Date.now() }).catch(()=>{});
+        // puterSet disabled — auto-triggers Puter popup. Only enable if user opts in.
       }
       // Generate follow-up suggestions after short delay
       if(fullText&&msg.length>8) {
