@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 // Smart Phone Control — Voice, Real-time, AI NLP, Alternatives everywhere
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { settings as jarvisSettings, savePhoneEvent, getPhoneEvents } from '@/lib/storage/unified';
 import {
   Smartphone, Wifi, WifiOff, Bluetooth, Volume2, VolumeX,
   Sun, Moon, Camera, MessageSquare, Phone, PhoneOff,
@@ -214,10 +215,10 @@ export default function PhonePage() {
       ]);
       setModules({ na, mb });
       setReady(true);
-      const id = localStorage.getItem('macrodroid_device_id') || '';
+      const id = jarvisSettings.macrodroidId() || '';
       setDeviceId(id);
       setNoIdWarn(!id);
-      setAutoReply(localStorage.getItem('jarvis_autoreply') === 'true');
+      setAutoReply(jarvisSettings.autoReply());
       setAiReply(localStorage.getItem('jarvis_autoreply_ai') === 'true');
       if (na?.checkAllAPIs) setApiCaps(na.checkAllAPIs());
       if (na?.getBatteryInfo) na.getBatteryInfo().then(b => b && setBattery(b));
@@ -252,18 +253,25 @@ export default function PhonePage() {
     try {
       const r = await fetch('/api/phone?type=notifications');
       const d = await r.json();
-      if (d.notifications) setNotifs(d.notifications.slice(0, 50));
+      if (d.notifications) {
+        setNotifs(d.notifications.slice(0, 50));
+        return;
+      }
+    } catch {}
+    // Fallback: read from local IndexedDB (works offline)
+    try {
+      const localNotifs = await getPhoneEvents(50);
+      if (localNotifs?.length) setNotifs(localNotifs);
     } catch {}
   }
 
-  // ── GUARD — no Device ID ─────────────────────────────────
-  function auto(fn) {
-    if (!deviceId) {
-      addToast('warn', 'MacroDroid Device ID nahi hai! Setup tab mein save karo →');
-      setTab('setup');
-      return Promise.resolve({ ok: false });
-    }
-    return fn();
+  // ── SMART AUTO — MacroDroid if available, deep link silently otherwise ──
+  async function auto(fn, deepFallback = null) {
+    if (deviceId) return fn(); // MacroDroid — use it
+    if (deepFallback?.url) return deep(deepFallback.url, deepFallback.label); // Silent deeplink
+    // No fallback — gentle info only (not error, not redirect)
+    addToast('info', '💡 Setup tab mein MacroDroid connect karo — ya deeplink alternatives try karo');
+    return { ok: false, reason: 'no_macrodroid' };
   }
 
   // ── DEEP LINK helper ─────────────────────────────────────
@@ -431,11 +439,11 @@ export default function PhonePage() {
           </div>
         </div>
 
-        {/* No Device ID banner */}
-        {noIdWarn && (
-          <div onClick={() => setTab('setup')} className="mx-4 mb-2 mt-1 bg-orange-500/20 border border-orange-500/40 rounded-xl px-3 py-2 flex items-center gap-2 cursor-pointer active:opacity-70">
-            <AlertTriangle size={13} className="text-orange-400 shrink-0" />
-            <span className="text-orange-300 text-xs flex-1">MacroDroid ID nahi — buttons kaam nahi karenge. <span className="underline">Setup karo →</span></span>
+        {/* Subtle MacroDroid indicator — only when actually needed */}
+        {!deviceId && tab === 'setup' && (
+          <div className="mx-4 mb-2 mt-1 bg-blue-500/10 border border-blue-500/20 rounded-xl px-3 py-2 flex items-center gap-2">
+            <Info size={12} className="text-blue-400 shrink-0" />
+            <span className="text-blue-300/70 text-xs">MacroDroid optional hai — bina ID ke bhi sab kaam karta hai via deep links</span>
           </div>
         )}
 
@@ -489,14 +497,14 @@ export default function PhonePage() {
             {/* NETWORK */}
             <Card title="Network" icon={Wifi} color="cyan">
               <div className="grid grid-cols-4 gap-2">
-                <Btn icon={Wifi}      label="WiFi On"     color="cyan"  onClick={() => auto(() => mb?.Network?.wifiOn())} />
-                <Btn icon={WifiOff}   label="WiFi Off"    color="red"   onClick={() => auto(() => mb?.Network?.wifiOff())} />
-                <Btn icon={Bluetooth} label="BT On"       color="blue"  onClick={() => auto(() => mb?.Network?.bluetoothOn())} />
-                <Btn icon={Bluetooth} label="BT Off"      color="red"   onClick={() => auto(() => mb?.Network?.bluetoothOff())} />
-                <Btn icon={Signal}    label="Hotspot On"  color="green" onClick={() => auto(() => mb?.Network?.hotspotOn())} />
-                <Btn icon={Signal}    label="Hotspot Off" color="red"   onClick={() => auto(() => mb?.Network?.hotspotOff())} />
-                <Btn icon={Globe}     label="Data On"     color="blue"  onClick={() => auto(() => mb?.Network?.dataOn())} />
-                <Btn icon={Globe}     label="Data Off"    color="red"   onClick={() => auto(() => mb?.Network?.dataOff())} />
+                <Btn icon={Wifi}      label="WiFi On"     color="cyan"  onClick={() => auto(() => mb?.Network?.wifiOn(),    { url: 'intent:#Intent;action=android.settings.WIFI_SETTINGS;end', label: 'WiFi Settings' })} />
+                <Btn icon={WifiOff}   label="WiFi Off"    color="red"   onClick={() => auto(() => mb?.Network?.wifiOff(),   { url: 'intent:#Intent;action=android.settings.WIFI_SETTINGS;end', label: 'WiFi Settings' })} />
+                <Btn icon={Bluetooth} label="BT On"       color="blue"  onClick={() => auto(() => mb?.Network?.bluetoothOn(), { url: 'intent:#Intent;action=android.settings.BLUETOOTH_SETTINGS;end', label: 'BT Settings' })} />
+                <Btn icon={Bluetooth} label="BT Off"      color="red"   onClick={() => auto(() => mb?.Network?.bluetoothOff(),{ url: 'intent:#Intent;action=android.settings.BLUETOOTH_SETTINGS;end', label: 'BT Settings' })} />
+                <Btn icon={Signal}    label="Hotspot On"  color="green" onClick={() => auto(() => mb?.Network?.hotspotOn(),  { url: 'intent:#Intent;action=android.settings.TETHER_SETTINGS;end', label: 'Hotspot Settings' })} />
+                <Btn icon={Signal}    label="Hotspot Off" color="red"   onClick={() => auto(() => mb?.Network?.hotspotOff(), { url: 'intent:#Intent;action=android.settings.TETHER_SETTINGS;end', label: 'Hotspot Settings' })} />
+                <Btn icon={Globe}     label="Data On"     color="blue"  onClick={() => auto(() => mb?.Network?.dataOn(),    { url: 'intent:#Intent;action=android.settings.DATA_ROAMING_SETTINGS;end', label: 'Data Settings' })} />
+                <Btn icon={Globe}     label="Data Off"    color="red"   onClick={() => auto(() => mb?.Network?.dataOff(),   { url: 'intent:#Intent;action=android.settings.DATA_ROAMING_SETTINGS;end', label: 'Data Settings' })} />
               </div>
               <button onClick={() => deep('android-app://com.android.settings/.wifi.WifiSettings', 'WiFi Settings')}
                 className="mt-2 w-full text-xs text-cyan-400/60 bg-cyan-500/5 py-1.5 rounded-lg flex items-center justify-center gap-1 active:opacity-70">
@@ -513,10 +521,10 @@ export default function PhonePage() {
                 <span className="text-white text-xs w-8 text-right">{vol}%</span>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                <Btn icon={Volume2}     label="Max"     color="orange" onClick={() => auto(() => mb?.Volume?.max())} />
-                <Btn icon={VolumeX}     label="Mute"    color="red"   onClick={() => auto(() => mb?.Volume?.mute())} />
-                <Btn icon={Radio}       label="Vibrate" color="purple" onClick={() => auto(() => mb?.Volume?.vibrateMode())} />
-                <Btn icon={Volume2}     label="Unmute"  color="green" onClick={() => auto(() => mb?.Volume?.unmute())} />
+                <Btn icon={Volume2}     label="Max"     color="orange" onClick={() => auto(() => mb?.Volume?.max(),    { url: 'intent:#Intent;action=android.settings.SOUND_SETTINGS;end', label: 'Sound Settings' })} />
+                <Btn icon={VolumeX}     label="Mute"    color="red"   onClick={() => auto(() => mb?.Volume?.mute(),   { url: 'intent:#Intent;action=android.settings.SOUND_SETTINGS;end', label: 'Sound Settings' })} />
+                <Btn icon={Radio}       label="Vibrate" color="purple" onClick={() => auto(() => mb?.Volume?.vibrateMode(), { url: 'intent:#Intent;action=android.settings.SOUND_SETTINGS;end', label: 'Sound Settings' })} />
+                <Btn icon={Volume2}     label="Unmute"  color="green" onClick={() => auto(() => mb?.Volume?.unmute(), { url: 'intent:#Intent;action=android.settings.SOUND_SETTINGS;end', label: 'Sound Settings' })} />
                 <Btn icon={Play}        label="Play"    color="green" onClick={() => auto(() => mb?.Volume?.playMedia())} />
                 <Btn icon={Pause}       label="Pause"   color="yellow" onClick={() => auto(() => mb?.Volume?.pauseMedia())} />
                 <Btn icon={SkipForward} label="Next"    color="blue"  onClick={() => auto(() => mb?.Volume?.nextTrack())} />
@@ -533,11 +541,11 @@ export default function PhonePage() {
                 <span className="text-white text-xs w-8 text-right">{bright}%</span>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                <Btn icon={Sun}     label="Max"       color="yellow" onClick={() => auto(() => mb?.Display?.brightnessMax())} />
-                <Btn icon={Moon}    label="Min"       color="blue"   onClick={() => auto(() => mb?.Display?.brightnessMin())} />
-                <Btn icon={Moon}    label="Dark Mode" color="purple" onClick={() => auto(() => mb?.Display?.darkModeOn())} />
-                <Btn icon={Lock}    label="Lock"      color="red"    onClick={() => auto(() => mb?.Display?.lockPhone())} />
-                <Btn icon={Sun}     label="Auto"      color="cyan"   onClick={() => auto(() => mb?.Display?.autoBrightness())} />
+                <Btn icon={Sun}     label="Max"       color="yellow" onClick={() => auto(() => mb?.Display?.brightnessMax(), { url: 'intent:#Intent;action=android.settings.DISPLAY_SETTINGS;end', label: 'Display Settings' })} />
+                <Btn icon={Moon}    label="Min"       color="blue"   onClick={() => auto(() => mb?.Display?.brightnessMin(), { url: 'intent:#Intent;action=android.settings.DISPLAY_SETTINGS;end', label: 'Display Settings' })} />
+                <Btn icon={Moon}    label="Dark Mode" color="purple" onClick={() => auto(() => mb?.Display?.darkModeOn(),    { url: 'intent:#Intent;action=android.settings.DISPLAY_SETTINGS;end', label: 'Display Settings' })} />
+                <Btn icon={Lock}    label="Lock"      color="red"    onClick={() => { if(navigator.vibrate) navigator.vibrate(100); return auto(() => mb?.Display?.lockPhone()); }} />
+                <Btn icon={Sun}     label="Auto"      color="cyan"   onClick={() => auto(() => mb?.Display?.autoBrightness(), { url: 'intent:#Intent;action=android.settings.DISPLAY_SETTINGS;end', label: 'Display Settings' })} />
                 <Btn icon={Tv}      label="Keep On"   color="orange" onClick={() => auto(() => mb?.Display?.keepOn())} />
                 <Btn icon={Maximize}label="Rotate"   color="green"  onClick={() => auto(() => mb?.Display?.rotateAuto())} />
               </div>
@@ -549,9 +557,13 @@ export default function PhonePage() {
                 <Btn icon={Flashlight} label="Torch On"  color="yellow" onClick={() => auto(() => mb?.Hardware?.torchOn())} />
                 <Btn icon={Flashlight} label="Torch Off" color="red"    onClick={() => auto(() => mb?.Hardware?.torchOff())} />
                 <Btn icon={Camera}     label="Screenshot"color="blue"   onClick={() => auto(() => mb?.Hardware?.screenshot())} />
-                <Btn icon={Camera}     label="Selfie"    color="pink"   onClick={() => auto(() => mb?.Hardware?.takeSelfie())} />
-                <Btn icon={Battery}    label="Battery"   color="green"  onClick={() => auto(() => mb?.DeviceInfo?.getBattery())} />
-                <Btn icon={HardDrive}  label="Storage"   color="cyan"   onClick={() => auto(() => mb?.DeviceInfo?.getStorage())} />
+                <Btn icon={Camera}     label="Selfie"    color="pink"   onClick={() => auto(() => mb?.Hardware?.takeSelfie(), { url: 'intent:#Intent;action=android.media.action.IMAGE_CAPTURE;extra.android.intent.extra.CAMERA_FACING:i=1;end', label: 'Selfie' })} />
+                <Btn icon={Battery}    label="Battery"   color="green"  onClick={async () => {
+                  const b = modules?.na ? await modules.na.getBatteryInfo?.() : null;
+                  if (b?.level) { addToast('ok', `🔋 Battery: ${b.level}%${b.charging?' ⚡ Charging':''}`); return { ok: true }; }
+                  return auto(() => mb?.DeviceInfo?.getBattery(), { url: 'intent:#Intent;action=android.settings.BATTERY_SAVER_SETTINGS;end', label: 'Battery' });
+                }} />
+                <Btn icon={HardDrive}  label="Storage"   color="cyan"   onClick={() => auto(() => mb?.DeviceInfo?.getStorage(), { url: 'intent:#Intent;action=android.settings.INTERNAL_STORAGE_SETTINGS;end', label: 'Storage' })} />
                 <Btn icon={Cpu}        label="RAM"       color="purple" onClick={() => auto(() => mb?.DeviceInfo?.getRAM())} />
                 <Btn icon={Activity}   label="All Info"  color="orange" onClick={() => auto(() => mb?.DeviceInfo?.getAllInfo())} />
               </div>
@@ -583,14 +595,14 @@ export default function PhonePage() {
             {/* SMART MODES */}
             <Card title="Smart Modes" icon={Zap} color="purple">
               <div className="grid grid-cols-4 gap-2">
-                <Btn icon={BookOpen} label="Study"   color="cyan"   onClick={() => auto(() => mb?.SmartModes?.study())} />
-                <Btn icon={Moon}     label="Sleep"   color="purple" onClick={() => auto(() => mb?.SmartModes?.sleep())} />
-                <Btn icon={Car}      label="Drive"   color="blue"   onClick={() => auto(() => mb?.SmartModes?.drive())} />
-                <Btn icon={Dumbbell} label="Gym"     color="red"    onClick={() => auto(() => mb?.SmartModes?.gym())} />
-                <Btn icon={Film}     label="Movie"   color="orange" onClick={() => auto(() => mb?.SmartModes?.movie())} />
+                <Btn icon={BookOpen} label="Study"   color="cyan"   onClick={() => auto(() => mb?.SmartModes?.study(),   { url: 'intent:#Intent;action=android.settings.ZEN_MODE_SETTINGS;end', label: 'Focus/DND Settings' })} />
+                <Btn icon={Moon}     label="Sleep"   color="purple" onClick={() => auto(() => mb?.SmartModes?.sleep(),   { url: 'intent:#Intent;action=android.settings.ZEN_MODE_SETTINGS;end', label: 'DND Settings' })} />
+                <Btn icon={Car}      label="Drive"   color="blue"   onClick={() => auto(() => mb?.SmartModes?.drive(),   { url: 'geo:0,0?q=', label: 'Maps' })} />
+                <Btn icon={Dumbbell} label="Gym"     color="red"    onClick={() => auto(() => mb?.SmartModes?.gym(),     { url: 'intent://open.spotify.com/#Intent;scheme=https;package=com.spotify.music;end', label: 'Spotify' })} />
+                <Btn icon={Film}     label="Movie"   color="orange" onClick={() => auto(() => mb?.SmartModes?.movie(),   { url: 'intent:#Intent;action=android.settings.ZEN_MODE_SETTINGS;end', label: 'DND Settings' })} />
                 <Btn icon={Gamepad}  label="Gaming"  color="green"  onClick={() => auto(() => mb?.SmartModes?.gaming())} />
                 <Btn icon={Coffee}   label="Work"    color="yellow" onClick={() => auto(() => mb?.SmartModes?.work())} />
-                <Btn icon={Users}    label="Meeting" color="pink"   onClick={() => auto(() => mb?.SmartModes?.meeting())} />
+                <Btn icon={Users}    label="Meeting" color="pink"   onClick={() => auto(() => mb?.SmartModes?.meeting(), { url: 'intent:#Intent;action=android.settings.ZEN_MODE_SETTINGS;end', label: 'DND Settings' })} />
               </div>
             </Card>
 
@@ -764,9 +776,9 @@ export default function PhonePage() {
         {/* ═══ SETUP ════════════════════════════════════════ */}
         {tab === 'setup' && (
           <>
-            <Card title="MacroDroid Device ID" icon={Settings} color="blue">
-              <div className={`mb-3 p-3 rounded-xl border text-xs font-medium ${deviceId ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-red-500/10 border-red-500/30 text-red-400'}`}>
-                {deviceId ? `✅ Saved: ${deviceId.slice(0, 16)}...` : '❌ ID nahi hai — setup karo'}
+            <Card title="MacroDroid Setup (Optional)" icon={Settings} color="blue">
+              <div className={`mb-3 p-3 rounded-xl border text-xs font-medium ${deviceId ? 'bg-green-500/10 border-green-500/30 text-green-400' : 'bg-white/5 border-white/10 text-white/50'}`}>
+                {deviceId ? `✅ Connected: ${deviceId.slice(0, 16)}...` : '💡 Optional — bina ID ke bhi sab kaam karta hai deeplinks se'}
               </div>
               <input value={deviceId} onChange={e => setDeviceId(e.target.value)}
                 placeholder="MacroDroid Device ID yahan paste karo"

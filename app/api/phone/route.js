@@ -19,8 +19,12 @@ export async function GET(request) {
     return NextResponse.json({ notifications: notificationQueue.slice(-50) });
   }
 
+  if (type === 'ping') {
+    return NextResponse.json({ ok: true, status: 'alive', ts: Date.now() });
+  }
+
   return NextResponse.json({
-    status: 'JARVIS Phone API v10.8',
+    status: 'JARVIS Phone API v10.9',
     endpoints: [
       'POST /api/phone — main handler',
       'GET  /api/phone?type=notifications — get notification queue',
@@ -46,8 +50,13 @@ export async function POST(request) {
       notificationQueue.push(notif);
       if (notificationQueue.length > MAX_QUEUE) notificationQueue.shift();
 
-      // Push to connected clients via (simplified — full push via Supabase Realtime)
-      return NextResponse.json({ ok: true, notif_id: notif.id });
+      // Try push notification via VAPID if available
+      try {
+        const { sendPushNotification } = await import('@/app/api/push/route.js').catch(() => ({}));
+        if (sendPushNotification) await sendPushNotification(notif.title, notif.text, notif.app).catch(() => {});
+      } catch {}
+
+      return NextResponse.json({ ok: true, notif_id: notif.id, notif });
     }
 
     // ─── WHATSAPP AUTO-REPLY ────────────────────────────────

@@ -320,9 +320,12 @@ export default function SettingsPage() {
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">🎨 Theme</p>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id:'dark',   label:'Dark Blue', emoji:'🔵', bg:'#050810', accent:'#1A56DB' },
-                  { id:'amoled', label:'AMOLED',    emoji:'⚫', bg:'#000000', accent:'#3b82f6' },
-                  { id:'soft',   label:'Soft Dark', emoji:'🌫', bg:'#1a1a2e', accent:'#6366f1' },
+                  { id:'dark',   label:'Dark Blue',     emoji:'🔵', bg:'#050810', accent:'#1A56DB' },
+                  { id:'amoled', label:'AMOLED Black',   emoji:'⚫', bg:'#000000', accent:'#3b82f6' },
+                  { id:'soft',   label:'Soft Dark',      emoji:'🌫', bg:'#1a1a2e', accent:'#6366f1' },
+                  { id:'green',  label:'Matrix Green',   emoji:'🟢', bg:'#020d05', accent:'#00cc44' },
+                  { id:'purple', label:'Deep Purple',    emoji:'💜', bg:'#0a0010', accent:'#9333ea' },
+                  { id:'sunset', label:'Sunset',         emoji:'🌅', bg:'#0f0a00', accent:'#f97316' },
                 ].map(t => {
                   const saved = typeof window!=='undefined' ? localStorage.getItem('jarvis_theme')||'dark' : 'dark';
                   const active = saved === t.id;
@@ -343,6 +346,27 @@ export default function SettingsPage() {
                 })}
               </div>
               <p className="text-xs text-slate-600 mt-2 text-center">Chat mein header ke theme button se bhi change kar sakte ho</p>
+              
+              {/* Font Size */}
+              <div className="mt-4 pt-4 border-t border-white/5">
+                <p className="text-white text-sm font-medium mb-3">Font Size</p>
+                <div className="flex gap-2">
+                  {[{id:'small',label:'Small',size:'13px'},{id:'normal',label:'Normal',size:'14px'},{id:'large',label:'Large',size:'16px'},{id:'xlarge',label:'XL',size:'18px'}].map(f => {
+                    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('jarvis_font_size') || 'normal' : 'normal';
+                    return (
+                      <button key={f.id} onClick={() => {
+                        localStorage.setItem('jarvis_font_size', f.id);
+                        document.documentElement.style.fontSize = f.size;
+                        window.dispatchEvent(new Event('jarvis-font-change'));
+                      }}
+                        className={`flex-1 py-2 rounded-xl text-xs border transition-all ${saved === f.id ? 'bg-blue-500/20 border-blue-500/40 text-blue-400' : 'bg-white/5 border-white/10 text-white/50'}`}
+                        style={{fontSize: f.size}}>
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="glass-card p-4">
@@ -357,6 +381,37 @@ export default function SettingsPage() {
                 maxLength={500}
               />
               <p className="text-[10px] text-slate-700 mt-1 text-right">{customInstr.length}/500</p>
+              
+              {/* Custom Accent Color */}
+              <div className="mt-4 pt-4 border-t border-white/5">
+                <p className="text-white text-sm font-medium mb-2">Custom Accent Color</p>
+                <div className="flex items-center gap-3">
+                  <input type="color" 
+                    defaultValue={typeof localStorage !== 'undefined' ? localStorage.getItem('jarvis_custom_accent') || '#1A56DB' : '#1A56DB'}
+                    onChange={e => {
+                      localStorage.setItem('jarvis_custom_accent', e.target.value);
+                      document.documentElement.style.setProperty('--accent', e.target.value);
+                    }}
+                    className="w-12 h-10 rounded-xl cursor-pointer bg-transparent border border-white/20"/>
+                  <div className="flex-1">
+                    <p className="text-white/70 text-xs">Apna favorite color set karo</p>
+                    <p className="text-white/30 text-xs">Buttons, highlights, borders</p>
+                  </div>
+                  <button onClick={() => { localStorage.removeItem('jarvis_custom_accent'); window.location.reload(); }}
+                    className="text-xs text-white/40 hover:text-white/70 px-2 py-1 bg-white/5 rounded-lg">Reset</button>
+                </div>
+              </div>
+              
+              {/* JARVIS Name Customization */}
+              <div className="mt-4 pt-4 border-t border-white/5">
+                <p className="text-white text-sm font-medium mb-2">JARVIS Ko Naam Do</p>
+                <input 
+                  defaultValue={typeof localStorage !== 'undefined' ? localStorage.getItem('jarvis_ai_name') || 'JARVIS' : 'JARVIS'}
+                  onChange={e => localStorage.setItem('jarvis_ai_name', e.target.value)}
+                  placeholder="e.g. FRIDAY, ZEUS, ARIA..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm placeholder-slate-600 focus:border-blue-500/40"/>
+                <p className="text-white/30 text-xs mt-1">AI tumhe is naam se respond karega</p>
+              </div>
               <button onClick={saveProfile} disabled={saving}
                 className="w-full mt-2 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50">
                 {saving ? 'Saving...' : 'Save Instructions'}

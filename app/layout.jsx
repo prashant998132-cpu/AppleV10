@@ -29,7 +29,30 @@ export default function RootLayout({ children }) {
         {/* iOS splash screens */}
         <link rel="apple-touch-startup-image" href="/icons/icon-512.png"/>
       </head>
-      <body className="bg-[#050810] text-slate-100 antialiased overflow-hidden h-screen w-screen">
+      <script dangerouslySetInnerHTML={{__html: `
+  try {
+    const theme = localStorage.getItem('jarvis_theme') || 'dark';
+    const accent = localStorage.getItem('jarvis_custom_accent');
+    const fs = localStorage.getItem('jarvis_font_size');
+    const themes = {
+      dark: {bg:'#050810',accent:'#1A56DB'},
+      amoled: {bg:'#000000',accent:'#3b82f6'},
+      soft: {bg:'#1a1a2e',accent:'#6366f1'},
+      green: {bg:'#020d05',accent:'#00cc44'},
+      purple: {bg:'#0a0010',accent:'#9333ea'},
+      sunset: {bg:'#0f0a00',accent:'#f97316'},
+    };
+    const t = themes[theme] || themes.dark;
+    document.documentElement.style.setProperty('--accent', accent || t.accent);
+    document.documentElement.style.setProperty('--bg', t.bg);
+    document.body.style.backgroundColor = t.bg;
+    if (fs) {
+      const sizes = {small:'13px',normal:'14px',large:'16px',xlarge:'18px'};
+      if (sizes[fs]) document.documentElement.style.fontSize = sizes[fs];
+    }
+  } catch(e) {}
+`}} />
+<body className="bg-[#050810] text-slate-100 antialiased overflow-hidden h-screen w-screen">
         {children}
 
         {/* PWA: SW + Install Banner + Update Detection */}
