@@ -115,7 +115,9 @@ export async function POST(req) {
   })();
 
   // Load feedback patterns (self-learning)
-  const feedbackMems = await db.from('memories').select('key,value').eq('user_id', user.id).eq('category', 'feedback').order('importance', { ascending: false }).limit(10).then(r => r.data || []).catch(() => []);
+  const { getSupabaseServer } = await import('@/lib/db/supabase').catch(() => ({}));
+  const _sbServer = getSupabaseServer ? await getSupabaseServer().catch(() => null) : null;
+  const feedbackMems = _sbServer ? await _sbServer.from('memories').select('key,value').eq('user_id', user.id).eq('category', 'feedback').order('importance', { ascending: false }).limit(10).then(r => r.data || []).catch(() => []) : [];
   const learningCtx = buildLearningContext(feedbackMems);
   const system  = buildSystemPrompt(profile, memCtx + (learningCtx ? '\n' + learningCtx : ''), profile.personality, quickEmotion);
 
@@ -131,6 +133,10 @@ export async function POST(req) {
 
   // ── Parallel tool execution (was sequential, now concurrent) ─
   let toolCtx = '';
+  // Phone command pre-detection (fast regex — tells LLM what happened)
+  if (/\b(wifi|bluetooth|torch|flashlight|hotspot|screenshot|mute|volume|brightness|dark.mode|dnd|study.mode|sleep.mode|gym.mode|drive.mode)\b/i.test(msgLow)) {
+    toolCtx += '\n[PHONE_CMD_DETECTED: Tell user the action will be executed via MacroDroid. Keep reply short like "WiFi on kar diya" or "Karo, MacroDroid ke through chal raha hai"]';
+  }
   const toolSources = []; // for source badges in UI
   const m = msgLow;
   try {
@@ -247,7 +253,7 @@ export async function POST(req) {
       try {
         // ── v10.1 SMART ROUTER — Auto pick best provider ─────────
         // Gets ordered list based on: mode + complexity + daily usage + available keys
-        const providerOrder = getProviderOrder(mode, message, chatHistory, keys);
+        const providerOrder = getProviderOrder(mode, message, history, keys);
         let usedProvider = 'offline';
         let streamSuccess = false;
 

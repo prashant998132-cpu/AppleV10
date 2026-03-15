@@ -59,14 +59,29 @@ const ACTION_MAP = {
   // Phone
   'take_screenshot': { trigger: 'jarvis_screenshot',     desc: 'Screenshot le raha hoon 📸' },
   'lock_phone':      { trigger: 'jarvis_lock',           desc: 'Phone lock kar diya 🔒' },
+  // Smart Modes
+  'study_mode':      { trigger: 'jarvis_studymode',      desc: 'Study mode on ✅ — DND, dim, focus' },
+  'sleep_mode':      { trigger: 'jarvis_sleepmode',      desc: 'Sleep mode on ✅ — WiFi off, DND, dim' },
+  'gym_mode':        { trigger: 'jarvis_gymmode',        desc: 'Gym mode on 💪 — Music + DND' },
+  'drive_mode':      { trigger: 'jarvis_drivemode',      desc: 'Drive mode on 🚗 — BT + Maps + DND' },
+  'movie_mode':      { trigger: 'jarvis_moviemode',      desc: 'Movie mode on 🎬 — Max bright + DND' },
+  'gaming_mode':     { trigger: 'jarvis_gamingmode',     desc: 'Gaming mode on 🎮 — Max vol + DND' },
+  // Extended hardware
+  'selfie':          { trigger: 'jarvis_selfie',         desc: 'Selfie le raha hoon 🤳' },
+  'hotspot_on':      { trigger: 'jarvis_hotspot_on',     desc: 'Hotspot on kar diya ✅' },
+  'hotspot_off':     { trigger: 'jarvis_hotspot_off',    desc: 'Hotspot off kar diya ✅' },
+  'brightness_max':  { trigger: 'jarvis_brightness_max', desc: 'Brightness max kar diya ☀️' },
+  'brightness_min':  { trigger: 'jarvis_brightness_min', desc: 'Brightness min kar diya 🌑' },
+  'dark_mode':       { trigger: 'jarvis_dark_mode_on',   desc: 'Dark mode on 🌙' },
 };
 
 // ─── INTENT DETECTOR ─────────────────────────────────────────────
+// ─── ENHANCED INTENT DETECTOR (covers more Hinglish patterns) ──────
 export function detectAutomationIntent(text) {
   const t = text.toLowerCase();
 
   // WiFi
-  if (/wifi.*(on|chalu|khol|start|laga)/i.test(t))  return 'wifi_on';
+  if (/wifi.*(on|chalu|khol|start|laga|kar|karo)|wifi\s+chalu|wi-?fi\s+on/i.test(t))  return 'wifi_on';
   if (/wifi.*(off|band|bund|stop)/i.test(t))          return 'wifi_off';
   // Bluetooth
   if (/bluetooth.*(on|chalu)/i.test(t))               return 'bt_on';
@@ -77,7 +92,7 @@ export function detectAutomationIntent(text) {
   if (/mute|chup|silent/i.test(t))                    return 'volume_mute';
   if (/volume.*(max|full|poora)/i.test(t))             return 'volume_max';
   // Torch
-  if (/torch|flashlight|light.*(on|chalu)/i.test(t)) return 'torch_on';
+  if (/torch.*(on|chalu|jala|laga)|flashlight.*(on|chalu)|light.*(on|chalu)|batti.*on/i.test(t)) return 'torch_on';
   if (/torch|flashlight|light.*(off|band)/i.test(t)) return 'torch_off';
   // Apps
   if (/youtube.*khol|open.*youtube/i.test(t))         return 'open_youtube';
@@ -101,6 +116,12 @@ export function detectAutomationIntent(text) {
   // Alarm
   if (/alarm.*(set|laga|rakh)/i.test(t))              return 'set_alarm';
   if (/alarm.*(cancel|band|hata)/i.test(t))           return 'cancel_alarm';
+
+  // Smart modes
+  if (/study.*mode|studymode|padhai.*mode/i.test(t)) return 'study_mode';
+  if (/sleep.*mode|sleepmode|so.*ja|sone.*wala/i.test(t)) return 'sleep_mode';
+  if (/gym.*mode|gymmode|exercise.*mode/i.test(t)) return 'gym_mode';
+  if (/drive.*mode|drivemode|gaadi.*chal/i.test(t)) return 'drive_mode';
 
   return null;
 }
@@ -129,26 +150,38 @@ export async function POST(req) {
       return Response.json({ ok: false, message: `Unknown action: ${resolvedAction}` });
     }
 
-    // Get MacroDroid device ID from env
+    // Get MacroDroid device ID — check multiple sources
     const keys = getKeys();
-    const deviceId = keys.MACRODROID_DEVICE_ID || process.env.MACRODROID_DEVICE_ID;
+    // Priority: body > env var > header
+    const deviceId = params?.deviceId
+      || keys.MACRODROID_DEVICE_ID
+      || process.env.MACRODROID_DEVICE_ID
+      || req.headers?.get?.('x-macrodroid-id');
 
     if (!deviceId) {
-      // No MacroDroid configured — return setup instructions
+      // Try AI NLP first if text provided and no action
+      if (text && !action) {
+        const aiResult = await fetch(new URL('/api/phone/command', req.url).href, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: text, deviceId: '' }),
+        }).then(r => r.json()).catch(() => null);
+        if (aiResult?.action) {
+          return Response.json({
+            ok: false,
+            setup_needed: true,
+            understood: aiResult.action,
+            explain: aiResult.explain,
+            message: 'MacroDroid ID nahi hai — Phone Control → Setup tab mein save karo.',
+          });
+        }
+      }
       return Response.json({
         ok: false,
         setup_needed: true,
-        message: 'MacroDroid setup karo! Steps neeche hain.',
+        message: 'MacroDroid Device ID nahi hai. Phone Control → Setup tab mein save karo.',
         action: resolvedAction,
-        desc: actionDef.desc,
-        setup_steps: [
-          '1. MacroDroid app install karo (Play Store - FREE)',
-          '2. MacroDroid → Webhooks → Device ID copy karo',
-          '3. Vercel → Settings → Env Vars mein MACRODROID_DEVICE_ID paste karo',
-          `4. MacroDroid mein "${actionDef.trigger}" naam ka trigger banao`,
-          '5. Done! JARVIS phone control kar sakta hai',
-        ],
-        webhook_url_format: `https://trigger.macrodroid.com/{DEVICE_ID}/${actionDef.trigger}`,
+        desc: actionDef?.desc,
       });
     }
 

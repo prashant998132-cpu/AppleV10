@@ -810,24 +810,38 @@ export default function ChatPage() {
     },
   });
 
-  // Try phone automation command
+  // Phone automation — smart: NLP → MacroDroid, deep link fallback
   async function tryAutomation(text) {
     try {
+      // Step 1: Try AI NLP command interpretation first
+      const deviceId = typeof localStorage !== 'undefined' ? localStorage.getItem('macrodroid_device_id') : null;
+
+      // Step 2: Send to automation with device ID from localStorage
       const r = await fetch('/api/automation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, deviceId }),
       });
       const d = await r.json();
+
       if (d.ok) {
-        // Show automation result in chat
-        const autoMsg = { id: `auto${Date.now()}`, role: 'assistant', content: `${d.message} 📱`, ts: Date.now(), mode: 'flash' };
+        const autoMsg = {
+          id: `auto${Date.now()}`, role: 'assistant',
+          content: `${d.message} 📱`, ts: Date.now(), mode: 'flash',
+        };
         setMsgs(p => [...p, autoMsg]);
-        navigator.vibrate?.(200);
+        if (typeof navigator !== 'undefined') navigator.vibrate?.(200);
         return true;
       }
+
       if (d.setup_needed) {
-        const setupMsg = { id: `setup${Date.now()}`, role: 'assistant', content: `📱 MacroDroid setup nahi hua abhi. [Automation Setup](/automation) page pe jaao!`, ts: Date.now(), mode: 'flash' };
+        // Show what JARVIS understood, guide to setup
+        const understood = d.understood ? `\n\nMain samajha: "${d.explain || d.understood}" — lekin MacroDroid se connected nahi hoon abhi.` : '';
+        const setupMsg = {
+          id: `setup${Date.now()}`, role: 'assistant',
+          content: `📱 **Phone control ke liye MacroDroid chahiye!**${understood}\n\n→ [Phone Control Setup](/phone) pe jaao — 2 min mein ready.`,
+          ts: Date.now(), mode: 'flash',
+        };
         setMsgs(p => [...p, setupMsg]);
         return true;
       }
@@ -884,15 +898,17 @@ export default function ChatPage() {
       if (autoResult) return;
     }
 
-    // 3. Puter Web Search — if looks like news/current event query
+    // 3. Puter Web Search — live data for news/current events
+    // Fixed: no longer fights with fullText — always wins for live queries
     if (msg) {
-      const isSearchQuery = /\b(news|khabar|latest|aaj ka|today|current|price|kitna|rate|weather|mausam|score|result|winner|2025|2026)\b/i.test(msg);
+      const isSearchQuery = /\b(news|khabar|latest|aaj ka|today|current|price|kitna|rate|weather|mausam|score|result|winner|2024|2025|2026|abhi|live)\b/i.test(msg);
       if (isSearchQuery && !imgB64) {
-        // Try puter search in background, don't block main AI
-        puterSearchChat(msg, `Tu JARVIS hai. Hinglish mein reply. Web search results use karo.`).then(sr => {
-          if (sr && !fullText) {
-            setMsgs(p => p.map(m => m.id === aiId ? { ...m, content: sr.reply, streaming: false, modelUsed: '🔍 puter-search' } : m));
-            fullText = sr.reply;
+        puterSearchChat(msg, `Tu JARVIS hai — ${profile?.name||'yaar'} ka personal AI. Web search results use kar. Hinglish mein concise reply de.`).then(sr => {
+          if (sr?.reply) {
+            // Always update — puter has live data, overwrite server response
+            setMsgs(p => p.map(m => m.id === aiId
+              ? { ...m, content: sr.reply, streaming: false, modelUsed: '🔍 live-search' }
+              : m));
           }
         }).catch(() => {});
       }
