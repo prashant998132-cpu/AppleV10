@@ -1,5 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { BiometricLockScreen } from '@/components/security/BiometricLock';
+import { isAppLocked, touchActivity, isBiometricLockEnabled } from '@/lib/security/biometric';
+import { startBackgroundAI, scheduleStudyNotifications, registerPeriodicSync } from '@/lib/ai/background-service';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, LogOut, Zap, Bell, Sparkles, User, Smartphone, Phone } from 'lucide-react';
@@ -28,6 +31,27 @@ const MOBILE_NAV = [
 ];
 
 export default function DashboardClient({ children, user, profile }) {
+  const [locked, setLocked] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (isBiometricLockEnabled() && isAppLocked()) setLocked(true);
+    } catch {}
+
+    const touch = () => { try { touchActivity(); } catch {} };
+    window.addEventListener('touchstart', touch, { passive: true });
+    window.addEventListener('click', touch);
+
+    // Start background services
+    startBackgroundAI();
+    scheduleStudyNotifications();
+    registerPeriodicSync();
+
+    return () => {
+      window.removeEventListener('touchstart', touch);
+      window.removeEventListener('click', touch);
+    };
+  }, []);
   const path   = usePathname();
   const router = useRouter();
   const [sidebar, setSidebar]   = useState(false);
@@ -53,6 +77,10 @@ export default function DashboardClient({ children, user, profile }) {
   }
 
   const currentPage = NAV.find(n => n.href === path)?.label || 'JARVIS';
+
+  if (locked) {
+    return <BiometricLockScreen onUnlock={() => { setLocked(false); touchActivity(); }} />;
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#050810] overflow-hidden safe-top">

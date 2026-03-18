@@ -1,5 +1,6 @@
 'use client';
 import WebBluetoothPanel from '@/components/phone/WebBluetooth';
+import VolumeControl from '@/components/phone/VolumeControl';
 export const dynamic = 'force-dynamic';
 // app/(dashboard)/phone/page.jsx — JARVIS v10.9
 // Smart Phone Control — Voice, Real-time, AI NLP, Alternatives everywhere
@@ -418,6 +419,7 @@ export default function PhonePage() {
   const TABS = [
     { id: 'control',   label: 'Control',   icon: Zap },
     { id: 'comms',     label: 'Comms',     icon: MessageSquare },
+    { id: 'volume',    label: 'Volume',    icon: Zap },
     { id: 'bluetooth', label: 'Bluetooth', icon: Activity },
     { id: 'monitor',   label: 'Status',    icon: Activity },
     { id: 'setup',     label: 'Setup',     icon: Settings },
@@ -776,6 +778,19 @@ export default function PhonePage() {
         )}
 
         {/* ═══ SETUP ════════════════════════════════════════ */}
+        {tab === 'volume' && (
+          <div className="space-y-4 pb-6">
+            <div className="flex items-center gap-2 px-1 mb-2">
+              <span className="text-xl">🔊</span>
+              <div>
+                <p className="text-sm font-bold text-white">Volume Control</p>
+                <p className="text-xs text-slate-600">Media volume direct + System volume via MacroDroid</p>
+              </div>
+            </div>
+            <VolumeControl />
+          </div>
+        )}
+
         {tab === 'bluetooth' && (
           <div className="space-y-4 pb-6">
             <div className="flex items-center gap-2 px-1 mb-2">
