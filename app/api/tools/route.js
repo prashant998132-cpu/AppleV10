@@ -2,14 +2,13 @@
 // ═══════════════════════════════════════════════════════════════
 // Executes any of the 58 tools
 // ═══════════════════════════════════════════════════════════════
-import { getUser } from '@/lib/db/supabase';
 import { getKeys } from '@/lib/config';
 import { executeTool, TOOLS } from '@/lib/tools';
 
 export const runtime = 'nodejs';
 
 export async function GET() {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   // Return tool catalog
   const catalog = Object.entries(TOOLS).map(([id, t]) => ({ id, ...t }));
@@ -17,7 +16,7 @@ export async function GET() {
 }
 
 export async function POST(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { tool, params = {} } = await req.json();

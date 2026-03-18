@@ -1,6 +1,5 @@
 import { getKeys, APP } from '@/lib/config';
 // app/api/oauth/route.js
-import { getUser } from '@/lib/db/supabase';
 import { buildOAuthUrl, exchangeCode, saveToken } from '@/lib/oauth/social';
 import { NextResponse } from 'next/server';
 
@@ -37,7 +36,7 @@ export async function GET(req) {
   }
 
   // Initiate OAuth
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) return NextResponse.redirect(`${BASE_URL}/login`);
   if (!platform) return Response.json({ error: 'platform required' }, { status: 400 });
 

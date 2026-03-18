@@ -502,13 +502,11 @@ export default function ChatPage() {
   // Logout
   async function logout() {
     try {
-      const { getSupabaseBrowser } = await import('@/lib/db/supabase');
-      const sb = getSupabaseBrowser();
-      await sb.auth.signOut();
+      // No Supabase — clear session cookies and reload app
+      document.cookie = 'jarvis_token=; path=/; max-age=0';
+      document.cookie = 'jarvis_uid=; path=/; max-age=0';
     } catch {}
-    document.cookie = 'jarvis_token=; path=/; max-age=0';
-    document.cookie = 'jarvis_uid=; path=/; max-age=0';
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 
   const [msgs, setMsgs]         = useState([]);

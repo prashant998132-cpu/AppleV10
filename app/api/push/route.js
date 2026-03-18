@@ -1,5 +1,4 @@
 // app/api/push/route.js — Push Notification Subscribe + Send
-import { getUser } from '@/lib/db/supabase';
 import webpush from 'web-push';
 
 // Set VAPID only if keys are configured (skip at build time)
@@ -15,7 +14,7 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
 const subscriptions = new Map();
 
 export async function POST(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const body = await req.json();
 

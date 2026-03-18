@@ -2,14 +2,13 @@
 // Chain: Spotify preview → Jamendo (free) → Suno → YouTube link
 // RULE: NEVER proxy audio binary — external URLs ONLY
 import { getKeys } from '@/lib/config';
-import { getUser } from '@/lib/db/supabase';
 import { generateMusic, MUSIC_GENRES } from '@/lib/ai/music';
 import { spotify } from '@/lib/integrations';
 
 export const runtime = 'nodejs';
 
 export async function POST(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { prompt, genre = 'background', duration = 30 } = await req.json();

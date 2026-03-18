@@ -4,7 +4,6 @@
 // GET  /api/integrations         → health check for all apps
 // POST /api/integrations         → execute integration action
 // ═══════════════════════════════════════════════════════════════
-import { getUser } from '@/lib/db/supabase';
 import { getKeys } from '@/lib/config';
 import {
   github, vercel, googleCalendar, telegram,
@@ -16,7 +15,7 @@ export const runtime = 'nodejs';
 
 // GET — Health check all integrations
 export async function GET() {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const keys = getKeys();
@@ -26,7 +25,7 @@ export async function GET() {
 
 // POST — Execute any integration
 export async function POST(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { app, action, params = {} } = await req.json();

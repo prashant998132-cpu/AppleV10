@@ -1,6 +1,5 @@
 // app/api/cron/daily-brief — Runs daily at 9 PM IST (15:30 UTC) via Vercel Cron
 // Generates proactive summary and pushes notification to all active users
-import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { buildMemoryContext, generateProactiveSuggestions } from '@/lib/ai/brain';
 import { getKeys } from '@/lib/config';
 

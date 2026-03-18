@@ -9,7 +9,6 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { getKeys } from '@/lib/config';
-import { getUser, getSupabaseAdmin } from '@/lib/db/supabase';
 import { generateImage, IMAGE_STYLES, enhancePrompt } from '@/lib/ai/image';
 
 // ─── Save base64 to Supabase Storage → return public URL ─────
@@ -38,7 +37,7 @@ function pollinationsUrl(prompt, w = 512, h = 512) {
 }
 
 export async function POST(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { prompt, style = 'realistic', width = 512, height = 512, highQuality = false } = await req.json();

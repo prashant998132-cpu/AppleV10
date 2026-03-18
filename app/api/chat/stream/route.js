@@ -1,5 +1,4 @@
 // app/api/chat/stream/route.js — Streaming Chat v9
-import { getUser } from '@/lib/db/supabase';
 import { getProfile, buildMemoryContext, saveMemory, createConversation, saveMessage, updateConversation, addXP, checkAndAwardBadges, saveLLMLog, getGoals, searchKnowledge } from '@/lib/db/queries';
 import { buildSystemPrompt, analyzeImage, AGENTS, autoDetectConvMode } from '@/lib/ai/brain';
 import { saveLearningPattern, buildLearningContext } from '@/lib/ai/self-learning';
@@ -16,7 +15,7 @@ export const runtime = 'nodejs';
 
 export async function POST(req) {
   const reqStart = Date.now(); // LLM latency tracking
-  let user = await getUser().catch(() => null);
+  let user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   // If no Supabase configured — use guest mode (still works with Puter.js AI)
   if (!user) {
     const { SUPABASE_ENABLED } = await import('@/lib/db/supabase');
@@ -123,9 +122,7 @@ export async function POST(req) {
   })();
 
   // Load feedback patterns (self-learning)
-  const { getSupabaseServer } = await import('@/lib/db/supabase').catch(() => ({}));
-  const _sbServer = getSupabaseServer ? await getSupabaseServer().catch(() => null) : null;
-  const feedbackMems = _sbServer ? await _sbServer.from('memories').select('key,value').eq('user_id', user.id).eq('category', 'feedback').order('importance', { ascending: false }).limit(10).then(r => r.data || []).catch(() => []) : [];
+  const feedbackMems = [];
   const learningCtx = buildLearningContext(feedbackMems);
   const system  = buildSystemPrompt(profile, memCtx + (learningCtx ? '\n' + learningCtx : ''), profile.personality, quickEmotion);
 

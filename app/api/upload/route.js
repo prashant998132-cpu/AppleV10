@@ -1,11 +1,10 @@
 import { getKeys } from '@/lib/config';
 // app/api/upload/route.js
-import { getUser } from '@/lib/db/supabase';
 import { saveKnowledge } from '@/lib/db/queries';
 import { analyzeDocument, analyzeImage } from '@/lib/ai/brain';
 
 export async function POST(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const formData = await req.formData();

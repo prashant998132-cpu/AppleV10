@@ -13,7 +13,6 @@
 // https://trigger.macrodroid.com/{DEVICE_ID}/{TRIGGER_NAME}
 // ════════════════════════════════════════════════════════════
 
-import { getUser } from '@/lib/db/supabase';
 import { getKeys } from '@/lib/config';
 
 export const runtime = 'nodejs';
@@ -129,7 +128,7 @@ export function detectAutomationIntent(text) {
 // ─── MAIN HANDLER ────────────────────────────────────────────────
 export async function POST(req) {
   try {
-    const user = await getUser();
+    const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
     if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { action, text, params = {} } = await req.json();

@@ -1,7 +1,6 @@
 // app/api/chat/title/route.js — Auto-generate smart conversation title
 // Uses lightweight model. Fallback: first 8 words of user message
 
-import { getUser } from '@/lib/db/supabase';
 import { updateConversation } from '@/lib/db/queries';
 import { getKeys } from '@/lib/config';
 
@@ -9,7 +8,7 @@ export const runtime = 'nodejs';
 
 export async function POST(req) {
   try {
-    const user = await getUser();
+    const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
     if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { conversationId, firstMessage, firstReply } = await req.json();

@@ -1,12 +1,11 @@
 // app/api/chat/route.js
-import { getUser } from '@/lib/db/supabase';
 import { getProfile, buildMemoryContext, saveMemory, createConversation, saveMessage, updateConversation } from '@/lib/db/queries';
 import { jarvisThink, buildSystemPrompt } from '@/lib/ai/brain';
 import { callLLMChain } from '@/lib/ai/router';
 import { getKeys, APP } from '@/lib/config';
 
 export async function POST(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto' } = await req.json();

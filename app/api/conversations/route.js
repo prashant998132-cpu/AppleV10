@@ -1,9 +1,8 @@
 // app/api/conversations/route.js
-import { getUser } from '@/lib/db/supabase';
 import { getConversations, getMessages, deleteConversation } from '@/lib/db/queries';
 
 export async function GET(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const convId = searchParams.get('id');
@@ -16,7 +15,7 @@ export async function GET(req) {
 }
 
 export async function DELETE(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await req.json();
   await deleteConversation(user.id, id);

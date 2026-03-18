@@ -1,9 +1,8 @@
 // app/api/profile/gamification/route.js
-import { getUser } from '@/lib/db/supabase';
 import { getXP, getBadges, addXP, awardBadge, BADGES, LEVEL_CONFIG, calcLevel, nextLevelXp } from '@/lib/db/queries';
 
 export async function GET() {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const [xpData, earnedBadges] = await Promise.all([getXP(user.id), getBadges(user.id)]);
   const earnedIds = new Set(earnedBadges.map(b => b.badge_id));
@@ -19,7 +18,7 @@ export async function GET() {
 }
 
 export async function POST(req) {
-  const user = await getUser();
+  const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { action, badgeId, amount = 10 } = await req.json();
   if (action === 'award_badge') return Response.json(await awardBadge(user.id, badgeId));

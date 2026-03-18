@@ -1,78 +1,15 @@
 'use client';
-// components/dashboard/AuthGuard.jsx
-// Client-side auth fallback — reads Supabase session from localStorage
-// Wraps DashboardClient when server-side cookie is missing
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { getSupabaseBrowser } from '@/lib/db/supabase';
+// components/dashboard/AuthGuard.jsx — No auth needed
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import InstallBanner from '@/components/pwa/InstallBanner';
 
+const LOCAL_USER = { id: 'local-user-jarvis', email: 'local@jarvis.app', user_metadata: { name: 'Pranshu' } };
+const LOCAL_PROFILE = { name: 'Pranshu', personality: 'normal', city: 'Rewa', language: 'hinglish' };
+
 export default function AuthGuard({ children }) {
-  const [state, setState] = useState('loading'); // loading | authed | unauthed
-  const [user, setUser]   = useState(null);
-  const [profile, setProfile] = useState(null);
-  const router = useRouter();
-
-  useEffect(() => {
-    async function check() {
-      try {
-        const sb = getSupabaseBrowser();
-        const { data: { session } } = await sb.auth.getSession();
-
-        if (!session?.access_token) {
-          // No Supabase session — use local guest mode (no login needed)
-          const localUser = { id: 'local-user-jarvis', email: 'local@jarvis.app', user_metadata: { name: 'Pranshu' } };
-          setUser(localUser);
-          setProfile({ name: 'Pranshu', personality: 'normal', city: 'Rewa', language: 'hinglish' });
-          setState('authed');
-          return;
-        }
-
-        // Refresh cookie for server-side requests
-        document.cookie = `jarvis_token=${session.access_token}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax`;
-        document.cookie = `jarvis_uid=${session.user.id}; path=/; max-age=${session.expires_in || 3600}; SameSite=Lax`;
-
-        // Fetch profile
-        const { data: p } = await sb
-          .from('profiles')
-          .select('name,personality,city,language')
-          .eq('id', session.user.id)
-          .single();
-
-        setUser(session.user);
-        setProfile(p || null);
-        setState('authed');
-      } catch {
-        // Any error → local guest mode (never crash, never redirect to login)
-        const localUser = { id: 'local-user-jarvis', email: 'local@jarvis.app', user_metadata: { name: 'Pranshu' } };
-        setUser(localUser);
-        setProfile({ name: 'Pranshu', personality: 'normal', city: 'Rewa', language: 'hinglish' });
-        setState('authed');
-      }
-    }
-    check();
-  }, []);
-
-  if (state === 'loading') {
-    return (
-      <div className="min-h-screen bg-[#050810] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center animate-pulse shadow-[0_0_30px_rgba(26,86,219,0.5)]">
-            <span className="text-white font-black text-lg">J</span>
-          </div>
-          <p className="text-slate-500 text-sm">JARVIS load ho raha hai...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (state !== 'authed' || !user) return null;
-
   return (
     <>
-      <DashboardClient user={user} profile={profile}>
+      <DashboardClient user={LOCAL_USER} profile={LOCAL_PROFILE}>
         {children}
       </DashboardClient>
       <InstallBanner />
