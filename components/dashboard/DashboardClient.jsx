@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, LogOut, Zap, Bell, Sparkles, User, Smartphone, Phone } from 'lucide-react';
-import { getSupabaseBrowser } from '@/lib/db/supabase';
 
 const NAV = [
   { href: '/',           icon: Zap,           label: 'Dashboard' },
@@ -47,9 +46,10 @@ export default function DashboardClient({ children, user, profile }) {
   }, []);
 
   async function logout() {
-    const sb = getSupabaseBrowser();
-    await sb.auth.signOut();
-    router.push('/login');
+    // Clear session cookies
+    document.cookie = 'jarvis_token=; path=/; max-age=0';
+    document.cookie = 'jarvis_uid=; path=/; max-age=0';
+    router.push('/');
   }
 
   const currentPage = NAV.find(n => n.href === path)?.label || 'JARVIS';
