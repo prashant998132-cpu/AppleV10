@@ -7,13 +7,13 @@ export const metadata = {
   description: 'Aapka personal AI — chat, goals, analytics sab ek jagah. Hinglish mein.',
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'JARVIS' },
-  themeColor: '#050810',
   keywords: ['AI', 'personal assistant', 'Hinglish', 'JARVIS', 'chat'],
 };
 
 export const viewport = {
   width: 'device-width', initialScale: 1, maximumScale: 1,
   userScalable: false, viewportFit: 'cover',
+  themeColor: '#050810',
 };
 
 export default function RootLayout({ children }) {
