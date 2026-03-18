@@ -627,6 +627,24 @@ export default function ChatPage() {
     setTimeCtx(getTimeContext());
     setFreqCmds(getFrequentCommands(4));
     getProactiveAlerts().then(setProAlerts).catch(()=>{});
+
+    // Setup notifications + periodic sync
+    (async () => {
+      try {
+        if ('serviceWorker' in navigator && 'Notification' in window) {
+          const perm = await Notification.requestPermission();
+          if (perm === 'granted' && navigator.serviceWorker.controller) {
+            // Register periodic sync for study reminders
+            const reg = await navigator.serviceWorker.ready;
+            if ('periodicSync' in reg) {
+              await reg.periodicSync.register('jarvis-study-check',   { minInterval: 10 * 60 * 1000 });
+              await reg.periodicSync.register('jarvis-daily-brief',   { minInterval: 60 * 60 * 1000 });
+              await reg.periodicSync.register('jarvis-motivational',  { minInterval: 2 * 60 * 60 * 1000 });
+            }
+          }
+        }
+      } catch {}
+    })();
   }, []);
 
   // Load pinned messages on mount

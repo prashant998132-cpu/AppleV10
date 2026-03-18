@@ -1,4 +1,5 @@
 'use client';
+import WebBluetoothPanel from '@/components/phone/WebBluetooth';
 export const dynamic = 'force-dynamic';
 // app/(dashboard)/phone/page.jsx — JARVIS v10.9
 // Smart Phone Control — Voice, Real-time, AI NLP, Alternatives everywhere
@@ -415,10 +416,11 @@ export default function PhonePage() {
   const na = modules?.na;
 
   const TABS = [
-    { id: 'control', label: 'Control', icon: Zap },
-    { id: 'comms',   label: 'Comms',   icon: MessageSquare },
-    { id: 'monitor', label: 'Status',  icon: Activity },
-    { id: 'setup',   label: 'Setup',   icon: Settings },
+    { id: 'control',   label: 'Control',   icon: Zap },
+    { id: 'comms',     label: 'Comms',     icon: MessageSquare },
+    { id: 'bluetooth', label: 'Bluetooth', icon: Activity },
+    { id: 'monitor',   label: 'Status',    icon: Activity },
+    { id: 'setup',     label: 'Setup',     icon: Settings },
   ];
 
   return (
@@ -774,6 +776,40 @@ export default function PhonePage() {
         )}
 
         {/* ═══ SETUP ════════════════════════════════════════ */}
+        {tab === 'bluetooth' && (
+          <div className="space-y-4 pb-6">
+            <div className="flex items-center gap-2 px-1 mb-2">
+              <span className="text-xl">🔵</span>
+              <div>
+                <p className="text-sm font-bold text-white">Web Bluetooth</p>
+                <p className="text-xs text-slate-600">BLE devices directly connect karo — Chrome Android</p>
+              </div>
+            </div>
+            <WebBluetoothPanel />
+            <div className="bg-white/[0.03] border border-white/8 rounded-2xl p-4 space-y-2">
+              <p className="text-xs text-slate-500 font-medium">⚠️ Kab kaam karta hai:</p>
+              <div className="space-y-1 text-xs text-slate-600">
+                <p>✅ Chrome Android (version 56+)</p>
+                <p>✅ HTTPS pages (apple-v10.vercel.app)</p>
+                <p>✅ BLE devices (Bluetooth 4.0+)</p>
+                <p>❌ Firefox/Safari mein nahi kaam karta</p>
+                <p>❌ Classic Bluetooth (old devices) nahi</p>
+              </div>
+            </div>
+            <div className="bg-blue-500/5 border border-blue-500/15 rounded-2xl p-4">
+              <p className="text-xs text-blue-300/70 font-medium mb-2">Compatible Devices:</p>
+              <div className="grid grid-cols-2 gap-1 text-xs text-slate-600">
+                <p>🏃 Mi Band / Fitbit</p>
+                <p>❤️ Heart Rate Monitors</p>
+                <p>💡 Smart BLE Bulbs</p>
+                <p>🌡️ BLE Thermometers</p>
+                <p>🤖 Arduino + BLE shield</p>
+                <p>📟 ESP32 BLE module</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === 'setup' && (
           <>
             <Card title="MacroDroid Setup (Optional)" icon={Settings} color="blue">

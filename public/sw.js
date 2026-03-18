@@ -1,317 +1,300 @@
-// JARVIS v8 — Service Worker
+// JARVIS v10.9 — Service Worker
 // ═══════════════════════════════════════════════════════════════
-// CACHE STRATEGY:
-//   Shell (HTML/JS/CSS) → StaleWhileRevalidate
-//   API JSON            → NetworkFirst (fresh data)
-//   Media (audio/image) → CacheFirst + 7d TTL (zero re-downloads)
-//   TTS audio           → CacheFirst permanent (same text = same audio)
-//   Pollinations images → CacheFirst 7d
-//   External CDN media  → CacheFirst 30d
+// 1. Smart caching (shell, API, media)
+// 2. Periodic Sync — NEET reminders + daily brief
+// 3. Push notifications — rich with actions
+// 4. Background sync — offline message queue
+// 5. Study schedule notifications
 // ═══════════════════════════════════════════════════════════════
 
-const VERSION = 'jarvis-v8.1';
+const VERSION = 'jarvis-v10.9';
 const CACHE_SHELL  = `${VERSION}-shell`;
 const CACHE_API    = `${VERSION}-api`;
-const CACHE_MEDIA  = `${VERSION}-media`;   // audio + images
-const CACHE_STATIC = `${VERSION}-static`;
+const CACHE_MEDIA  = `${VERSION}-media`;
 
-const SHELL_URLS = ['/', '/chat', '/analytics', '/goals', '/memory', '/knowledge', '/settings', '/offline'];
+const SHELL_URLS = ['/ ', '/chat', '/analytics', '/goals', '/memory',
+  '/knowledge', '/settings', '/offline', '/phone'];
+
+// NEET 2026 Study Schedule
+const STUDY_SCHEDULE = [
+  { hour:5,  min:30, title:'🌅 Uth ja!',           body:'NEET 2026 — aaj shuru karo. Paani pi, stretch karo.',        tag:'wake',     url:'/chat' },
+  { hour:6,  min:0,  title:'📚 Physics Session',    body:'2.5 ghante — fresh brain best time. Focus mode on!',         tag:'study1',   url:'/chat' },
+  { hour:8,  min:30, title:'☕ Break Time',          body:'15 min naashta. Phone nahi, bas relax karo.',                tag:'break1',   url:'/' },
+  { hour:9,  min:0,  title:'🧬 Biology Session',    body:'NCERT + diagrams — 2 ghante. Sabse important!',             tag:'study2',   url:'/chat' },
+  { hour:11, min:0,  title:'⚗️ Chemistry Session',  body:'Reactions + organic — 2 ghante. Concentrate!',              tag:'study3',   url:'/chat' },
+  { hour:13, min:0,  title:'🍽️ Lunch Break',        body:'30 min. Proper khana khao — energy chahiye.',               tag:'lunch',    url:'/' },
+  { hour:14, min:0,  title:'⚡ Numericals Session',  body:'Problems + PYQ — 3 ghante. Ek ek question solve karo.',    tag:'study4',   url:'/chat' },
+  { hour:17, min:30, title:'🏃 Exercise Time',       body:'30 min walk/stretch. Dimaag reset hoga!',                  tag:'exercise', url:'/' },
+  { hour:18, min:15, title:'📖 Revision Session',   body:'Aaj jo padha — 2 ghante revision. Notes banana.',           tag:'study5',   url:'/chat' },
+  { hour:20, min:30, title:'🌙 Dinner Time',         body:'30 min. Khana khao, aaj ka review karo mentally.',          tag:'dinner',   url:'/' },
+  { hour:21, min:0,  title:'📝 Night Review',        body:'Light notes + formulas — 1.5 ghante. Brain consolidation.', tag:'study6',   url:'/chat' },
+  { hour:22, min:30, title:'😴 So Jao!',             body:'7.5 ghante neend = better memory. Kal phir full josh! 🔥',  tag:'sleep',    url:'/' },
+];
+
+const MOTIVATIONAL = [
+  'Har practice test teri rank improve karti hai. Chalta reh! 🔥',
+  'Biology mein tera goal 360/360 hai. Ek chapter ek din — kar sakta hai!',
+  'Topper woh nahi jo zyada padhta hai — woh jo smart padhta hai. Tu smart hai!',
+  '48 din mein NEET crack karna possible hai — tu bhi karega!',
+  'Chemistry ke formulas teri dost hain. Unhe baar baar dekho — yaad ho jayenge.',
+  'Aaj jo padh raha hai woh exam mein kaam aayega. Waste nahi ho raha kuch bhi!',
+];
+
+function getDaysLeft() {
+  const neet = new Date('2026-05-03');
+  const today = new Date(); today.setHours(0,0,0,0); neet.setHours(0,0,0,0);
+  return Math.max(0, Math.round((neet-today)/(864e5)));
+}
 
 // ─── INSTALL ──────────────────────────────────────────────────
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE_SHELL).then(c =>
-      c.addAll(SHELL_URLS.map(u => new Request(u, { credentials: 'same-origin' })))
-    ).catch(() => {}) // don't fail install if shell cache fails
-    .then(() => self.skipWaiting())
+    caches.open(CACHE_SHELL)
+      .then(c => c.addAll(SHELL_URLS.map(u => new Request(u.trim(), {credentials:'same-origin'}))))
+      .catch(() => {})
+      .then(() => self.skipWaiting())
   );
 });
 
-// ─── ACTIVATE — clear old caches ─────────────────────────────
+// ─── ACTIVATE ─────────────────────────────────────────────────
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys
-        .filter(k => k.startsWith('jarvis-') && !k.startsWith(VERSION))
-        .map(k => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k.startsWith('jarvis-') && !k.startsWith(VERSION)).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+      .then(() => {
+        if (self.registration.periodicSync) {
+          Promise.allSettled([
+            self.registration.periodicSync.register('jarvis-study-check',   { minInterval: 10 * 60 * 1000 }),
+            self.registration.periodicSync.register('jarvis-daily-brief',   { minInterval: 60 * 60 * 1000 }),
+            self.registration.periodicSync.register('jarvis-motivational',  { minInterval: 2 * 60 * 60 * 1000 }),
+          ]);
+        }
+      })
   );
 });
 
 // ─── FETCH ────────────────────────────────────────────────────
-
-// ─── OFFLINE SMART RESPONSES ─────────────────────────────────
-// Agar net nahi hai toh bhi JARVIS kuch basic cheezein answer kar sakta hai
-const OFFLINE_ANSWERS = [
-  { keys: ['time', 'samay', 'baje', 'clock', 'kitne baje'], fn: () => `Abhi ${new Date().toLocaleTimeString('hi-IN', {hour:'2-digit',minute:'2-digit'})} baje hain.` },
-  { keys: ['date', 'aaj', 'today', 'tareekh', 'din'], fn: () => `Aaj ${new Date().toLocaleDateString('hi-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'})} hai.` },
-  { keys: ['calculator', 'calculate', 'math', 'plus', 'minus', 'multiply', '+', '-', '*', '/'],
-    fn: (q) => { try { const expr = q.replace(/[^0-9+\-*/().%\s]/g,''); const r = Function('"use strict";return ('+expr+')')(); return `${expr} = ${r}`; } catch { return 'Calculation nahi kar paya. Net chahiye.'; } } },
-  { keys: ['hello', 'hi', 'namaste', 'hey', 'hii'], fn: () => 'Namaste! 👋 Abhi offline hoon, lekin main yahan hoon. Net aate hi full power mein wapas aaunga!' },
-  { keys: ['bmi', 'weight', 'height'], fn: () => 'BMI = Weight(kg) / Height(m)². Apna weight aur height batao toh main calculate kar sakta hoon offline bhi!' },
-  { keys: ['joke', 'funny', 'hasao', 'maza'], fn: () => 'Offline mode mein ek joke: "WiFi bola Modem se — tum sirf cable ho, main connection hoon!" 😄' },
-  { keys: ['jarvis', 'kaisa hai', 'how are you', 'theek hai'], fn: () => 'Main theek hoon! Thoda offline hoon abhi, lekin ready hoon. Net aao toh full power! 💪' },
-  { keys: ['weather', 'mausam', 'temperature', 'garmi', 'thandi'], fn: () => 'Weather ke liye internet chahiye. Abhi offline hoon.' },
-  { keys: ['help', 'kya kar', 'features', 'kya karta'], fn: () => 'Offline mein main kar sakta hoon: ⏰ Time/Date, 🧮 Calculator, 💬 Basic chat. Net aane pe: AI chat, weather, news, phone control sab!' },
-];
-
-function getOfflineAnswer(message) {
-  if (!message) return null;
-  const msg = message.toLowerCase();
-  for (const item of OFFLINE_ANSWERS) {
-    if (item.keys.some(k => msg.includes(k))) {
-      return item.fn(msg);
-    }
-  }
-  return null;
-}
-
 self.addEventListener('fetch', e => {
-  const { request } = e;
-  const url = new URL(request.url);
+  const url = new URL(e.request.url);
 
-  // Skip non-GET, non-HTTP, chrome-extension etc.
-  if (request.method !== 'GET') return;
-  if (!url.protocol.startsWith('http')) return;
-
-  // 1. TTS audio — permanent cache (same text → same audio)
-  if (url.pathname.startsWith('/api/tts') && request.method === 'GET') {
-    e.respondWith(cacheFirstMedia(request, CACHE_MEDIA, 86400 * 30));
+  if (url.pathname === '/share' && e.request.method === 'POST') {
+    e.respondWith((async () => {
+      const fd = await e.request.formData();
+      const p = new URLSearchParams({title:fd.get('title')||'',text:fd.get('text')||'',url:fd.get('url')||''});
+      return Response.redirect(\`/share?${p}\`, 303);
+    })());
     return;
   }
 
-  // 2. Pollinations images — 7 day cache
-  if (url.hostname === 'image.pollinations.ai') {
-    e.respondWith(cacheFirstMedia(request, CACHE_MEDIA, 86400 * 7));
-    return;
-  }
+  if (e.request.method !== 'GET' || !url.protocol.startsWith('http')) return;
 
-  // 3. Supabase Storage CDN (our generated images) — 30 day cache
-  if (url.hostname.includes('supabase.co') && url.pathname.includes('/storage/')) {
-    e.respondWith(cacheFirstMedia(request, CACHE_MEDIA, 86400 * 30));
-    return;
+  if (url.pathname.startsWith('/api/')) {
+    e.respondWith(networkFirst(e.request, CACHE_API)); return;
   }
-
-  // 4. AIMLAPI / fal.ai CDN image URLs — 7 day cache
-  if (url.hostname.includes('aimlapi.com') || url.hostname.includes('fal.run') ||
-      url.hostname.includes('cdn.fal.ai') || url.hostname.includes('storage.googleapis.com')) {
-    e.respondWith(cacheFirstMedia(request, CACHE_MEDIA, 86400 * 7));
-    return;
+  if (/\.(mp3|wav|ogg|webp|png|jpg|jpeg|gif|svg|woff2?)$/i.test(url.pathname)) {
+    e.respondWith(cacheFirst(e.request, CACHE_MEDIA)); return;
   }
-
-  // 5. Mubert CDN music — 30 day cache
-  if (url.hostname.includes('mubert.com')) {
-    e.respondWith(cacheFirstMedia(request, CACHE_MEDIA, 86400 * 30));
-    return;
-  }
-
-  // 6. HuggingFace model CDN — 7 day cache
-  if (url.hostname.includes('huggingface.co') && url.pathname.includes('/resolve/')) {
-    e.respondWith(cacheFirstMedia(request, CACHE_MEDIA, 86400 * 7));
-    return;
-  }
-
-  // 7. Static assets (JS, CSS, fonts, icons) — CacheFirst 30d
-  if (
-    url.hostname === self.location.hostname &&
-    (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/') ||
-     url.pathname.endsWith('.woff2') || url.pathname.endsWith('.png'))
-  ) {
-    e.respondWith(cacheFirstStatic(request));
-    return;
-  }
-
-  // 8. App API JSON — NetworkFirst 5s timeout, then cache
-  if (url.hostname === self.location.hostname && url.pathname.startsWith('/api/')) {
-    // Never cache auth or streaming endpoints
-    if (url.pathname.includes('/auth') || url.pathname.includes('/stream')) return;
-    e.respondWith(networkFirstAPI(request));
-    return;
-  }
-
-  // 9. App shell pages — StaleWhileRevalidate
-  if (url.hostname === self.location.hostname && !url.pathname.includes('.')) {
-    e.respondWith(staleWhileRevalidate(request));
-    return;
+  if (url.origin === self.location.origin) {
+    e.respondWith(staleWhileRevalidate(e.request)); return;
   }
 });
 
-// ─── STRATEGIES ──────────────────────────────────────────────
-
-// CacheFirst for media — if cached, return immediately (zero network)
-async function cacheFirstMedia(request, cacheName, maxAgeSeconds) {
+async function networkFirst(req, cacheName) {
   const cache = await caches.open(cacheName);
-  const cached = await cache.match(request);
-
-  if (cached) {
-    const cachedDate = cached.headers.get('sw-cached-at');
-    if (cachedDate) {
-      const age = (Date.now() - parseInt(cachedDate)) / 1000;
-      if (age < maxAgeSeconds) return cached; // fresh — return immediately
-    } else {
-      return cached; // no date header — assume fresh
-    }
-  }
-
   try {
-    const response = await fetch(request.clone());
-    if (response.ok) {
-      // Clone and add cache timestamp header
-      const headers = new Headers(response.headers);
-      headers.set('sw-cached-at', String(Date.now()));
-      const toCache = new Response(await response.clone().arrayBuffer(), {
-        status: response.status,
-        statusText: response.statusText,
-        headers,
-      });
-      cache.put(request, toCache);
-    }
-    return response;
+    const res = await fetch(req);
+    if (res.ok) cache.put(req, res.clone());
+    return res;
   } catch {
-    return cached || new Response('Offline', { status: 503 });
+    return await cache.match(req) || new Response(JSON.stringify({error:'offline'}), {status:503,headers:{'Content-Type':'application/json'}});
   }
 }
 
-// CacheFirst for static assets (immutable — never re-fetch)
-async function cacheFirstStatic(request) {
-  const cache = await caches.open(CACHE_STATIC);
-  const cached = await cache.match(request);
+async function cacheFirst(req, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(req);
   if (cached) return cached;
-  try {
-    const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
-    return response;
-  } catch {
-    return new Response('Asset unavailable offline', { status: 503 });
-  }
+  try { const res = await fetch(req); if (res.ok) cache.put(req, res.clone()); return res; } catch { return new Response('', {status:404}); }
 }
 
-// NetworkFirst with fallback (API JSON)
-async function networkFirstAPI(request) {
-  const cache = await caches.open(CACHE_API);
-  try {
-    const response = await Promise.race([
-      fetch(request.clone()),
-      new Promise((_, r) => setTimeout(() => r(new Error('timeout')), 5000)),
-    ]);
-    if (response.ok) cache.put(request, response.clone());
-    return response;
-  } catch {
-    const cached = await cache.match(request);
-    // Try offline smart answer for /api/chat
-    if (request.url.includes('/api/chat')) {
-      try {
-        const body = await request.clone().json();
-        const msg = body.message || '';
-        const answer = getOfflineAnswer(msg);
-        if (answer) {
-          return Response.json({ reply: answer, offline: true, model: 'offline' });
-        }
-      } catch {}
-    }
-    return cached || Response.json({ error: 'Offline', offline: true, reply: 'Main abhi offline hoon. Net check karo aur dobara try karo!' }, { status: 503 });
-  }
-}
-
-// StaleWhileRevalidate for HTML pages
-async function staleWhileRevalidate(request) {
+async function staleWhileRevalidate(req) {
   const cache = await caches.open(CACHE_SHELL);
-  const cached = await cache.match(request);
-  const networkPromise = fetch(request).then(r => {
-    if (r.ok) cache.put(request, r.clone());
-    return r;
-  }).catch(() => null);
-  return cached || await networkPromise || new Response('Offline', {
-    status: 200, headers: { 'Content-Type': 'text/html' }
+  const cached = await cache.match(req);
+  const networkP = fetch(req).then(r => { if (r.ok) cache.put(req, r.clone()); return r; }).catch(() => null);
+  return cached || await networkP || await caches.match('/offline') || new Response('<h1>Offline</h1>',{status:200,headers:{'Content-Type':'text/html'}});
+}
+
+// ─── PERIODIC SYNC ────────────────────────────────────────────
+self.addEventListener('periodicsync', e => {
+  if (e.tag === 'jarvis-study-check')  e.waitUntil(checkStudyTime());
+  if (e.tag === 'jarvis-daily-brief')  e.waitUntil(sendDailyBrief());
+  if (e.tag === 'jarvis-motivational') e.waitUntil(sendMotivation());
+});
+
+async function checkStudyTime() {
+  const now = new Date();
+  const cur = now.getHours() * 60 + now.getMinutes();
+  for (const s of STUDY_SCHEDULE) {
+    const target = s.hour * 60 + s.min;
+    if (cur >= target && cur <= target + 8) {
+      const shown = await getKV('shown_' + s.tag);
+      const todayKey = new Date().toDateString();
+      if (shown === todayKey) continue;
+      await setKV('shown_' + s.tag, todayKey);
+      await self.registration.showNotification(s.title, {
+        body: s.body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png',
+        tag: 'neet-' + s.tag, data: {url: s.url},
+        vibrate: [200,100,200,100,300],
+        requireInteraction: s.tag.includes('study') || s.tag === 'wake',
+        actions: [
+          {action:'open',   title:'✅ Ready hoon'},
+          {action:'snooze', title:'⏰ 5 min baad'},
+        ],
+      });
+      break;
+    }
+  }
+}
+
+async function sendDailyBrief() {
+  const h = new Date().getHours();
+  if (h < 6 || h > 8) return;
+  const shown = await getKV('brief_' + new Date().toDateString());
+  if (shown) return;
+  await setKV('brief_' + new Date().toDateString(), true);
+  const days = getDaysLeft();
+  await self.registration.showNotification('📚 JARVIS Morning Brief', {
+    body: \`NEET 2026 mein sirf ${days} din bache hain. Aaj ka plan ready karo!\`,
+    icon: '/icons/icon-192.png', badge: '/icons/icon-192.png',
+    tag: 'jarvis-morning-brief', data: {url:'/chat'},
+    vibrate: [100,50,100],
+    actions: [{action:'open', title:'📋 Plan dekhna'}],
   });
+}
+
+async function sendMotivation() {
+  const h = new Date().getHours();
+  if (h < 7 || h > 21) return;
+  const msg = MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)];
+  await self.registration.showNotification('💪 JARVIS — Keep Going!', {
+    body: msg, icon: '/icons/icon-192.png',
+    tag: 'jarvis-motivation', data: {url:'/chat'},
+    silent: true, vibrate: [50],
+  });
+}
+
+// Simple KV using caches API (no IndexedDB needed)
+async function getKV(key) {
+  const c = await caches.open('jarvis-kv');
+  const r = await c.match('/kv/' + key);
+  return r ? await r.text().then(t => { try { return JSON.parse(t); } catch { return t; } }) : null;
+}
+async function setKV(key, value) {
+  const c = await caches.open('jarvis-kv');
+  await c.put('/kv/' + key, new Response(JSON.stringify(value), {headers:{'Content-Type':'application/json'}}));
 }
 
 // ─── PUSH NOTIFICATIONS ───────────────────────────────────────
 self.addEventListener('push', e => {
-  const data = e.data?.json() || {};
-  e.waitUntil(self.registration.showNotification(data.title || 'JARVIS', {
-    body: data.body || 'Naya message hai!',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
-    tag: data.tag || 'jarvis',
-    data: { url: data.url || '/chat' },
-    vibrate: [200, 100, 200],
-    actions: [
-      { action: 'open',    title: '📱 Open' },
-      { action: 'dismiss', title: '✕ Dismiss' },
-    ],
+  let data = {};
+  try { data = e.data?.json() || {}; } catch { data = {body: e.data?.text()}; }
+  e.waitUntil(self.registration.showNotification(data.title || '📚 JARVIS', {
+    body: data.body || 'Naya message!',
+    icon: '/icons/icon-192.png', badge: '/icons/icon-192.png',
+    tag: data.tag || 'jarvis', data: {url: data.url || '/chat'},
+    vibrate: data.tag?.includes('study') ? [200,100,200,100,300] : [100,50,100],
+    requireInteraction: !!data.requireInteraction,
+    actions: [{action:'open',title:'📱 Kholna'},{action:'dismiss',title:'✕ Baad mein'}],
   }));
 });
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   if (e.action === 'dismiss') return;
+  if (e.action === 'snooze') {
+    setTimeout(() => {
+      self.registration.showNotification(e.notification.title, {
+        body: e.notification.body + ' (Snoozed)',
+        icon: '/icons/icon-192.png', tag: e.notification.tag + '-snooze',
+        vibrate: [200,100,200],
+      });
+    }, 5 * 60 * 1000);
+    return;
+  }
   const url = e.notification.data?.url || '/chat';
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
-      const existing = cs.find(c => c.url.includes(url));
-      if (existing) { existing.focus(); return; }
+    clients.matchAll({type:'window',includeUncontrolled:true}).then(cs => {
+      const w = cs.find(c => c.url.includes('apple-v10') || c.url.includes('localhost'));
+      if (w) { w.focus(); w.postMessage({type:'NOTIFICATION_CLICK',url,data:e.notification.data}); return; }
       return clients.openWindow(url);
     })
   );
 });
 
-// ─── MESSAGE (from app — force update, clear media cache) ─────
-self.addEventListener('message', e => {
-  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
-  if (e.data?.type === 'CLEAR_MEDIA_CACHE') {
-    caches.delete(CACHE_MEDIA).then(() => {
-      e.source?.postMessage({ type: 'MEDIA_CACHE_CLEARED' });
-    });
-  }
-  if (e.data?.type === 'GET_VERSION') {
-    e.source?.postMessage({ type: 'VERSION', version: VERSION });
-  }
+// ─── BACKGROUND SYNC — Offline message queue ──────────────────
+self.addEventListener('sync', e => {
+  if (e.tag === 'jarvis-send-message') e.waitUntil(flushOfflineQueue());
 });
 
-// ─── PERIODIC BACKGROUND SYNC ────────────────────────────────
-self.addEventListener('periodicsync', e => {
-  if (e.tag === 'jarvis-daily-refresh') {
-    e.waitUntil(
-      fetch('/api/chat/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [{ role: 'user', content: 'daily refresh ping' }] })
-      }).catch(() => {})
-    );
+async function flushOfflineQueue() {
+  const cache = await caches.open('jarvis-offline-queue');
+  const keys = await cache.keys();
+  for (const req of keys) {
+    try {
+      const cached = await cache.match(req);
+      const body = await cached.json();
+      const res = await fetch('/api/chat/stream', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      if (res.ok) {
+        await cache.delete(req);
+        const cs = await clients.matchAll({type:'window'});
+        cs.forEach(c => c.postMessage({type:'OFFLINE_MSG_SENT', id: body.id}));
+      }
+    } catch {}
   }
-});
+}
 
-// ─── BACKGROUND FETCH ────────────────────────────────────────
+// ─── BACKGROUND FETCH ─────────────────────────────────────────
 self.addEventListener('backgroundfetchsuccess', e => {
-  e.waitUntil(
-    (async () => {
-      const cache = await caches.open('jarvis-bg-fetch');
-      const records = await e.registration.matchAll();
-      await Promise.all(records.map(async record => {
-        const response = await record.responseReady;
-        await cache.put(record.request, response);
-      }));
-      await e.updateUI({ title: 'JARVIS: Download complete!' });
-    })()
-  );
+  e.waitUntil((async () => {
+    const cache = await caches.open('jarvis-bg-fetch');
+    const records = await e.registration.matchAll();
+    await Promise.all(records.map(async r => { const res = await r.responseReady; await cache.put(r.request, res); }));
+    await e.updateUI({title:'JARVIS: Download complete! ✅'});
+  })());
 });
 
-// ─── SHARE TARGET (POST method) ──────────────────────────────
-// Note: GET method is handled by /share page directly
-// POST method would need this:
-self.addEventListener('fetch', e => {
-  if (e.request.url.includes('/share') && e.request.method === 'POST') {
-    e.respondWith(
-      (async () => {
-        const formData = await e.request.formData();
-        const title = formData.get('title') || '';
-        const text  = formData.get('text')  || '';
-        const url   = formData.get('url')   || '';
-        const params = new URLSearchParams({ title, text, url });
-        return Response.redirect(`/share?${params}`, 303);
-      })()
-    );
+// ─── MESSAGE — App se commands ────────────────────────────────
+self.addEventListener('message', async e => {
+  const {type, data} = e.data || {};
+  switch(type) {
+    case 'SKIP_WAITING': self.skipWaiting(); break;
+    case 'CLEAR_MEDIA_CACHE': await caches.delete(CACHE_MEDIA); e.source?.postMessage({type:'MEDIA_CACHE_CLEARED'}); break;
+    case 'GET_VERSION': e.source?.postMessage({type:'VERSION', version:VERSION}); break;
+    case 'SHOW_NOTIFICATION':
+      await self.registration.showNotification(data?.title||'JARVIS', {
+        body:data?.body, icon:'/icons/icon-192.png', badge:'/icons/icon-192.png',
+        tag:data?.tag||'jarvis', data:{url:data?.url||'/chat'},
+        vibrate:data?.vibrate||[100,50,100], requireInteraction:!!data?.requireInteraction,
+      });
+      break;
+    case 'SCHEDULE_NOTIFICATION':
+      setTimeout(async () => {
+        await self.registration.showNotification(data?.title||'📚 JARVIS', {
+          body:data?.body, icon:'/icons/icon-192.png',
+          tag:data?.tag||'scheduled', data:{url:data?.url||'/chat'},
+          vibrate:[200,100,200], requireInteraction:true,
+        });
+      }, data?.delay||0);
+      e.source?.postMessage({type:'NOTIFICATION_SCHEDULED'});
+      break;
+    case 'QUEUE_OFFLINE_MSG':
+      const qCache = await caches.open('jarvis-offline-queue');
+      await qCache.put('/offline-queue/'+Date.now(), new Response(JSON.stringify(data), {headers:{'Content-Type':'application/json'}}));
+      if (self.registration.sync) await self.registration.sync.register('jarvis-send-message');
+      e.source?.postMessage({type:'MSG_QUEUED', id:data?.id});
+      break;
   }
 });
