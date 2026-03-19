@@ -35,17 +35,19 @@ export default function DashboardClient({ children, user, profile }) {
 
   useEffect(() => {
     try {
-      if (isBiometricLockEnabled() && isAppLocked()) setLocked(true);
+      if (typeof localStorage !== 'undefined' && isBiometricLockEnabled() && isAppLocked()) {
+        setLocked(true);
+      }
     } catch {}
 
     const touch = () => { try { touchActivity(); } catch {} };
     window.addEventListener('touchstart', touch, { passive: true });
     window.addEventListener('click', touch);
 
-    // Start background services
-    startBackgroundAI();
-    scheduleStudyNotifications();
-    registerPeriodicSync();
+    // Start background services — completely wrapped, no crash
+    try { startBackgroundAI(); } catch {}
+    setTimeout(() => { try { scheduleStudyNotifications(); } catch {} }, 2000);
+    setTimeout(() => { try { registerPeriodicSync(); } catch {} }, 3000);
 
     return () => {
       window.removeEventListener('touchstart', touch);

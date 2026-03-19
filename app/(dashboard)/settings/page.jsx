@@ -678,6 +678,12 @@ export default function SettingsPage() {
           </Suspense>
         )}
       </div>
+    {/* ── SECURITY ──────────────────────────── */}
+    <div className="space-y-3 mt-4">
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-1">🔐 Security</p>
+      <BiometricSettings />
+    </div>
+
     </div>
   );
 }
