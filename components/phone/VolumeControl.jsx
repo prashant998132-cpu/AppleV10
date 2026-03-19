@@ -1,4 +1,14 @@
 'use client';
+// Safe timeout signal — works on all Android Chrome versions
+function _timeoutSignal(ms) {
+  try {
+    if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) return AbortSignal.timeout(ms);
+  } catch {}
+  const ctrl = new AbortController();
+  setTimeout(() => { try { ctrl.abort(); } catch {} }, ms);
+  return ctrl.signal;
+}
+
 // components/phone/VolumeControl.jsx — JARVIS Volume Direct Control
 // ══════════════════════════════════════════════════════════════════
 // 3 methods in order:
@@ -50,7 +60,7 @@ export function useVolumeControl() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ level }),
-          signal: AbortSignal.timeout(3000),
+          signal: _timeoutSignal(3000),
         });
       } catch {}
     }
@@ -66,7 +76,7 @@ export function useVolumeControl() {
       const action = newMuted ? 'jarvis_volume_mute' : 'jarvis_ringer_on';
       try {
         await fetch(`https://trigger.macrodroid.com/${deviceId}/${action}`, {
-          method: 'POST', signal: AbortSignal.timeout(3000),
+          method: 'POST', signal: _timeoutSignal(3000),
         });
       } catch {}
     }
@@ -83,7 +93,7 @@ export function useVolumeControl() {
       };
       try {
         await fetch(`https://trigger.macrodroid.com/${deviceId}/${actionMap[mode]}`, {
-          method: 'POST', signal: AbortSignal.timeout(3000),
+          method: 'POST', signal: _timeoutSignal(3000),
         });
       } catch {}
     }
