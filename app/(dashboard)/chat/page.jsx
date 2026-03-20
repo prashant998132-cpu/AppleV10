@@ -238,7 +238,7 @@ function CopyButton({ text }) {
   );
 }
 
-function Bubble({ msg, onSpeak, voiceOn, onFollowUp }) {
+function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, setPinnedMsgs, msgs, exportChat, titleGenerated, setTitleGenerated, setConvs, convId }) {
   const isUser = msg.role === 'user';
   const [showC, setShowC] = useState(false);
   const [compressed, setCompressed] = useState(null);
@@ -246,42 +246,9 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp }) {
   const [feedback, setFeedback] = useState(null); // null | 'up' | 'down'
   const text = compressed || msg.content;
 
-  // Auto-generate conversation title after first exchange
-  async function generateTitle(cId, userMsg, aiReply) {
-    if (titleGenerated || !cId) return;
-    setTitleGenerated(true);
-    try {
-      const r = await fetch('/api/chat/title', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ conversationId: cId, firstMessage: userMsg, firstReply: aiReply })
-      });
-      const d = await r.json();
-      if (d.title) {
-        // Update sidebar conversation list with new title
-        setConvs(p => p.map(c => c.id===cId ? {...c, title: d.title} : c));
-      }
-    } catch { /* silent */ }
-  }
 
-  // Export chat as .txt file
-  function exportChat() {
-    if (!msgs.length) return;
-    const lines = msgs.map(m => {
-      const who  = m.role==='user' ? '👤 Tum' : '🤖 JARVIS';
-      const time = new Date(m.ts||Date.now()).toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'});
-      return `[${time}] ${who}:
-${m.content}
-`;
-    });
-    const separator = '─'.repeat(40);
-    const dateStr = new Date().toLocaleDateString('hi-IN');
-    const text = ['JARVIS Chat Export — ' + dateStr, separator, '', ...lines].join('\n');
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = `jarvis-chat-${Date.now()}.txt`;
-    a.click(); URL.revokeObjectURL(url);
-  }
+
+
 
   // Handle emoji reaction
   function handleReaction(msgId, emoji) {
@@ -499,6 +466,22 @@ function DynamicGreeting() {
 
 // ─── Main Chat Page ───────────────────────────────────────────
 export default function ChatPage() {
+  // Export chat as .txt file
+  function exportChat() {
+    if (!msgs.length) return;
+    const lines = msgs.map(m => {
+      const who  = m.role==='user' ? '👤 Tum' : '🤖 JARVIS';
+      const time = new Date(m.ts||Date.now()).toLocaleTimeString('hi-IN',{hour:'2-digit',minute:'2-digit'});
+      return `[${time}] ${who}:\n${m.content}\n`;
+    });
+    const text = ['JARVIS Chat — ' + new Date().toLocaleDateString('hi-IN'), '─'.repeat(40), '', ...lines].join('\n');
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `jarvis-chat-${Date.now()}.txt`;
+    a.click(); URL.revokeObjectURL(url);
+  }
+
   // Logout
   async function logout() {
     try {
@@ -1403,7 +1386,7 @@ export default function ChatPage() {
             {msgs.map(m=>(
               m.streaming&&m.content===''
                 ? <TypingDots key={m.id} mode={m.mode}/>
-                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)}/></div>
+                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} setConvs={setConvs} convId={convId}/></div>
             ))}
             {loading&&<TypingDots mode={mode==='auto'?(detected||'flash'):mode}/>}
             {/* Workflow Progress */}
