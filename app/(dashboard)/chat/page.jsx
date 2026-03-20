@@ -291,18 +291,18 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
   }
 
   return (
-    <div className={`flex ${isUser?'justify-end':'justify-start'} mb-3 px-1 msg-in`}>
+    <div className={`flex ${isUser?'justify-end':'justify-start'} mb-1.5 px-1 msg-in`}>
       {!isUser && (
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center mr-2.5 mt-0.5 shrink-0 shadow-[0_0_14px_rgba(26,86,219,0.3)]">
           <span className="text-white font-black text-[10px]">J</span>
         </div>
       )}
-      <div className={`max-w-[84%] flex flex-col ${isUser?'items-end':'items-start'} gap-1`}>
+      <div className={`max-w-[86%] flex flex-col ${isUser?'items-end':'items-start'} gap-0.5`}>
         {msg.cameraPreview && <img src={msg.cameraPreview} alt="" className="rounded-2xl max-w-[110px] border border-white/10 mb-1"/>}
         {msg.imageUrl && <div className="rounded-2xl overflow-hidden border border-white/10 mb-1 shadow-xl"><img src={msg.imageUrl} alt="" className="w-full max-w-[260px]"/></div>}
         {!isUser && <ThinkBubble tokens={msg.thinking}/>}
 
-        <div className={`px-3.5 py-2.5 text-[13.5px] leading-relaxed ${
+        <div className={`px-3 py-2 text-[13px] leading-snug ${
           isUser
             ? 'bg-gradient-to-br from-blue-600 to-blue-500 text-white rounded-[20px_20px_5px_20px] shadow-[0_4px_20px_rgba(59,130,246,0.22)]'
             : 'bg-white/[0.06] border border-white/[0.08] text-slate-100 rounded-[20px_20px_20px_5px]'
@@ -1236,7 +1236,7 @@ export default function ChatPage() {
       )}
 
       {/* Header */}
-      <div className="px-3 py-2 flex items-center justify-between border-b border-white/[0.06] shrink-0">
+      <div className="px-2 py-1 flex items-center justify-between border-b border-white/[0.05] shrink-0">
         <div className="flex items-center gap-2.5">
           <button onClick={()=>setHistoryOpen(true)} className="p-1.5 text-slate-600 hover:text-slate-300 transition-colors" title="Chat history">
             <History size={16}/>
@@ -1306,7 +1306,7 @@ export default function ChatPage() {
       </div>
 
       {/* Mode Bar + Quick Cmd toggle */}
-      <div className="px-3 py-1 flex gap-1 overflow-x-auto shrink-0 no-scrollbar items-center">
+      <div className="px-2 py-0.5 flex gap-1 overflow-x-auto shrink-0 no-scrollbar items-center">
         {MODES.map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)}
             className={`shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${mode===m.id?m.bg+' '+m.text+' border-current/30':'bg-transparent border-transparent text-slate-700 hover:text-slate-500'}`}>
@@ -1332,12 +1332,12 @@ export default function ChatPage() {
       )}
 
       {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 no-scrollbar jarvis-scroll">
+      <div className="flex-1 min-h-0 overflow-y-auto px-2 py-1 no-scrollbar jarvis-scroll">
         {isEmpty ? (
-          <div className="flex flex-col items-center gap-4 pt-6 pb-2">
+          <div className="flex flex-col items-center gap-2 pt-2 pb-1">
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-blue-500/15 animate-ping opacity-40"/>
-              <div className={`w-[72px] h-[72px] rounded-full flex items-center justify-center orb-pulse transition-all duration-500 ${
+              <div className={`w-[56px] h-[56px] rounded-full flex items-center justify-center orb-pulse transition-all duration-500 ${
                 mode==='think' ? 'bg-gradient-to-br from-purple-600 via-purple-500 to-pink-400 shadow-[0_0_50px_rgba(147,51,234,0.5)]' :
                 mode==='flash' ? 'bg-gradient-to-br from-yellow-500 via-orange-500 to-yellow-400 shadow-[0_0_50px_rgba(234,179,8,0.5)]' :
                 mode==='deep'  ? 'bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-400 shadow-[0_0_50px_rgba(29,78,216,0.5)]' :
@@ -1358,7 +1358,7 @@ export default function ChatPage() {
             {/* App Quick Launch — tap to open */}
             <div className="w-full max-w-[300px]">
               <p className="text-[10px] text-slate-700 mb-1.5 text-center">📱 Tap karo — app khulega</p>
-              <div className="flex flex-wrap gap-1.5 justify-center">
+              <div className="flex flex-wrap gap-1 justify-center">
                 {[{e:'📸',l:'Instagram',cmd:'Instagram kholo'},{e:'💬',l:'WhatsApp',cmd:'WhatsApp kholo'},{e:'▶️',l:'YouTube',cmd:'YouTube kholo'},{e:'🎵',l:'Spotify',cmd:'Spotify kholo'},{e:'🗺️',l:'Maps',cmd:'Maps kholo'},{e:'🔦',l:'Torch',cmd:'Torch on karo'},{e:'📚',l:'Study',cmd:'Study mode on karo'},{e:'📋',l:'Routine',cmd:'Mera daily routine dikhao'}].map(a=>(
                   <button key={a.cmd} onClick={()=>send(a.cmd)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/8 text-white/55 text-[11px] hover:bg-blue-500/10 hover:border-blue-500/20 hover:text-white active:scale-95 transition-all">
                     {a.e} {a.l}
@@ -1368,7 +1368,7 @@ export default function ChatPage() {
             </div>
 
             {/* Smart time-based suggestions */}
-            <div className="grid grid-cols-2 gap-2 w-full max-w-[300px]">
+            <div className="grid grid-cols-2 gap-1.5 w-full max-w-[320px]">
               {(timeCtx?.suggestions || QUICK.map(q=>({icon:q.i, text:q.t, cmd:q.t}))).map((q,i)=>(
                 <button key={i} onClick={()=>send(q.cmd||q.t)}
                   className="text-left glass-card px-3 py-2.5 hover:border-blue-500/25 hover:bg-blue-500/5 transition-all text-xs text-slate-400 hover:text-slate-200 rounded-xl">
@@ -1380,7 +1380,7 @@ export default function ChatPage() {
             {freqCmds.length > 0 && (
               <div className="w-full max-w-[300px]">
                 <p className="text-[10px] text-slate-700 mb-1.5 text-center">⚡ Frequent commands</p>
-                <div className="flex flex-wrap gap-1.5 justify-center">
+                <div className="flex flex-wrap gap-1 justify-center">
                   {freqCmds.map((f, i) => (
                     <button key={i} onClick={()=>send(f.cmd)}
                       className="text-[11px] text-slate-500 border border-white/5 bg-white/[0.03] rounded-full px-2.5 py-1 hover:text-slate-300 hover:border-white/10 transition-all">
@@ -1422,7 +1422,7 @@ export default function ChatPage() {
 
       {/* Image preview */}
       {preview && (
-        <div className="px-3 py-2 border-t border-white/[0.06] flex items-center gap-3 shrink-0">
+        <div className="px-2 py-1.5 border-t border-white/[0.05] flex items-center gap-2 shrink-0">
           <img src={preview} alt="" className="h-10 w-10 rounded-lg object-cover border border-white/10"/>
           <span className="text-xs text-slate-500 flex-1">Image attached</span>
           <button onClick={()=>{setPreview(null);setImgB64(null);}}><X size={14} className="text-slate-600"/></button>

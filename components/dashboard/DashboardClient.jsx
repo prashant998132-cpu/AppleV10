@@ -186,15 +186,15 @@ export default function DashboardClient({ children, user, profile }) {
 
       {/* Mobile bottom nav */}
       <nav className="lg:hidden relative z-20 glass border-t border-white/5 safe-bottom shrink-0">
-        <div className="flex justify-around py-1.5 px-1">
+        <div className="flex justify-around py-1 px-1">
           {MOBILE_NAV.map(({ href, icon: Icon, label }) => {
             const active = href === '/' ? path === '/' : path.startsWith(href);
             return (
               <Link key={href} href={href}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all ${active ? 'text-blue-400' : 'text-slate-600'}`}>
-                <Icon size={18}/>
-                <span className="text-[10px]">{label}</span>
-                {active && <div className="w-1 h-1 bg-blue-400 rounded-full"/>}
+                className={`flex flex-col items-center gap-0 px-3 py-1 rounded-xl transition-all ${active ? 'text-blue-400' : 'text-slate-600'}`}>
+                <Icon size={17}/>
+                <span className="text-[9px] leading-tight mt-0.5">{label}</span>
+                {active && <div className="absolute bottom-0.5 w-1 h-1 bg-blue-400 rounded-full"/>}
               </Link>
             );
           })}
