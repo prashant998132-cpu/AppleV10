@@ -292,9 +292,9 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
   }
 
   return (
-    <div className={`flex ${isUser?'justify-end':'justify-start'} mb-1.5 px-1 msg-in`}>
+    <div className={`flex ${isUser?'justify-end':'justify-start'} mb-1 px-0.5 msg-in`}>
       {!isUser && (
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center mr-2.5 mt-0.5 shrink-0 shadow-[0_0_14px_rgba(26,86,219,0.3)]">
+        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center mr-2 mt-0.5 shrink-0">
           <span className="text-white font-black text-[10px]">J</span>
         </div>
       )}
@@ -325,7 +325,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
         )}
 
         {/* Meta bar */}
-        <div className="flex flex-wrap gap-1.5 items-center px-0.5">
+        <div className="flex gap-1 items-center px-0.5 overflow-x-auto no-scrollbar">
           {msg.agentsUsed?.slice(0,3).map(a=>(
             <span key={a} className="text-[10px] bg-blue-500/10 text-blue-400/80 border border-blue-500/15 px-1.5 py-0.5 rounded-full">{a.replace(/_/g,' ')}</span>
           ))}
@@ -363,23 +363,19 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
               )}
             </>
           )}
-          {msg.modelUsed && !isUser && (
-            <span className={`text-[10px] border px-1.5 py-0.5 rounded-full ${
-              msg.modelUsed === 'offline' || msg.modelUsed === 'keyword-fallback'
-                ? 'text-orange-400/80 border-orange-500/20 bg-orange-500/5'
-                : 'text-slate-800 border-white/5'
-            }`}>{msg.modelUsed === 'keyword-fallback' ? '⚠️ offline mode' : msg.modelUsed}</span>
+          {msg.modelUsed && !isUser && (msg.modelUsed === 'offline' || msg.modelUsed === 'keyword-fallback') && (
+            <span className="text-[9px] text-orange-400/80 border border-orange-500/20 bg-orange-500/5 px-1.5 py-0 rounded-full shrink-0">⚠️ offline</span>
           )}
-          <span className="text-[10px] text-slate-800 cursor-pointer hover:text-slate-500 transition-colors" title={new Date(msg.ts||Date.now()).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}>{new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}{msg.timing?` · ${(msg.timing/1000).toFixed(1)}s`:''}</span>
+          <span className="text-[9px] text-slate-800 shrink-0">{new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span>
         </div>
 
-        {/* Follow-up chips — single scrollable row */}
+        {/* Follow-up chips — tiny horizontal scroll */}
         {!isUser && !msg.streaming && msg.followUps?.length > 0 && (
-          <div className="flex gap-1 mt-1 overflow-x-auto no-scrollbar max-w-[92%] pb-0.5">
-            {msg.followUps.map(q=>(
+          <div className="flex gap-1 mt-0.5 overflow-x-auto no-scrollbar" style={{maxWidth:'92%'}}>
+            {msg.followUps.slice(0,3).map(q=>(
               <button key={q} onClick={()=>onFollowUp(q)}
-                className="shrink-0 text-[10px] text-blue-400/60 border border-blue-500/15 bg-blue-500/5 hover:bg-blue-500/10 hover:text-blue-300 px-2 py-0.5 rounded-lg transition-all whitespace-nowrap">
-                {q}
+                className="shrink-0 text-[9px] text-blue-400/50 border border-blue-500/10 px-1.5 py-0.5 rounded-md transition-all whitespace-nowrap active:bg-blue-500/10">
+                {q.length > 20 ? q.slice(0,18)+'…' : q}
               </button>
             ))}
           </div>
