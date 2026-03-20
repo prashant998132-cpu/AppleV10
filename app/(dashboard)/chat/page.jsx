@@ -246,6 +246,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
   const [compressed, setCompressed] = useState(null);
   const [compressing, setCompressing] = useState(false);
   const [feedback, setFeedback] = useState(null); // null | 'up' | 'down'
+  const [showActions, setShowActions] = useState(false); // tap to show
   const text = compressed || msg.content;
 
 
@@ -303,7 +304,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
         {msg.imageUrl && <div className="rounded-2xl overflow-hidden border border-white/10 mb-1 shadow-xl"><img src={msg.imageUrl} alt="" className="w-full max-w-[260px]"/></div>}
         {!isUser && <ThinkBubble tokens={msg.thinking}/>}
 
-        <div className={`px-3 py-2 text-[13px] leading-snug ${
+        <div onClick={()=>setShowActions(v=>!v)} className={`px-3 py-2 text-[13px] leading-snug cursor-pointer select-none ${
           isUser
             ? 'bg-gradient-to-br from-blue-600 to-blue-500 text-white rounded-[20px_20px_5px_20px] shadow-[0_4px_20px_rgba(59,130,246,0.22)]'
             : 'bg-white/[0.06] border border-white/[0.08] text-slate-100 rounded-[20px_20px_20px_5px]'
@@ -325,7 +326,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
         )}
 
         {/* Meta bar */}
-        <div className="flex gap-1 items-center px-0.5 overflow-x-auto no-scrollbar">
+        {showActions && <div className="flex gap-1 items-center px-0.5 overflow-x-auto no-scrollbar animate-in fade-in duration-150">
 
           {!isUser && !msg.streaming && (
             <>
@@ -361,7 +362,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
             <span className="text-[9px] text-orange-400/80 border border-orange-500/20 bg-orange-500/5 px-1.5 py-0 rounded-full shrink-0">⚠️ offline</span>
           )}
           <span className="text-[9px] text-slate-800 shrink-0">{new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span>
-        </div>
+        </div>}
 
         {/* Follow-up chips — tiny horizontal scroll */}
         {!isUser && !msg.streaming && msg.followUps?.length > 0 && (
@@ -1044,9 +1045,19 @@ export default function ChatPage() {
       }
 
       const history = msgs.slice(-12).map(m=>({role:m.role,content:m.content}));
+      // Get location if available (non-blocking)
+      let userLoc = null;
+      if (navigator.geolocation) {
+        try {
+          userLoc = await new Promise(res => navigator.geolocation.getCurrentPosition(
+            p => res({lat:p.coords.latitude.toFixed(4),lng:p.coords.longitude.toFixed(4)}),
+            () => res(null), {timeout:2000,maximumAge:300000}
+          ));
+        } catch {}
+      }
       const res = await fetch('/api/chat/stream',{
         method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({message:msg,history,conversationId:convId,imageBase64:b64,mode:finalMode}),
+        body:JSON.stringify({message:msg,history,conversationId:convId,imageBase64:b64,mode:finalMode,userLocation:userLoc}),
       });
 
       if(!res.ok) throw new Error(`HTTP ${res.status}`);

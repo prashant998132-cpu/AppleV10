@@ -17,7 +17,7 @@ export async function POST(req) {
   const reqStart = Date.now(); // LLM latency tracking
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
 
-  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto' } = await req.json();
+  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto', userLocation } = await req.json();
   if (!message?.trim() && !imageBase64) return new Response('Empty', { status: 400 });
 
   const keys = getKeys();
@@ -129,6 +129,16 @@ export async function POST(req) {
 
   // ── Parallel tool execution (was sequential, now concurrent) ─
   let toolCtx = '';
+
+  // ── ALWAYS inject real IST time + location context ──────────
+  const nowIST = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Kolkata'}));
+  const istHour = nowIST.getHours();
+  const istMin = nowIST.getMinutes();
+  const istTime12 = `${istHour % 12 || 12}:${String(istMin).padStart(2,'0')} ${istHour >= 12 ? 'PM' : 'AM'}`;
+  const istDate = nowIST.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const userCity = profile?.city?.split(',')[0]?.trim() || 'Rewa';
+  const locationStr = userLocation ? `GPS: ${userLocation.lat}, ${userLocation.lng} (${userCity})` : userCity;
+  toolCtx += `\n[CURRENT_CONTEXT: Abhi IST mein ${istTime12} baj rahe hain. Aaj ${istDate} hai. User ${locationStr} mein hai. Agar time/date/location poochha toh yahi batao — seedha, natural Hinglish mein. Format mat dikhaao jaise "[Utility: time...]" ya "[CURRENT_CONTEXT...]" — sirf natural reply do.]`;
   // Phone command pre-detection (fast regex — tells LLM what happened)
   if (/\b(wifi|bluetooth|torch|flashlight|hotspot|screenshot|mute|volume|brightness|dark.mode|dnd|study.mode|sleep.mode|gym.mode|drive.mode)\b/i.test(msgLow)) {
     toolCtx += '\n[PHONE_CMD_DETECTED: Tell user the action will be executed via MacroDroid. Keep reply short like "WiFi on kar diya" or "Karo, MacroDroid ke through chal raha hai"]';
