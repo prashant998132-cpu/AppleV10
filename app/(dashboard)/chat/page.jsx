@@ -326,25 +326,19 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
 
         {/* Meta bar */}
         <div className="flex gap-1 items-center px-0.5 overflow-x-auto no-scrollbar">
-          {msg.agentsUsed?.slice(0,3).map(a=>(
-            <span key={a} className="text-[10px] bg-blue-500/10 text-blue-400/80 border border-blue-500/15 px-1.5 py-0.5 rounded-full">{a.replace(/_/g,' ')}</span>
-          ))}
+
           {!isUser && !msg.streaming && (
             <>
               <CopyButton text={msg.content}/>
-              {msg.content?.length > 150 && (
-                <button onClick={()=>setShowC(s=>!s)} className="text-[10px] text-slate-700 hover:text-slate-400 flex items-center gap-0.5 transition-colors">
-                  <Minimize2 size={9}/>compress
-                </button>
-              )}
-              {voiceOn && <button onClick={()=>onSpeak(msg.content)} className="text-[10px] text-slate-700 hover:text-blue-400 transition-colors">🔊</button>}
+
+
               {!isUser && (
-                <div className="flex items-center gap-0.5 ml-1">
+                <div className="flex items-center gap-0.5">
                   <button onClick={()=>sendFeedback('up')} title="Helpful"
-                    className={`text-[10px] transition-colors ${feedback==='up'?'text-green-400':'text-slate-700 hover:text-green-400'}`}>👍</button>
+                    className={`text-[11px] transition-colors ${feedback==='up'?'text-green-400':'text-slate-700'}`}>👍</button>
                   <button onClick={()=>sendFeedback('down')} title="Not helpful"
-                    className={`text-[10px] transition-colors ${feedback==='down'?'text-red-400':'text-slate-700 hover:text-red-400'}`}>👎</button>
-                  <MessageReactions messageId={msg.id} onReact={handleReaction}/>
+                    className={`text-[11px] transition-colors ${feedback==='down'?'text-red-400':'text-slate-700'}`}>👎</button>
+
                   <button onClick={async()=>{
                     const isPinned = pinnedIds.has(msg.id);
                     await fetch('/api/messages/pin',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -371,10 +365,11 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
 
         {/* Follow-up chips — tiny horizontal scroll */}
         {!isUser && !msg.streaming && msg.followUps?.length > 0 && (
-          <div className="flex gap-1 mt-0.5 overflow-x-auto no-scrollbar" style={{maxWidth:'92%'}}>
+          <div className="flex gap-1 mt-0.5 overflow-x-scroll no-scrollbar" style={{maxWidth:"90%",flexWrap:"nowrap"}}>
             {msg.followUps.slice(0,3).map(q=>(
               <button key={q} onClick={()=>onFollowUp(q)}
-                className="shrink-0 text-[9px] text-blue-400/50 border border-blue-500/10 px-1.5 py-0.5 rounded-md transition-all whitespace-nowrap active:bg-blue-500/10">
+                style={{flexShrink:0,whiteSpace:"nowrap"}}
+                className="text-[9px] text-blue-400/50 border border-blue-500/10 px-1.5 py-0.5 rounded-md transition-all active:bg-blue-500/10">
                 {q.length > 20 ? q.slice(0,18)+'…' : q}
               </button>
             ))}
