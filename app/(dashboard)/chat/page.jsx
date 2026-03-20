@@ -1,4 +1,5 @@
 'use client';
+import WallpaperPicker, { ChatBackground } from '@/components/chat/WallpaperPicker';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { clientSpeak, stopCurrentAudio, speakWithEmotion } from '@/lib/ai/media-client';
 import { useClientCache } from '@/lib/cache/client-cache';
@@ -1147,6 +1148,7 @@ export default function ChatPage() {
 
   const QUICK = getQuickStarters(); // re-evaluated each render
   const [showCmdChips, setShowCmdChips] = useState(false);
+  const [showWallpaper, setShowWallpaper]   = useState(false);
   const curM  = MODES.find(m=>m.id===mode)||MODES[0];
   const showM = mode==='auto'&&detected ? MODES.find(m=>m.id===detected)||curM : curM;
   const isEmpty = msgs.length===0;
@@ -1164,7 +1166,9 @@ export default function ChatPage() {
   );
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-[#050810]">
+    <>
+    <ChatBackground>
+    <div className="h-full flex flex-col overflow-hidden" style={{background:"transparent"}}>
 
       {/* Search */}
       {searchOpen && <SearchPanel msgs={msgs} onClose={()=>setSearchOpen(false)} onJump={id=>{const el=msgRefs.current[id];el?.scrollIntoView({behavior:'smooth',block:'center'});}}/>}
@@ -1292,7 +1296,12 @@ export default function ChatPage() {
             {{'dark':'🔵','amoled':'⚫','soft':'🌫','green':'🟢','purple':'💜','sunset':'🌅'}[theme]||'🎨'}
           </button>
           <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Plus size={16}/></button>
-          <button onClick={logout} title="Logout" className="p-2 rounded-xl text-slate-700 hover:text-red-400 transition-colors lg:hidden"><LogOut size={15}/></button>
+          <button onClick={()=>setShowWallpaper(true)}
+            title="Chat Wallpaper — background badlo"
+            className="p-2 rounded-xl text-slate-700 hover:text-purple-400 transition-colors text-sm">
+            🎨
+          </button>
+          <button onClick={logout} title="Logout"  className="p-2 rounded-xl text-slate-700 hover:text-red-400 transition-colors lg:hidden"><LogOut size={15}/></button>
         </div>
       </div>
 
@@ -1464,5 +1473,15 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+    </ChatBackground>
+    {showWallpaper && (
+      <WallpaperPicker
+        onClose={() => setShowWallpaper(false)}
+        onWallpaperChange={(changes) => {
+          window.dispatchEvent(new CustomEvent('jarvis-wallpaper-change', { detail: changes }));
+        }}
+      />
+    )}
+    </>
   );
 }

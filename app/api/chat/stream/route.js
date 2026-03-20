@@ -277,8 +277,14 @@ export async function POST(req) {
             }
 
             usedProvider = providerId;
-            streamSuccess = true;
-            break; // Success — stop trying fallbacks
+            // Only mark success if we actually got content
+            if (fullReply.trim().length > 0) {
+              streamSuccess = true;
+              break; // Success — stop trying fallbacks
+            } else {
+              console.warn(`[smart-router] ${providerId} returned empty reply, trying next`);
+              fullReply = ''; // reset for next provider
+            }
 
           } catch (provErr) {
             console.warn(`[smart-router] ${providerId} failed:`, provErr.message);
