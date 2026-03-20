@@ -1,5 +1,44 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Component } from 'react';
+
+// ── Error Boundary — shows EXACT error on screen ──────────────
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) {
+    console.error('[JARVIS CRASH]', error?.message, info?.componentStack?.slice(0, 200));
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding:'20px',background:'#050810',color:'white',minHeight:'100vh',fontFamily:'monospace'}}>
+          <div style={{background:'#1a0000',border:'1px solid #ff4444',borderRadius:'12px',padding:'16px',marginBottom:'16px'}}>
+            <p style={{color:'#ff6666',fontWeight:'bold',fontSize:'14px',marginBottom:'8px'}}>🔴 JARVIS Crash — Error:</p>
+            <p style={{color:'#ffaaaa',fontSize:'12px',wordBreak:'break-all'}}>
+              {this.state.error?.message || 'Unknown error'}
+            </p>
+          </div>
+          <div style={{background:'#000a1a',border:'1px solid #1a56db',borderRadius:'12px',padding:'12px',marginBottom:'12px'}}>
+            <p style={{color:'#4488ff',fontSize:'11px',marginBottom:'4px'}}>Stack trace:</p>
+            <p style={{color:'#6699cc',fontSize:'10px',wordBreak:'break-all',whiteSpace:'pre-wrap'}}>
+              {this.state.error?.stack?.slice(0, 500) || 'No stack'}
+            </p>
+          </div>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
+            style={{background:'#1a56db',color:'white',border:'none',borderRadius:'8px',padding:'12px 24px',fontSize:'14px',cursor:'pointer',width:'100%'}}>
+            🔄 Reload JARVIS
+          </button>
+          <p style={{color:'#444',fontSize:'10px',marginTop:'12px',textAlign:'center'}}>
+            Yeh error message screenshot lekar Claude ko bhejo — crash fix ho jayega
+          </p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 import { BiometricLockScreen } from '@/components/security/BiometricLock';
 import { isAppLocked, touchActivity, isBiometricLockEnabled } from '@/lib/security/biometric';
 import { startBackgroundAI, scheduleStudyNotifications, registerPeriodicSync } from '@/lib/ai/background-service';
@@ -85,6 +124,7 @@ export default function DashboardClient({ children, user, profile }) {
   }
 
   return (
+    <ErrorBoundary>
     <div className="h-screen w-screen flex flex-col bg-[#050810] overflow-hidden safe-top">
       {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
@@ -188,5 +228,6 @@ export default function DashboardClient({ children, user, profile }) {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }
