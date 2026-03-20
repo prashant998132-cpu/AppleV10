@@ -179,27 +179,22 @@ export default function DashboardClient({ children, user, profile }) {
         </aside>
 
         {/* Page content */}
+        {/* Floating hamburger for mobile — non-chat pages */}
+        {path !== '/chat' && (
+          <button onClick={()=>setSidebar(true)}
+            className="lg:hidden fixed top-2.5 right-3 z-40 w-9 h-9 bg-[#0a0f1a]/90 border border-white/10 rounded-xl flex flex-col gap-[3.5px] items-center justify-center shadow-lg backdrop-blur-sm">
+            <span className="block w-4 h-[1.5px] bg-slate-400 rounded-full"/>
+            <span className="block w-4 h-[1.5px] bg-slate-400 rounded-full"/>
+            <span className="block w-2.5 h-[1.5px] bg-slate-400 rounded-full"/>
+          </button>
+        )}
+
         <main className="flex-1 overflow-hidden h-full page-enter">
           {children}
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
-      <nav className="lg:hidden relative z-20 glass border-t border-white/5 safe-bottom shrink-0">
-        <div className="flex justify-around py-0.5 px-1">
-          {MOBILE_NAV.map(({ href, icon: Icon, label }) => {
-            const active = href === '/' ? path === '/' : path.startsWith(href);
-            return (
-              <Link key={href} href={href}
-                className={`flex flex-col items-center gap-0 px-3 py-0.5 rounded-xl transition-all ${active ? 'text-blue-400' : 'text-slate-600'}`}>
-                <Icon size={16}/>
-                <span className="text-[8px] leading-tight">{label}</span>
-                {active && <div className="w-1 h-0.5 bg-blue-400 rounded-full mt-0.5"/>}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+
 
       {/* Mobile sidebar overlay */}
       {sidebar && (

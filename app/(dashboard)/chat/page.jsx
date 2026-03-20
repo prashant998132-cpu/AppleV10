@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import WallpaperPicker, { ChatBackground } from '@/components/chat/WallpaperPicker';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { clientSpeak, stopCurrentAudio, speakWithEmotion } from '@/lib/ai/media-client';
@@ -372,12 +373,12 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
           <span className="text-[10px] text-slate-800 cursor-pointer hover:text-slate-500 transition-colors" title={new Date(msg.ts||Date.now()).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}>{new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}{msg.timing?` · ${(msg.timing/1000).toFixed(1)}s`:''}</span>
         </div>
 
-        {/* Follow-up suggestions */}
+        {/* Follow-up chips — single scrollable row */}
         {!isUser && !msg.streaming && msg.followUps?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1 max-w-[90%]">
+          <div className="flex gap-1 mt-1 overflow-x-auto no-scrollbar max-w-[92%] pb-0.5">
             {msg.followUps.map(q=>(
               <button key={q} onClick={()=>onFollowUp(q)}
-                className="text-[11px] text-blue-400/70 border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 hover:text-blue-300 px-2.5 py-1 rounded-xl transition-all">
+                className="shrink-0 text-[10px] text-blue-400/60 border border-blue-500/15 bg-blue-500/5 hover:bg-blue-500/10 hover:text-blue-300 px-2 py-0.5 rounded-lg transition-all whitespace-nowrap">
                 {q}
               </button>
             ))}
@@ -510,6 +511,7 @@ export default function ChatPage() {
   const [convs, setConvs]       = useState([]);  // conversation list
   const [phase, setPhase]       = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [navOpen, setNavOpen]         = useState(false);
   const [resuming, setResuming] = useState(true);   // auto-resume last chat
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ]   = useState('');
@@ -1188,6 +1190,51 @@ export default function ChatPage() {
       {/* History Sidebar */}
       <HistorySidebar open={historyOpen} onClose={()=>setHistoryOpen(false)} onLoad={loadConversation} onDelete={deleteConversation}/>
 
+      {/* ── Slide-in Nav Menu ─────────────────────────────────── */}
+      {navOpen && (
+        <div className="fixed inset-0 z-[9990]" onClick={()=>setNavOpen(false)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
+          <div className="absolute right-0 top-0 bottom-0 w-60 bg-[#080c14] border-l border-white/[0.07] flex flex-col"
+            onClick={e=>e.stopPropagation()}>
+            {/* Nav header */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center">
+                  <span className="text-white font-black text-xs">J</span>
+                </div>
+                <span className="font-bold text-white text-sm">JARVIS</span>
+              </div>
+              <button onClick={()=>setNavOpen(false)} className="text-slate-500 hover:text-white p-1">✕</button>
+            </div>
+            {/* Nav links */}
+            <nav className="flex-1 overflow-y-auto py-2 no-scrollbar">
+              {[
+                { href:'/',           icon:'⚡', label:'Dashboard'  },
+                { href:'/chat',       icon:'💬', label:'Chat'       },
+                { href:'/phone',      icon:'📱', label:'Phone'      },
+                { href:'/studio',     icon:'✨', label:'Studio'     },
+                { href:'/analytics',  icon:'📊', label:'Analytics'  },
+                { href:'/goals',      icon:'🎯', label:'Goals'      },
+                { href:'/memory',     icon:'🧠', label:'Memory'     },
+                { href:'/knowledge',  icon:'📚', label:'Knowledge'  },
+                { href:'/automation', icon:'⚙️', label:'Automation' },
+                { href:'/settings',   icon:'🔧', label:'Settings'   },
+              ].map(({ href, icon, label }) => (
+                <Link key={href} href={href} onClick={()=>setNavOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm">
+                  <span className="text-base w-6 text-center">{icon}</span>
+                  <span>{label}</span>
+                </Link>
+              ))}
+            </nav>
+            {/* Footer */}
+            <div className="px-4 py-3 border-t border-white/[0.06]">
+              <p className="text-[10px] text-slate-700 text-center">apple-v10.vercel.app</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Daily Morning Brief */}
       <DailyBrief onBriefMessage={(msg) => {
         const briefMsg = { id: `brief${Date.now()}`, role:'assistant', content: msg, ts: Date.now(), mode:'flash' };
@@ -1297,7 +1344,13 @@ export default function ChatPage() {
             className="p-2 rounded-xl text-slate-700 hover:text-purple-400 transition-colors text-sm">
             🎨
           </button>
-          <button onClick={logout} title="Logout"  className="p-2 rounded-xl text-slate-700 hover:text-red-400 transition-colors lg:hidden"><LogOut size={15}/></button>
+          <button onClick={()=>setNavOpen(true)}
+            title="Menu"
+            className="p-1.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/8 transition-all flex flex-col gap-[3px] items-center justify-center w-8 h-8 lg:hidden">
+            <span className="block w-4 h-[1.5px] bg-current rounded-full"/>
+            <span className="block w-4 h-[1.5px] bg-current rounded-full"/>
+            <span className="block w-2.5 h-[1.5px] bg-current rounded-full"/>
+          </button>
         </div>
       </div>
 
