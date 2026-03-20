@@ -238,7 +238,7 @@ function CopyButton({ text }) {
   );
 }
 
-function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, setPinnedMsgs, msgs, exportChat, titleGenerated, setTitleGenerated, setConvs, convId }) {
+function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, setPinnedMsgs, msgs, exportChat, titleGenerated, setTitleGenerated, convId }) {
   const isUser = msg.role === 'user';
   const [showC, setShowC] = useState(false);
   const [compressed, setCompressed] = useState(null);
@@ -506,6 +506,7 @@ export default function ChatPage() {
   const [imgB64, setImgB64]     = useState(null);
   const [cameraOn, setCameraOn] = useState(false);
   const [convId, setConvId]     = useState(null);
+  const [convs, setConvs]       = useState([]);  // conversation list
   const [phase, setPhase]       = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
   const [resuming, setResuming] = useState(true);   // auto-resume last chat
@@ -1386,7 +1387,7 @@ export default function ChatPage() {
             {msgs.map(m=>(
               m.streaming&&m.content===''
                 ? <TypingDots key={m.id} mode={m.mode}/>
-                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} setConvs={setConvs} convId={convId}/></div>
+                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId}/></div>
             ))}
             {loading&&<TypingDots mode={mode==='auto'?(detected||'flash'):mode}/>}
             {/* Workflow Progress */}
