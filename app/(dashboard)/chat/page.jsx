@@ -1252,14 +1252,10 @@ export default function ChatPage() {
                 {newBadge.emoji} Badge Mila: {newBadge.name}! 🎉
               </div>
             )}
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1.5">
-                <WakeWordIndicator active={wakeWordOn} wakeDetected={wakeDetected}/>
-                <p className="text-[10px] text-slate-600">{phase||(listening?'🎤 Sun raha hoon...':speaking?'🔊 Bol raha hoon...':`${showM.label} · ready`)}</p>
-              </div>
-              {convMode !== 'casual' && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-medium capitalize">{convMode}</span>
-              )}
+            <div className="flex items-center gap-1">
+              <WakeWordIndicator active={wakeWordOn} wakeDetected={wakeDetected}/>
+              {(listening||speaking) && <p className="text-[9px] text-slate-600">{listening?'🎤':'🔊'}</p>}
+              {convMode !== 'casual' && <span className="text-[9px] px-1 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-medium capitalize">{convMode}</span>}
             </div>
           </div>
         </div>
@@ -1309,7 +1305,7 @@ export default function ChatPage() {
       <div className="px-2 py-0.5 flex gap-1 overflow-x-auto shrink-0 no-scrollbar items-center">
         {MODES.map(m=>(
           <button key={m.id} onClick={()=>setMode(m.id)}
-            className={`shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${mode===m.id?m.bg+' '+m.text+' border-current/30':'bg-transparent border-transparent text-slate-700 hover:text-slate-500'}`}>
+            className={`shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-medium border transition-all ${mode===m.id?m.bg+' '+m.text+' border-current/30':'bg-transparent border-transparent text-slate-700 hover:text-slate-500'}`}>
             {m.label}
             {mode==='auto'&&detected===m.id&&m.id!=='auto'&&<span className="inline-block w-1 h-1 rounded-full bg-current animate-pulse ml-1"/>}
           </button>
@@ -1321,7 +1317,7 @@ export default function ChatPage() {
 
       {/* Quick Command Chips — chat se directly actions */}
       {showCmdChips && (
-        <div className="px-2 py-1.5 flex gap-1.5 overflow-x-auto shrink-0 no-scrollbar border-b border-white/5">
+        <div className="px-2 py-1 flex gap-1 overflow-x-auto shrink-0 no-scrollbar border-b border-white/5">
           {JARVIS_QUICK_CMDS.map(q => (
             <button key={q.cmd} onClick={()=>send(q.cmd)}
               className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70 text-[11px] hover:bg-white/10 hover:text-white active:scale-95 transition-all">
@@ -1334,7 +1330,7 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-2 py-1 no-scrollbar jarvis-scroll">
         {isEmpty ? (
-          <div className="flex flex-col items-center gap-2 pt-2 pb-1">
+          <div className="flex flex-col items-center gap-1.5 pt-1 pb-0">
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-blue-500/15 animate-ping opacity-40"/>
               <div className={`w-[56px] h-[56px] rounded-full flex items-center justify-center orb-pulse transition-all duration-500 ${
@@ -1350,17 +1346,17 @@ export default function ChatPage() {
             <DynamicGreeting/>
             {/* Proactive Alerts */}
             {proAlerts.map((alert, i) => (
-              <div key={i} className="w-full max-w-[300px] bg-orange-500/10 border border-orange-500/20 rounded-xl px-3 py-2 flex items-center gap-2">
+              <div key={i} className="w-full max-w-[320px] bg-orange-500/10 border border-orange-500/20 rounded-lg px-2.5 py-1.5 flex items-center gap-2">
                 <span>{alert.icon}</span>
                 <p className="text-xs text-orange-300 flex-1">{alert.message}</p>
               </div>
             ))}
             {/* App Quick Launch — tap to open */}
             <div className="w-full max-w-[300px]">
-              <p className="text-[10px] text-slate-700 mb-1.5 text-center">📱 Tap karo — app khulega</p>
+              <p className="text-[9px] text-slate-800 mb-1 text-center">📱 Tap to open</p>
               <div className="flex flex-wrap gap-1 justify-center">
                 {[{e:'📸',l:'Instagram',cmd:'Instagram kholo'},{e:'💬',l:'WhatsApp',cmd:'WhatsApp kholo'},{e:'▶️',l:'YouTube',cmd:'YouTube kholo'},{e:'🎵',l:'Spotify',cmd:'Spotify kholo'},{e:'🗺️',l:'Maps',cmd:'Maps kholo'},{e:'🔦',l:'Torch',cmd:'Torch on karo'},{e:'📚',l:'Study',cmd:'Study mode on karo'},{e:'📋',l:'Routine',cmd:'Mera daily routine dikhao'}].map(a=>(
-                  <button key={a.cmd} onClick={()=>send(a.cmd)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/8 text-white/55 text-[11px] hover:bg-blue-500/10 hover:border-blue-500/20 hover:text-white active:scale-95 transition-all">
+                  <button key={a.cmd} onClick={()=>send(a.cmd)} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-white/50 text-[10px] hover:bg-blue-500/10 hover:border-blue-500/20 hover:text-white active:scale-95 transition-all">
                     {a.e} {a.l}
                   </button>
                 ))}
@@ -1371,7 +1367,7 @@ export default function ChatPage() {
             <div className="grid grid-cols-2 gap-1.5 w-full max-w-[320px]">
               {(timeCtx?.suggestions || QUICK.map(q=>({icon:q.i, text:q.t, cmd:q.t}))).map((q,i)=>(
                 <button key={i} onClick={()=>send(q.cmd||q.t)}
-                  className="text-left glass-card px-3 py-2.5 hover:border-blue-500/25 hover:bg-blue-500/5 transition-all text-xs text-slate-400 hover:text-slate-200 rounded-xl">
+                  className="text-left glass-card px-2.5 py-2 hover:border-blue-500/25 hover:bg-blue-500/5 transition-all text-[11px] text-slate-400 hover:text-slate-200 rounded-xl">
                   <span className="text-base mr-1.5">{q.icon}</span>{q.text}
                 </button>
               ))}
@@ -1453,11 +1449,11 @@ export default function ChatPage() {
           {/* Export chat button */}
           {msgs.length > 2 && (
             <button onClick={exportChat} title="Chat export karo (Ctrl+E)"
-              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-white/[0.05] border border-white/[0.08] text-slate-600 hover:text-green-400 transition-all">
+              className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-white/[0.05] border border-white/[0.08] text-slate-600 hover:text-green-400 transition-all">
               <Download size={14}/>
             </button>
           )}
-          <button onClick={() => setOcrOpen(true)} title="Screen Reader" className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:text-purple-300 transition-all">
+          <button onClick={() => setOcrOpen(true)} title="Screen Reader" className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:text-purple-300 transition-all">
             <span className="text-sm leading-none">🔍</span>
           </button>
           <button onClick={startCamera} className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${preview?'bg-green-600':'bg-white/[0.05] border border-white/[0.08] text-slate-600 hover:text-slate-300'}`}>
@@ -1467,7 +1463,7 @@ export default function ChatPage() {
             {listening?<MicOff size={15} className="text-white"/>:<Mic size={15}/>}
           </button>
           <button onClick={()=>send()} disabled={(!input.trim()&&!preview)||loading}
-            className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center shadow-[0_0_18px_rgba(59,130,246,0.4)] disabled:opacity-25 disabled:shadow-none transition-all shrink-0">
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center shadow-[0_0_18px_rgba(59,130,246,0.4)] disabled:opacity-25 disabled:shadow-none transition-all shrink-0">
             <Send size={14} className="text-white"/>
           </button>
         </div>
