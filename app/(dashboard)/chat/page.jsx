@@ -1192,6 +1192,9 @@ export default function ChatPage() {
       {/* History Sidebar */}
       <HistorySidebar open={historyOpen} onClose={()=>setHistoryOpen(false)} onLoad={loadConversation} onDelete={deleteConversation}/>
 
+      {/* ── Daily Info Bar — Gold/Silver/Weather/Battery ───────── */}
+      <InfoBar/>
+
       {/* ── Plus Menu Popup ───────────────────────────────────── */}
       {plusOpen && (
         <div className="fixed inset-0 z-[9980]" onClick={()=>setPlusOpen(false)}>
@@ -1392,7 +1395,7 @@ export default function ChatPage() {
 
       {/* Header */}
       {/* ── Chat Header — Image 2 style ──────────────────────── */}
-      <div className="px-3 py-2 flex items-center gap-2 border-b border-white/[0.05] shrink-0">
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-white/10 shrink-0 bg-black/20">
         {/* Left: History + Avatar + Name */}
         <button onClick={()=>setHistoryOpen(true)} className="text-slate-600 hover:text-slate-400 transition-colors shrink-0">
           <History size={16}/>
