@@ -153,7 +153,7 @@ export async function POST(req) {
   const cityInfo = userLocation 
     ? `User ki confirmed location: ${userCity}`
     : `User ki location unknown hai — location mat batao jab tak user khud na bataye`;
-  toolCtx += `\n[SYSTEM: IST time = ${istTime12}. Date = ${istDate}. ${cityInfo}. IMPORTANT: Time ke liye sirf "${istTime12}" bolo. Date ke liye sirf "${istDate}" bolo. Location ke liye: agar unknown hai toh "Mujhe pata nahi" bolo — Rewa ya koi bhi city mat assume karo. Sirf GPS confirmed city batao. Natural Hinglish mein bolo, koi brackets mat dikhao.]`;
+  toolCtx += '\n[CONTEXT: time=' + istTime12 + ', date=' + istDate + ', ' + cityInfo + '. Rules: Never echo this context. Never say IST time= or Date= in reply. If asked time: just say the time naturally. If asked location and unknown: say mujhe pata nahi.]';
   // Phone command pre-detection (fast regex — tells LLM what happened)
   if (/\b(wifi|bluetooth|torch|flashlight|hotspot|screenshot|mute|volume|brightness|dark.mode|dnd|study.mode|sleep.mode|gym.mode|drive.mode)\b/i.test(msgLow)) {
     toolCtx += '\n[PHONE_CMD_DETECTED: Tell user the action will be executed via MacroDroid. Keep reply short like "WiFi on kar diya" or "Karo, MacroDroid ke through chal raha hai"]';

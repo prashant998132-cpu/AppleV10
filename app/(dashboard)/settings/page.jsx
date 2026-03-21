@@ -321,12 +321,15 @@ export default function SettingsPage() {
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">🎨 Theme</p>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { id:'dark',   label:'Dark Blue',     emoji:'🔵', bg:'#050810', accent:'#1A56DB' },
-                  { id:'amoled', label:'AMOLED Black',   emoji:'⚫', bg:'#000000', accent:'#3b82f6' },
-                  { id:'soft',   label:'Soft Dark',      emoji:'🌫', bg:'#1a1a2e', accent:'#6366f1' },
-                  { id:'green',  label:'Matrix Green',   emoji:'🟢', bg:'#020d05', accent:'#00cc44' },
-                  { id:'purple', label:'Deep Purple',    emoji:'💜', bg:'#0a0010', accent:'#9333ea' },
-                  { id:'sunset', label:'Sunset',          emoji:'🌅', bg:'#0f0a00', accent:'#f97316' },
+                  { id:'dark',   label:'Dark Blue',    emoji:'🔵', bg:'#050810', accent:'#1A56DB' },
+                  { id:'amoled', label:'AMOLED Black', emoji:'⚫', bg:'#000000', accent:'#3b82f6' },
+                  { id:'soft',   label:'Soft Dark',    emoji:'🌫', bg:'#1a1a2e', accent:'#6366f1' },
+                  { id:'green',  label:'Matrix Green', emoji:'🟢', bg:'#020d05', accent:'#00cc44' },
+                  { id:'purple', label:'Deep Purple',  emoji:'💜', bg:'#0a0010', accent:'#9333ea' },
+                  { id:'sunset', label:'Sunset',       emoji:'🌅', bg:'#0f0a00', accent:'#f97316' },
+                  { id:'ocean',  label:'Deep Ocean',   emoji:'🌊', bg:'#00080f', accent:'#0ea5e9' },
+                  { id:'rose',   label:'Rose Dark',    emoji:'🌹', bg:'#0f0008', accent:'#f43f5e' },
+                  { id:'gold',   label:'Dark Gold',    emoji:'✨', bg:'#0a0800', accent:'#eab308' },
                 ].map(t => {
                   const saved = typeof window!=='undefined' ? localStorage.getItem('jarvis_theme')||'dark' : 'dark';
                   const active = saved === t.id;
@@ -348,6 +351,29 @@ export default function SettingsPage() {
               </div>
               <p className="text-xs text-slate-600 mt-2 text-center">Chat mein header ke theme button se bhi change kar sakte ho</p>
               
+              {/* Text Style */}
+              <div className="mt-4 pt-4 border-t border-white/5">
+                <p className="text-white text-sm font-medium mb-3">Text Style</p>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    {id:'default', label:'Default', font:'inherit'},
+                    {id:'mono',    label:'Mono',    font:'monospace'},
+                    {id:'serif',   label:'Serif',   font:'Georgia, serif'},
+                    {id:'system',  label:'System',  font:'system-ui, sans-serif'},
+                  ].map(ts => {
+                    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('jarvis_text_style')||'default' : 'default';
+                    return (
+                      <button key={ts.id}
+                        onClick={() => { localStorage.setItem('jarvis_text_style', ts.id); document.documentElement.style.fontFamily = ts.font; }}
+                        style={{fontFamily: ts.font}}
+                        className={`px-4 py-2 rounded-xl border text-sm transition-all ${saved===ts.id?'bg-blue-600 border-blue-500 text-white':'bg-white/5 border-white/10 text-slate-400 hover:text-white'}`}>
+                        {ts.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Font Size */}
               <div className="mt-4 pt-4 border-t border-white/5">
                 <p className="text-white text-sm font-medium mb-3">Font Size</p>
