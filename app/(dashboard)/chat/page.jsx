@@ -1,4 +1,5 @@
 'use client';
+import Sounds from '@/lib/sound/sounds';
 import Link from 'next/link';
 import WallpaperPicker, { ChatBackground } from '@/components/chat/WallpaperPicker';
 import InfoBar from '@/components/chat/InfoBar';
@@ -155,7 +156,7 @@ function MdContent({ text }) {
         out.push(
           <div key={out.length} className="my-2 rounded-xl overflow-hidden border border-white/10">
             {codeLang && <div className="px-3 py-1 bg-white/5 text-[10px] text-slate-500 font-mono">{codeLang}</div>}
-            <pre className="p-3 bg-black/40 text-green-300 text-xs font-mono overflow-x-auto whitespace-pre leading-relaxed">{code}</pre>
+            <pre className="p-3 bg-black/50 border border-white/10 text-green-300 text-[11px] font-mono overflow-x-auto whitespace-pre rounded-xl leading-relaxed">{code}</pre>
           </div>
         );
         codeBlock = false; codeLang = ''; codeLines = [];
@@ -306,7 +307,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
 
         <div onClick={()=>setShowActions(v=>!v)} className={`px-3 py-2 text-[13px] leading-snug cursor-pointer select-none ${
           isUser
-            ? 'bg-gradient-to-br from-blue-600 to-blue-500 text-white rounded-[20px_20px_5px_20px] shadow-[0_4px_20px_rgba(59,130,246,0.22)]'
+            ? 'bg-gradient-to-br from-blue-600 to-blue-500 text-white font-medium rounded-[20px_20px_5px_20px] shadow-[0_4px_20px_rgba(59,130,246,0.22)]'
             : 'bg-white/[0.06] border border-white/[0.08] text-slate-100 rounded-[20px_20px_20px_5px]'
         }`}>
           {compressing
@@ -361,7 +362,10 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
           {msg.modelUsed && !isUser && (msg.modelUsed === 'offline' || msg.modelUsed === 'keyword-fallback') && (
             <span className="text-[9px] text-orange-400/80 border border-orange-500/20 bg-orange-500/5 px-1.5 py-0 rounded-full shrink-0">⚠️ offline</span>
           )}
-          <span className="text-[9px] text-slate-800 shrink-0">{new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</span>
+          <span className="text-[9px] text-slate-700 shrink-0 flex items-center gap-0.5">
+            {new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
+            {msg.role==='user' && <span className="text-blue-400/60 text-[10px]">✓</span>}
+          </span>
         </div>}
 
         {/* Follow-up chips — tiny horizontal scroll */}
@@ -885,11 +889,24 @@ export default function ChatPage() {
 
   async function send(text=input, modeOvr=null) {
     const msg=text?.trim(); if((!msg&&!imgB64)||loading) return;
-    setInput(''); navigator.vibrate?.(15);
+    setInput(''); navigator.vibrate?.([10]); Sounds.sent();
 
     // Track usage for smart suggestions
     trackUsage(msg);
     setFreqCmds(getFrequentCommands(4));
+    // Track study streak
+    if (/neet|study|padhai|physics|biology|chemistry|revision|mcq|ncert/i.test(msg)) {
+      try {
+        const data = JSON.parse(localStorage.getItem('jarvis_study_streak') || '{}');
+        const today = new Date().toDateString();
+        if (data.lastDate !== today) {
+          const yesterday = new Date(Date.now() - 86400000).toDateString();
+          data.streak = data.lastDate === yesterday ? (data.streak || 0) + 1 : 1;
+          data.lastDate = today;
+          localStorage.setItem('jarvis_study_streak', JSON.stringify(data));
+        }
+      } catch {}
+    }
 
     // ── STEP 0: Chat Command Engine — highest priority ────────
     // Handles: app open, theme change, WhatsApp msg, routine, alarm, search, settings
@@ -921,7 +938,18 @@ export default function ChatPage() {
         if (result.handled) {
           const cmdReply = { id: `cmd${Date.now()}`, role: 'assistant', content: result.response, streaming: false, ts: Date.now(), mode: 'flash', modelUsed: '⚡ instant' };
           setMsgs(p => [...p, cmdReply]);
-          speak(result.response);
+          if (result.response && result.response.length < 200) speak(result.response);
+          return;
+        }
+        // neet_schedule type — show formatted message
+        if (result.type === 'neet_schedule' && result.message) {
+          const schedMsg = { id: `ns${Date.now()}`, role: 'assistant', content: result.message, streaming: false, ts: Date.now(), mode: 'flash', modelUsed: '📚 NEET' };
+          setMsgs(p => [...p, schedMsg]);
+          return;
+        }
+        if (result.type === 'timer' && result.message) {
+          const timerMsg = { id: `t${Date.now()}`, role: 'assistant', content: result.message, streaming: false, ts: Date.now(), mode: 'flash', modelUsed: '⏰ timer' };
+          setMsgs(p => [...p, timerMsg]);
           return;
         }
         // Not handled by command engine — remove user msg, fall through to AI
@@ -1093,7 +1121,7 @@ export default function ChatPage() {
             } else if(d.type==='thinking'){
               thinkBuffer+=d.token;
               setMsgs(p=>p.map(m=>m.id===aiId?{...m,thinking:thinkBuffer}:m));
-            } else if(d.type==='done'){
+            } else if(d.type==='done'){ Sounds.received();
               if(d.conversationId) setConvId(d.conversationId);
               // v10.1: Use server-side follow-up chips if available
               const serverFups = d.followUps || [];
@@ -1422,9 +1450,15 @@ export default function ChatPage() {
         </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-black text-white tracking-wide">JARVIS</p>
-            <p className="text-[10px] text-slate-500">
-              Prashant · {mode}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-[10px] text-slate-500">Prashant · {mode}</p>
+              {typeof navigator !== 'undefined' && !navigator.onLine && (
+                <span className="text-[9px] bg-orange-500/20 text-orange-400 border border-orange-500/30 px-1.5 py-0.5 rounded-full">Offline</span>
+              )}
+              {(loading || msgs.some(m=>m.streaming)) && (
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"/>
+              )}
+            </div>
             {newBadge && (
               <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-yellow-500/90 text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg animate-bounce whitespace-nowrap">
                 {newBadge.emoji} Badge Mila: {newBadge.name}! 🎉
@@ -1445,6 +1479,11 @@ export default function ChatPage() {
             <button onClick={()=>{stopCurrentAudio();setSpeaking(false);setVoiceOn(v=>!v);}}
               className={`p-1.5 rounded-full transition-all ${voiceOn||speaking?'text-blue-400':'text-slate-600'}`}>
               {voiceOn||speaking?<Volume2 size={15}/>:<VolumeX size={15}/>}
+            </button>
+            <button onClick={()=>{ const m=Sounds.toggleMute(); navigator.vibrate?.([5]); }}
+              title="UI sounds toggle"
+              className="p-1.5 rounded-full text-slate-700 hover:text-slate-400 transition-all text-[11px]">
+              🔈
             </button>
             {/* Search */}
             <button onClick={()=>setSearchOpen(true)} className="p-1.5 rounded-full text-slate-600 hover:text-white transition-all">
@@ -1483,20 +1522,32 @@ export default function ChatPage() {
 
             {/* ── Clock + Date ─────────────────────────────── */}
             <div className="flex flex-col items-center pt-6 pb-3 select-none">
-              <div className="text-[56px] font-black text-white tracking-tight leading-none tabular-nums">
-                {new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:true}).split(' ')[0]}
-                <span className="text-2xl font-medium text-white/50 ml-2">
-                  {new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:true}).split(' ')[1]?.toLowerCase()}
-                </span>
-              </div>
-              <p className="text-slate-500 text-sm mt-1">
-                {new Date().toLocaleDateString('hi-IN',{timeZone:'Asia/Kolkata',weekday:'short',day:'numeric',month:'long'})}
-              </p>
+              <LiveClock/>
               <p className="text-slate-400 text-base mt-2 font-medium">
                 {(()=>{const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();return h<5?'Raat ko jaaga? 🌙':h<12?'Kya scene hai, Prashant? 👋':h<17?'Good afternoon, Prashant ☀️':h<21?'Good evening, Prashant 🌇':'Raat ka mood kya hai? 🌙';})()}
               </p>
-              {/* NEET countdown */}
-              {(()=>{const d=Math.max(0,Math.round((new Date('2026-05-03')-new Date())/86400000));return d>0?(<div className="mt-2 px-4 py-2 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center gap-2"><span className="text-lg">📚</span><div><p className="text-[11px] text-blue-300 font-bold">NEET 2026 — {d} din baaki</p><p className="text-[10px] text-slate-600">3 May 2026 · Padhte raho!</p></div></div>):null;})()}
+              {/* NEET countdown + progress */}
+              {(()=>{
+                const d=Math.max(0,Math.round((new Date('2026-05-03')-new Date())/86400000));
+                const total=365; // roughly 1 year prep
+                const done=Math.max(0,total-d);
+                const pct=Math.round((done/total)*100);
+                return d>0?(
+                  <div className="mt-2 w-full max-w-[300px] bg-blue-600/10 border border-blue-500/20 rounded-2xl px-4 py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">📚</span>
+                        <p className="text-[12px] text-blue-300 font-bold">NEET 2026</p>
+                      </div>
+                      <p className="text-[11px] text-blue-400 font-black">{d} din</p>
+                    </div>
+                    <div className="w-full bg-white/5 rounded-full h-1.5">
+                      <div className="bg-gradient-to-r from-blue-600 to-cyan-500 h-1.5 rounded-full transition-all" style={{width:`${Math.min(pct,100)}%`}}/>
+                    </div>
+                    <p className="text-[10px] text-slate-600 mt-1">3 May 2026 · {pct}% journey complete</p>
+                  </div>
+                ):(<div className="mt-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-2xl"><p className="text-[11px] text-green-400 font-bold">🎉 NEET 2026 aa gaya! Best of luck!</p></div>);
+              })()}
             </div>
 
             {/* ── Quick Action Cards ────────────────────────── */}

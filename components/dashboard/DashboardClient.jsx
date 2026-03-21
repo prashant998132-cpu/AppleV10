@@ -80,6 +80,23 @@ export default function DashboardClient({ children, user, profile }) {
     } catch {}
 
     const touch = () => { try { touchActivity(); } catch {} };
+    
+    // Shake detection (DeviceMotion API)
+    let shakeLastX = 0, shakeLastY = 0, shakeLastZ = 0, shakeLast = 0;
+    const handleShake = (e) => {
+      try {
+        const { x, y, z } = e.accelerationIncludingGravity || {};
+        if (!x) return;
+        const now = Date.now();
+        if (now - shakeLast < 200) return;
+        const dX = Math.abs(x - shakeLastX), dY = Math.abs(y - shakeLastY), dZ = Math.abs(z - shakeLastZ);
+        shakeLastX = x; shakeLastY = y; shakeLastZ = z; shakeLast = now;
+        if (dX + dY + dZ > 50) {
+          window.dispatchEvent(new CustomEvent('jarvis-shake'));
+        }
+      } catch {}
+    };
+    window.addEventListener('devicemotion', handleShake, { passive: true });
     window.addEventListener('touchstart', touch, { passive: true });
     window.addEventListener('click', touch);
 
@@ -91,6 +108,7 @@ export default function DashboardClient({ children, user, profile }) {
     return () => {
       window.removeEventListener('touchstart', touch);
       window.removeEventListener('click', touch);
+      window.removeEventListener('devicemotion', handleShake);
     };
   }, []);
   const path   = usePathname();
