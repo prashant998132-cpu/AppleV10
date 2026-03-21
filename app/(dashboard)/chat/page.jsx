@@ -1485,38 +1485,68 @@ export default function ChatPage() {
       {/* Remote typing indicator */}
       <RemoteTypingIndicator isTyping={remoteTyping}/>
       {/* Input */}
-      <div className="px-3 pt-2 pb-2 border-t border-white/[0.06] shrink-0 safe-bottom">
-        <div className="flex items-end gap-2">
-          <div className="flex-1 bg-white/[0.05] border border-white/[0.08] rounded-[22px] flex items-end px-4 py-2.5 gap-2 focus-within:border-blue-500/35 transition-colors">
+      {/* ── Chat Input — Image 2 Style ─────────────────── */}
+      <div className="shrink-0 safe-bottom">
+        {/* Image preview */}
+        {preview && (
+          <div className="px-4 pb-2 flex items-center gap-2">
+            <img src={preview} alt="" className="h-10 w-10 rounded-xl object-cover border border-white/10"/>
+            <span className="text-xs text-slate-500 flex-1">Image ready</span>
+            <button onClick={()=>{setPreview(null);setImgB64(null);}}><X size={14} className="text-slate-600"/></button>
+          </div>
+        )}
+
+        {/* Main input container */}
+        <div className="mx-3 mb-3 bg-white/[0.05] border border-white/[0.09] rounded-[26px] focus-within:border-blue-500/30 transition-all overflow-hidden">
+          {/* Textarea */}
+          <div className="px-4 pt-3 pb-1">
             <textarea ref={taRef} value={input} onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}
-              placeholder={`${showM.label} — kuch bhi likho...`}
-              rows={1} style={{resize:'none',minHeight:'22px',maxHeight:'88px',overflowY:'auto'}}
-              className="flex-1 bg-transparent text-white text-sm placeholder-slate-700 outline-none leading-relaxed"/>
+              placeholder="Kuch poocho ya batao..."
+              rows={1} style={{resize:'none',minHeight:'24px',maxHeight:'96px',overflowY:'auto'}}
+              className="w-full bg-transparent text-white text-[15px] placeholder-slate-600 outline-none leading-relaxed"/>
           </div>
-          {/* Export chat button */}
-          {msgs.length > 2 && (
-            <button onClick={exportChat} title="Chat export karo (Ctrl+E)"
-              className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-white/[0.05] border border-white/[0.08] text-slate-600 hover:text-green-400 transition-all">
-              <Download size={14}/>
+
+          {/* Bottom toolbar */}
+          <div className="flex items-center px-3 pb-2.5 pt-1 gap-1">
+            {/* Left actions */}
+            <button onClick={startCamera}
+              className={`p-1.5 rounded-full transition-all ${preview?'text-green-400':'text-slate-600 hover:text-slate-400'}`}>
+              <Camera size={17}/>
             </button>
-          )}
-          <button onClick={() => setOcrOpen(true)} title="Screen Reader" className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:text-purple-300 transition-all">
-            <span className="text-sm leading-none">🔍</span>
-          </button>
-          <button onClick={startCamera} className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${preview?'bg-green-600':'bg-white/[0.05] border border-white/[0.08] text-slate-600 hover:text-slate-300'}`}>
-            <Camera size={15} className={preview?'text-white':''}/>
-          </button>
-          <button onClick={startVoice} className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all ${listening?'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]':'bg-white/[0.05] border border-white/[0.08] text-slate-600 hover:text-slate-300'}`}>
-            {listening?<MicOff size={15} className="text-white"/>:<Mic size={15}/>}
-          </button>
-          <button onClick={()=>send()} disabled={(!input.trim()&&!preview)||loading}
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 flex items-center justify-center shadow-[0_0_18px_rgba(59,130,246,0.4)] disabled:opacity-25 disabled:shadow-none transition-all shrink-0">
-            <Send size={14} className="text-white"/>
-          </button>
+            <button onClick={()=>setOcrOpen(true)} className="p-1.5 rounded-full text-slate-600 hover:text-purple-400 transition-all">
+              <span className="text-[15px] leading-none">🔍</span>
+            </button>
+
+            {/* Mode pill */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex gap-1">
+                {MODES.filter(m=>['auto','flash','think'].includes(m.id)).map(m=>(
+                  <button key={m.id} onClick={()=>setMode(m.id)}
+                    className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all ${
+                      mode===m.id ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30' : 'text-slate-700 hover:text-slate-500'
+                    }`}>
+                    <span>{m.label.split(' ')[0]}</span>
+                    {mode===m.id && m.id==='auto' && detected && <span className="text-[9px] opacity-60">{detected}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Right actions */}
+            <button onClick={startVoice}
+              className={`p-1.5 rounded-full transition-all ${listening?'text-red-400':'text-slate-600 hover:text-slate-400'}`}>
+              {listening?<MicOff size={17}/>:<Mic size={17}/>}
+            </button>
+            <button onClick={()=>send()} disabled={(!input.trim()&&!preview)||loading}
+              className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center disabled:opacity-25 transition-all shadow-[0_0_15px_rgba(59,130,246,0.35)] active:scale-95 shrink-0">
+              <Send size={13} className="text-white ml-0.5"/>
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
     </ChatBackground>
     {showWallpaper && (
       <WallpaperPicker
