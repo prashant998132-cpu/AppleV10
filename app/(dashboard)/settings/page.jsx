@@ -350,6 +350,15 @@ export default function SettingsPage() {
                 })}
               </div>
               <p className="text-xs text-slate-600 mt-2 text-center">Chat mein header ke theme button se bhi change kar sakte ho</p>
+              <button onClick={() => {
+                localStorage.setItem('jarvis_theme', 'dark');
+                document.body.style.background = '#050810';
+                document.documentElement.style.setProperty('--bg', '#050810');
+                document.documentElement.style.setProperty('--accent', '#1A56DB');
+                window.location.reload();
+              }} className="mt-2 w-full text-xs text-slate-600 hover:text-blue-400 py-1 transition-colors">
+                🔄 Reset to Dark Blue (default)
+              </button>
               
               {/* Text Style */}
               <div className="mt-4 pt-4 border-t border-white/5">

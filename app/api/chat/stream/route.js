@@ -332,10 +332,12 @@ export async function POST(req) {
           usedProvider = 'offline';
         }
 
-        // Strip AI's habit of adding time at end of messages
+        // Strip AI time suffix habit aggressively
         let cleanReply = fullReply.replace(/\[MEMORY: [^\]]+\]/g, '').trim();
-        cleanReply = cleanReply.replace(/\.?\s*\d{1,2}:\d{2}\s*(?:AM|PM)\s*(?:ho raha hai|hai ab|baj(?:e hain|\s*rahe hain))[.!]?\s*$/gi, '').trim();
-        cleanReply = cleanReply.replace(/\.?\s*Abhi\s+\d{1,2}:\d{2}\s*(?:AM|PM)[^.]*[.!]?\s*$/gi, '').trim();
+        // Remove: "3:22 PM hai", "3:22 PM ho raha hai", "Abhi 3:22 PM", "IST time = 3:22 PM" etc
+        cleanReply = cleanReply.replace(/[,.]?\s*(?:Abhi\s+)?\d{1,2}:\d{2}\s*(?:AM|PM)\s*(?:hai|ho raha hai|baj rahe hain|baje hain|hai ab|IST|mein)[^.!\n]{0,30}[.!]?\s*$/gi, '').trim();
+        cleanReply = cleanReply.replace(/[,.]?\s*(?:IST\s+time\s*[=:]?\s*)?\d{1,2}:\d{2}\s*(?:AM|PM)[^.!\n]{0,20}[.!]?\s*$/gi, '').trim();
+        cleanReply = cleanReply.replace(/\bDate\s*=\s*[^.!\n]+[.!]?\s*$/gi, '').trim();
         const memories   = (fullReply.match(/\[MEMORY: ([^\]]+)\]/g) || []).map(m => {
           const raw = m.replace('[MEMORY: ', '').replace(']', '');
           const [k, ...v] = raw.split('=');

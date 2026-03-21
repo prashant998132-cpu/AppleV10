@@ -640,6 +640,13 @@ export default function ChatPage() {
     setFreqCmds(getFrequentCommands(4));
     getProactiveAlerts().then(setProAlerts).catch(()=>{});
 
+    // Apply saved text style on mount
+    const savedStyle = localStorage.getItem('jarvis_text_style');
+    if (savedStyle && savedStyle !== 'default') {
+      const fonts = {mono:'monospace', serif:'Georgia, serif', system:'system-ui'};
+      if (fonts[savedStyle]) document.documentElement.style.fontFamily = fonts[savedStyle];
+    }
+
     // Pre-fetch location on mount (cached for 10 min)
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
