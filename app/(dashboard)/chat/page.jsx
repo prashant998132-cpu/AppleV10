@@ -1385,62 +1385,55 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-2 py-1 no-scrollbar jarvis-scroll">
         {isEmpty ? (
-          <div className="flex flex-col items-center gap-1.5 pt-1 pb-0">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-blue-500/15 animate-ping opacity-40"/>
-              <div className={`w-[56px] h-[56px] rounded-full flex items-center justify-center orb-pulse transition-all duration-500 ${
-                mode==='think' ? 'bg-gradient-to-br from-purple-600 via-purple-500 to-pink-400 shadow-[0_0_50px_rgba(147,51,234,0.5)]' :
-                mode==='flash' ? 'bg-gradient-to-br from-yellow-500 via-orange-500 to-yellow-400 shadow-[0_0_50px_rgba(234,179,8,0.5)]' :
-                mode==='deep'  ? 'bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-400 shadow-[0_0_50px_rgba(29,78,216,0.5)]' :
-                'bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-400 shadow-[0_0_50px_rgba(26,86,219,0.5)]'
-              }`}>
-                <span className="text-white font-black text-2xl">J</span>
+          <div className="flex flex-col h-full overflow-y-auto no-scrollbar">
+
+            {/* ── Clock + Date ─────────────────────────────── */}
+            <div className="flex flex-col items-center pt-6 pb-3 select-none">
+              <div className="text-[56px] font-black text-white tracking-tight leading-none tabular-nums">
+                {new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:true}).split(' ')[0]}
+                <span className="text-2xl font-medium text-white/50 ml-2">
+                  {new Date().toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',hour12:true}).split(' ')[1]?.toLowerCase()}
+                </span>
               </div>
+              <p className="text-slate-500 text-sm mt-1">
+                {new Date().toLocaleDateString('hi-IN',{timeZone:'Asia/Kolkata',weekday:'short',day:'numeric',month:'long'})}
+              </p>
+              <p className="text-slate-400 text-base mt-2 font-medium">
+                {(()=>{const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();return h<5?'Raat ko jaaga?  🌙':h<12?`Kya scene hai, Prashant? 👋`:h<17?'Good afternoon, Prashant ☀️':h<21?'Good evening, Prashant 🌇':'Raat ka mood kya hai? 🌙';})()}
+              </p>
             </div>
-            <FestivalBanner />
-            <DynamicGreeting/>
-            {/* Proactive Alerts */}
-            {proAlerts.map((alert, i) => (
-              <div key={i} className="w-full max-w-[320px] bg-orange-500/10 border border-orange-500/20 rounded-lg px-2.5 py-1.5 flex items-center gap-2">
-                <span>{alert.icon}</span>
-                <p className="text-xs text-orange-300 flex-1">{alert.message}</p>
-              </div>
-            ))}
-            {/* App Quick Launch — tap to open */}
-            <div className="w-full max-w-[300px]">
-              <p className="text-[9px] text-slate-800 mb-1 text-center">📱 Tap to open</p>
-              <div className="flex flex-wrap gap-1 justify-center">
-                {[{e:'📸',l:'Instagram',cmd:'Instagram kholo'},{e:'💬',l:'WhatsApp',cmd:'WhatsApp kholo'},{e:'▶️',l:'YouTube',cmd:'YouTube kholo'},{e:'🎵',l:'Spotify',cmd:'Spotify kholo'},{e:'🗺️',l:'Maps',cmd:'Maps kholo'},{e:'🔦',l:'Torch',cmd:'Torch on karo'},{e:'📚',l:'Study',cmd:'Study mode on karo'},{e:'📋',l:'Routine',cmd:'Mera daily routine dikhao'}].map(a=>(
-                  <button key={a.cmd} onClick={()=>send(a.cmd)} className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5 border border-white/8 text-white/50 text-[10px] hover:bg-blue-500/10 hover:border-blue-500/20 hover:text-white active:scale-95 transition-all">
-                    {a.e} {a.l}
+
+            {/* ── Quick Action Cards ────────────────────────── */}
+            <div className="px-3 pb-4">
+              <FestivalBanner />
+              {proAlerts.length > 0 && proAlerts.map((alert, i) => (
+                <div key={i} className="mb-2 w-full bg-orange-500/10 border border-orange-500/20 rounded-xl px-3 py-2 flex items-center gap-2">
+                  <span>{alert.icon}</span>
+                  <p className="text-xs text-orange-300 flex-1">{alert.message}</p>
+                </div>
+              ))}
+              <div className="grid grid-cols-2 gap-2.5">
+                {[
+                  ...(timeCtx?.suggestions || []).slice(0,4).map(q=>({icon:q.icon,title:q.text,sub:null,cmd:q.cmd||q.text})),
+                  ...(timeCtx?.suggestions?.length < 4 ? [
+                    {icon:'☀️',title:'Rewa ka mausam?',sub:'Aaj ka temperature & forecast',cmd:'Rewa ka aaj ka weather batao'},
+                    {icon:'📰',title:'Aaj ki top khabar?',sub:'India & world news summary',cmd:'Aaj ki top news batao'},
+                    {icon:'🧠',title:'Python sikhana hai',sub:'Bilkul beginner se shuru karo',cmd:'Python seekhna hai bilkul beginner se shuru karo'},
+                    {icon:'🎵',title:'Mujhe ek song recommend karo',sub:'Mood batao, perfect track milega',cmd:'Ek accha song recommend karo'},
+                    {icon:'🌸',title:'Top anime suggest karo',sub:null,cmd:'Top anime suggest karo'},
+                    {icon:'🪙',title:'Bitcoin aaj kitne ka hai?',sub:null,cmd:'Bitcoin ka aaj ka price batao'},
+                  ] : []),
+                ].slice(0,6).map((card,i) => (
+                  <button key={i} onClick={()=>send(card.cmd)}
+                    className="text-left bg-white/[0.05] border border-white/[0.08] rounded-2xl p-4 hover:bg-white/[0.08] hover:border-white/15 active:scale-95 transition-all">
+                    <div className="text-2xl mb-2">{card.icon}</div>
+                    <p className="text-white text-[13px] font-semibold leading-snug">{card.title}</p>
+                    {card.sub && <p className="text-slate-500 text-[11px] mt-0.5 leading-snug">{card.sub}</p>}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Smart time-based suggestions */}
-            <div className="grid grid-cols-2 gap-1.5 w-full max-w-[320px]">
-              {(timeCtx?.suggestions || QUICK.map(q=>({icon:q.i, text:q.t, cmd:q.t}))).map((q,i)=>(
-                <button key={i} onClick={()=>send(q.cmd||q.t)}
-                  className="text-left glass-card px-2.5 py-2 hover:border-blue-500/25 hover:bg-blue-500/5 transition-all text-[11px] text-slate-400 hover:text-slate-200 rounded-xl">
-                  <span className="text-base mr-1.5">{q.icon}</span>{q.text}
-                </button>
-              ))}
-            </div>
-            {/* Frequent commands */}
-            {freqCmds.length > 0 && (
-              <div className="w-full max-w-[300px]">
-                <p className="text-[10px] text-slate-700 mb-1.5 text-center">⚡ Frequent commands</p>
-                <div className="flex flex-wrap gap-1 justify-center">
-                  {freqCmds.map((f, i) => (
-                    <button key={i} onClick={()=>send(f.cmd)}
-                      className="text-[11px] text-slate-500 border border-white/5 bg-white/[0.03] rounded-full px-2.5 py-1 hover:text-slate-300 hover:border-white/10 transition-all">
-                      {f.text.slice(0, 24)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           <>

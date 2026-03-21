@@ -137,8 +137,8 @@ export async function POST(req) {
   const istTime12 = `${istHour % 12 || 12}:${String(istMin).padStart(2,'0')} ${istHour >= 12 ? 'PM' : 'AM'}`;
   const istDate = nowIST.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   const userCity = profile?.city?.split(',')[0]?.trim() || 'Rewa';
-  const locationStr = userLocation ? `GPS: ${userLocation.lat}, ${userLocation.lng} (${userCity})` : userCity;
-  toolCtx += `\n[CURRENT_CONTEXT: Abhi IST mein ${istTime12} baj rahe hain. Aaj ${istDate} hai. User ${locationStr} mein hai. Agar time/date/location poochha toh yahi batao — seedha, natural Hinglish mein. Format mat dikhaao jaise "[Utility: time...]" ya "[CURRENT_CONTEXT...]" — sirf natural reply do.]`;
+  const locationStr = userCity; // GPS used internally only - not shown to AI to avoid leaking in reply
+  toolCtx += `\n[SYSTEM: Current IST time = ${istTime12}. Date = ${istDate}. User city = ${userCity}. IMPORTANT: Agar time poochha toh sirf "${istTime12}" bolo. Agar date poochha toh sirf "${istDate}" bolo. Agar location poochha toh sirf "${userCity}" bolo. KABHI BHI coordinates, GPS, ya brackets reply mein mat dikhao. Natural Hinglish mein bolo.]`;
   // Phone command pre-detection (fast regex — tells LLM what happened)
   if (/\b(wifi|bluetooth|torch|flashlight|hotspot|screenshot|mute|volume|brightness|dark.mode|dnd|study.mode|sleep.mode|gym.mode|drive.mode)\b/i.test(msgLow)) {
     toolCtx += '\n[PHONE_CMD_DETECTED: Tell user the action will be executed via MacroDroid. Keep reply short like "WiFi on kar diya" or "Karo, MacroDroid ke through chal raha hai"]';
