@@ -150,7 +150,10 @@ export async function POST(req) {
   }
   if (!userCity) userCity = 'India';
   const locationStr = userCity; // GPS used internally only - not shown to AI to avoid leaking in reply
-  toolCtx += `\n[SYSTEM: Current IST time = ${istTime12}. Date = ${istDate}. User city = ${userCity}. IMPORTANT: Agar time poochha toh sirf "${istTime12}" bolo. Agar date poochha toh sirf "${istDate}" bolo. Agar location poochha toh sirf "${userCity}" bolo. KABHI BHI coordinates, GPS, ya brackets reply mein mat dikhao. Natural Hinglish mein bolo.]`;
+  const cityInfo = userLocation 
+    ? `User ki confirmed location: ${userCity}`
+    : `User ki location unknown hai — location mat batao jab tak user khud na bataye`;
+  toolCtx += `\n[SYSTEM: IST time = ${istTime12}. Date = ${istDate}. ${cityInfo}. IMPORTANT: Time ke liye sirf "${istTime12}" bolo. Date ke liye sirf "${istDate}" bolo. Location ke liye: agar unknown hai toh "Mujhe pata nahi" bolo — Rewa ya koi bhi city mat assume karo. Sirf GPS confirmed city batao. Natural Hinglish mein bolo, koi brackets mat dikhao.]`;
   // Phone command pre-detection (fast regex — tells LLM what happened)
   if (/\b(wifi|bluetooth|torch|flashlight|hotspot|screenshot|mute|volume|brightness|dark.mode|dnd|study.mode|sleep.mode|gym.mode|drive.mode)\b/i.test(msgLow)) {
     toolCtx += '\n[PHONE_CMD_DETECTED: Tell user the action will be executed via MacroDroid. Keep reply short like "WiFi on kar diya" or "Karo, MacroDroid ke through chal raha hai"]';
