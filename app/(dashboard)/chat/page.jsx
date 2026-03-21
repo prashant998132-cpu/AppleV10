@@ -1493,8 +1493,10 @@ export default function ChatPage() {
                 {new Date().toLocaleDateString('hi-IN',{timeZone:'Asia/Kolkata',weekday:'short',day:'numeric',month:'long'})}
               </p>
               <p className="text-slate-400 text-base mt-2 font-medium">
-                {(()=>{const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();return h<5?'Raat ko jaaga?  🌙':h<12?`Kya scene hai, Prashant? 👋`:h<17?'Good afternoon, Prashant ☀️':h<21?'Good evening, Prashant 🌇':'Raat ka mood kya hai? 🌙';})()}
+                {(()=>{const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();return h<5?'Raat ko jaaga? 🌙':h<12?'Kya scene hai, Prashant? 👋':h<17?'Good afternoon, Prashant ☀️':h<21?'Good evening, Prashant 🌇':'Raat ka mood kya hai? 🌙';})()}
               </p>
+              {/* NEET countdown */}
+              {(()=>{const d=Math.max(0,Math.round((new Date('2026-05-03')-new Date())/86400000));return d>0?(<div className="mt-2 px-4 py-2 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center gap-2"><span className="text-lg">📚</span><div><p className="text-[11px] text-blue-300 font-bold">NEET 2026 — {d} din baaki</p><p className="text-[10px] text-slate-600">3 May 2026 · Padhte raho!</p></div></div>):null;})()}
             </div>
 
             {/* ── Quick Action Cards ────────────────────────── */}
@@ -1510,12 +1512,12 @@ export default function ChatPage() {
                 {[
                   ...(timeCtx?.suggestions || []).slice(0,4).map(q=>({icon:q.icon,title:q.text,sub:null,cmd:q.cmd||q.text})),
                   ...(timeCtx?.suggestions?.length < 4 ? [
-                    {icon:'☀️',title:'Rewa ka mausam?',sub:'Aaj ka temperature & forecast',cmd:'Rewa ka aaj ka weather batao'},
-                    {icon:'📰',title:'Aaj ki top khabar?',sub:'India & world news summary',cmd:'Aaj ki top news batao'},
-                    {icon:'🧠',title:'Python sikhana hai',sub:'Bilkul beginner se shuru karo',cmd:'Python seekhna hai bilkul beginner se shuru karo'},
-                    {icon:'🎵',title:'Mujhe ek song recommend karo',sub:'Mood batao, perfect track milega',cmd:'Ek accha song recommend karo'},
-                    {icon:'🌸',title:'Top anime suggest karo',sub:null,cmd:'Top anime suggest karo'},
-                    {icon:'🪙',title:'Bitcoin aaj kitne ka hai?',sub:null,cmd:'Bitcoin ka aaj ka price batao'},
+                    {icon:'☀️',title:'Aaj ka mausam?',sub:'Live weather + forecast',cmd:'Aaj ka weather batao'},
+                    {icon:'📚',title:'NEET study plan',sub:'Aaj ka biology/physics/chemistry',cmd:'Aaj ka NEET study plan banao'},
+                    {icon:'🧠',title:'Biology samjhao',sub:'NCERT concept clear karo',cmd:'Biology ka koi important NEET topic samjhao'},
+                    {icon:'⚡',title:'Physics numericals',sub:'Practice problems do',cmd:'NEET physics ke 3 practice numericals do'},
+                    {icon:'📰',title:'Aaj ki khabar?',sub:'India & world news',cmd:'Aaj ki top 5 news batao'},
+                    {icon:'🪙',title:'Gold & crypto rate?',sub:'Live prices',cmd:'Aaj ka gold rate aur bitcoin price batao'},
                   ] : []),
                 ].slice(0,6).map((card,i) => (
                   <button key={i} onClick={()=>send(card.cmd)}
