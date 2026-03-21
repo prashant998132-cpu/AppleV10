@@ -504,6 +504,7 @@ export default function ChatPage() {
   const [phase, setPhase]       = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
   const [navOpen, setNavOpen]         = useState(false);
+  const [plusOpen, setPlusOpen]       = useState(false);
   const [resuming, setResuming] = useState(true);   // auto-resume last chat
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQ, setSearchQ]   = useState('');
@@ -1192,6 +1193,56 @@ export default function ChatPage() {
       {/* History Sidebar */}
       <HistorySidebar open={historyOpen} onClose={()=>setHistoryOpen(false)} onLoad={loadConversation} onDelete={deleteConversation}/>
 
+      {/* ── Plus Menu Popup ───────────────────────────────────── */}
+      {plusOpen && (
+        <div className="fixed inset-0 z-[9980]" onClick={()=>setPlusOpen(false)}>
+          <div className="absolute bottom-24 left-3 right-3 bg-[#0e1420] border border-white/[0.09] rounded-3xl overflow-hidden shadow-2xl"
+            onClick={e=>e.stopPropagation()}>
+
+            {/* MODE section */}
+            <div className="px-4 pt-4 pb-3">
+              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Mode</p>
+              <div className="grid grid-cols-2 gap-2">
+                {MODES.filter(m=>m.id!=='auto'?true:true).map(m=>(
+                  <button key={m.id} onClick={()=>{setMode(m.id);setPlusOpen(false);}}
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border transition-all active:scale-95 ${
+                      mode===m.id
+                        ? 'bg-blue-600/20 border-blue-500/40 text-white'
+                        : 'bg-white/[0.04] border-white/[0.07] text-slate-400 hover:text-white'
+                    }`}>
+                    <span className="text-base">{m.label.split(' ')[0]}</span>
+                    <span className="text-[12px] font-medium">{m.id.charAt(0).toUpperCase()+m.id.slice(1)}</span>
+                    {mode===m.id && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400"/>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-white/[0.06] mx-4"/>
+
+            {/* ATTACH section */}
+            <div className="px-4 pt-3 pb-4">
+              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Attach</p>
+              <div className="space-y-0.5">
+                {[
+                  { icon:'📷', label:'Camera',  action: ()=>{ setPlusOpen(false); startCamera(); } },
+                  { icon:'🖼️', label:'Image',  action: ()=>{ setPlusOpen(false); document.getElementById('img-upload')?.click(); } },
+                  { icon:'📄', label:'PDF',     action: ()=>{ setPlusOpen(false); setInput(v=>v+'[Attach PDF — coming soon] '); } },
+                  { icon:'🎙️', label:'Voice',  action: ()=>{ setPlusOpen(false); startVoice(); } },
+                ].map(item=>(
+                  <button key={item.label} onClick={item.action}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.05] active:bg-white/[0.08] transition-all text-left">
+                    <span className="text-[22px] w-8 text-center">{item.icon}</span>
+                    <span className="text-[14px] text-slate-300 font-medium">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Slide-in Nav Menu — Image 3 Style ───────────────────── */}
       {navOpen && (
         <div className="fixed inset-0 z-[9990]" onClick={()=>setNavOpen(false)}>
@@ -1329,75 +1380,69 @@ export default function ChatPage() {
       )}
 
       {/* Header */}
-      <div className="px-2 py-1 flex items-center justify-between border-b border-white/[0.05] shrink-0">
-        <div className="flex items-center gap-2.5">
-          <button onClick={()=>setHistoryOpen(true)} className="p-1.5 text-slate-600 hover:text-slate-300 transition-colors" title="Chat history">
-            <History size={16}/>
-          </button>
-          <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-[0_0_18px_rgba(26,86,219,0.4)] ${loading||msgs.some(m=>m.streaming)?'animate-pulse':''}`}>
-            <span className="text-white font-black text-xs">J</span>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-white">JARVIS</p>
-            {/* Conv mode badge + XP toast */}
+      {/* ── Chat Header — Image 2 style ──────────────────────── */}
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-white/[0.05] shrink-0">
+        {/* Left: History + Avatar + Name */}
+        <button onClick={()=>setHistoryOpen(true)} className="text-slate-600 hover:text-slate-400 transition-colors shrink-0">
+          <History size={16}/>
+        </button>
+        <div className={`w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shrink-0 ${loading||msgs.some(m=>m.streaming)?'animate-pulse shadow-[0_0_15px_rgba(26,86,219,0.5)]':''}`}>
+          <span className="text-white font-black text-sm">J</span>
+        </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-black text-white tracking-wide">JARVIS</p>
+            <p className="text-[10px] text-slate-500">
+              Prashant · {MODES.find(m=>m.id===mode)?.id||'auto'}
+              {timeCtx?.currentTime && <span className="ml-1 text-slate-600">{timeCtx.currentTime}</span>}
+            </p>
             {newBadge && (
               <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-yellow-500/90 text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg animate-bounce whitespace-nowrap">
                 {newBadge.emoji} Badge Mila: {newBadge.name}! 🎉
               </div>
             )}
-            <div className="flex items-center gap-1">
-              <WakeWordIndicator active={wakeWordOn} wakeDetected={wakeDetected}/>
-              {(listening||speaking) && <p className="text-[9px] text-slate-600">{listening?'🎤':'🔊'}</p>}
-              {convMode !== 'casual' && <span className="text-[9px] px-1 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-medium capitalize">{convMode}</span>}
-            </div>
           </div>
-        </div>
-        <div className="flex gap-1">
-          <button onClick={()=>{stopCurrentAudio();setSpeaking(false);setVoiceOn(v=>!v);}}
-            className={`p-2 rounded-xl transition-colors ${voiceOn||speaking?'text-blue-400 bg-blue-500/10':'text-slate-700 hover:text-slate-400'}`}>
-            {voiceOn||speaking?<Volume2 size={16}/>:<VolumeX size={16}/>}
-          </button>
-          <button onClick={()=>setSearchOpen(true)} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Search size={16}/></button>
-          <button onClick={()=>setPinsOpen(true)}
-            className={`p-2 rounded-xl transition-colors text-sm ${pinnedMsgs.length>0?'text-yellow-500':'text-slate-700 hover:text-yellow-400'}`}
-            title="Pinned messages">
-            📌{pinnedMsgs.length>0&&<span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-yellow-500 rounded-full text-[8px] text-black font-bold flex items-center justify-center">{pinnedMsgs.length}</span>}
-          </button>
-          {/* Wake Word toggle */}
-          <button onClick={() => setWakeWordOn(w => !w)}
-            title={wakeWordOn ? 'Wake Word ON — "Hey JARVIS"' : 'Wake Word OFF'}
-            className={`p-2 rounded-xl transition-all text-sm ${wakeWordOn ? 'text-blue-400 bg-blue-500/15' : 'text-slate-700 hover:text-slate-400'}`}>
-            {wakeWordOn ? (wakeDetected ? '🎤' : '👂') : '🔇'}
-          </button>
-          <button onClick={()=>{
-            const ts=['dark','amoled','soft','green','purple','sunset'];
-            const ei={'dark':'🔵','amoled':'⚫','soft':'🌫','green':'🟢','purple':'💜','sunset':'🌅'};
-            const bgs={'dark':'#050810','amoled':'#000000','soft':'#1a1a2e','green':'#020d05','purple':'#0a0010','sunset':'#0f0a00'};
-            const acs={'dark':'#1A56DB','amoled':'#3b82f6','soft':'#6366f1','green':'#00cc44','purple':'#9333ea','sunset':'#f97316'};
-            const nt=ts[(ts.indexOf(theme)+1)%ts.length];
-            setTheme(nt); localStorage.setItem('jarvis_theme',nt);
-            document.body.style.background=bgs[nt];
-            document.documentElement.style.setProperty('--accent', acs[nt]);
-            document.documentElement.style.setProperty('--bg', bgs[nt]);
-            window.dispatchEvent(new CustomEvent('jarvis-theme-change',{detail:{theme:nt}}));
-          }} title={`Theme: ${theme} (tap to cycle)`}
-            className="p-2 rounded-xl text-slate-700 hover:text-purple-400 transition-colors text-sm">
-            {{'dark':'🔵','amoled':'⚫','soft':'🌫','green':'🟢','purple':'💜','sunset':'🌅'}[theme]||'🎨'}
-          </button>
-          <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}} className="p-2 rounded-xl text-slate-700 hover:text-slate-400 transition-colors"><Plus size={16}/></button>
-          <button onClick={()=>setShowWallpaper(true)}
-            title="Chat Wallpaper — background badlo"
-            className="p-2 rounded-xl text-slate-700 hover:text-purple-400 transition-colors text-sm">
-            🎨
-          </button>
-          <button onClick={()=>setNavOpen(true)}
-            title="Menu"
-            className="p-1.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/8 transition-all flex flex-col gap-[3px] items-center justify-center w-8 h-8 lg:hidden">
-            <span className="block w-4 h-[1.5px] bg-current rounded-full"/>
-            <span className="block w-4 h-[1.5px] bg-current rounded-full"/>
-            <span className="block w-2.5 h-[1.5px] bg-current rounded-full"/>
-          </button>
-        </div>
+
+          {/* Weather + Battery info */}
+          {timeCtx?.weather && (
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-[11px] text-slate-500">{timeCtx.weather}</span>
+            </div>
+          )}
+
+          {/* Right action buttons — compact */}
+          <div className="flex items-center gap-0.5 shrink-0">
+          {/* Sound */}
+            <button onClick={()=>{stopCurrentAudio();setSpeaking(false);setVoiceOn(v=>!v);}}
+              className={`p-1.5 rounded-full transition-all ${voiceOn||speaking?'text-blue-400':'text-slate-600'}`}>
+              {voiceOn||speaking?<Volume2 size={15}/>:<VolumeX size={15}/>}
+            </button>
+            {/* Search */}
+            <button onClick={()=>setSearchOpen(true)} className="p-1.5 rounded-full text-slate-600 hover:text-white transition-all">
+              <Search size={15}/>
+            </button>
+            {/* Pin */}
+            <button onClick={()=>setPinsOpen(true)} className={`p-1.5 rounded-full text-sm transition-all relative ${pinnedMsgs.length>0?'text-yellow-400':'text-slate-600'}`}>
+              📌
+              {pinnedMsgs.length>0 && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-yellow-500 rounded-full text-[7px] text-black font-bold flex items-center justify-center">{pinnedMsgs.length}</span>}
+            </button>
+            {/* Notif / Wake word */}
+            <button onClick={()=>setWakeWordOn(w=>!w)}
+              className={`p-1.5 rounded-full text-sm transition-all ${wakeWordOn?'text-blue-400':'text-slate-600'}`}>
+              {wakeWordOn?(wakeDetected?'🎤':'👂'):'🔕'}
+            </button>
+            {/* New chat */}
+            <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}}
+              className="p-1.5 rounded-full text-slate-600 hover:text-white transition-all">
+              <Plus size={15}/>
+            </button>
+            {/* Menu */}
+            <button onClick={()=>setNavOpen(true)}
+              className="flex flex-col gap-[3px] items-center justify-center p-1.5 rounded-full text-slate-500 hover:text-white transition-all lg:hidden">
+              <span className="block w-3.5 h-[1.5px] bg-current rounded-full"/>
+              <span className="block w-3.5 h-[1.5px] bg-current rounded-full"/>
+              <span className="block w-2.5 h-[1.5px] bg-current rounded-full"/>
+            </button>
+          </div>
       </div>
 
       {/* Mode Bar + Quick Cmd toggle */}
@@ -1552,36 +1597,31 @@ export default function ChatPage() {
           </div>
 
           {/* Bottom toolbar */}
-          <div className="flex items-center px-3 pb-2.5 pt-1 gap-1">
-            {/* Left actions */}
-            <button onClick={startCamera}
-              className={`p-1.5 rounded-full transition-all ${preview?'text-green-400':'text-slate-600 hover:text-slate-400'}`}>
-              <Camera size={17}/>
-            </button>
-            <button onClick={()=>setOcrOpen(true)} className="p-1.5 rounded-full text-slate-600 hover:text-purple-400 transition-all">
-              <span className="text-[15px] leading-none">🔍</span>
+          <div className="flex items-center px-3 pb-2.5 pt-1 gap-2">
+            {/* + Button → popup */}
+            <button onClick={()=>setPlusOpen(v=>!v)}
+              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all border ${
+                plusOpen ? 'bg-blue-600 border-blue-500 text-white rotate-45' : 'bg-white/[0.06] border-white/[0.09] text-slate-400 hover:text-white'
+              }`}>
+              <Plus size={16}/>
             </button>
 
-            {/* Mode pill */}
-            <div className="flex-1 flex items-center justify-center">
-              <div className="flex gap-1">
-                {MODES.filter(m=>['auto','flash','think'].includes(m.id)).map(m=>(
-                  <button key={m.id} onClick={()=>setMode(m.id)}
-                    className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all ${
-                      mode===m.id ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30' : 'text-slate-700 hover:text-slate-500'
-                    }`}>
-                    <span>{m.label.split(' ')[0]}</span>
-                    {mode===m.id && m.id==='auto' && detected && <span className="text-[9px] opacity-60">{detected}</span>}
-                  </button>
-                ))}
-              </div>
+            {/* Mode pill - center */}
+            <div className="flex-1 flex items-center">
+              <button onClick={()=>setPlusOpen(v=>!v)}
+                className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 transition-all">
+                <span className="text-[12px]">{MODES.find(m=>m.id===mode)?.label || '🤖 Auto'}</span>
+                {mode==='auto' && detected && <span className="text-[10px] text-slate-700">{detected}</span>}
+              </button>
             </div>
 
-            {/* Right actions */}
+            {/* Voice */}
             <button onClick={startVoice}
-              className={`p-1.5 rounded-full transition-all ${listening?'text-red-400':'text-slate-600 hover:text-slate-400'}`}>
+              className={`p-1.5 rounded-full transition-all shrink-0 ${listening?'text-red-400':'text-slate-500 hover:text-slate-300'}`}>
               {listening?<MicOff size={17}/>:<Mic size={17}/>}
             </button>
+
+            {/* Send */}
             <button onClick={()=>send()} disabled={(!input.trim()&&!preview)||loading}
               className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center disabled:opacity-25 transition-all shadow-[0_0_15px_rgba(59,130,246,0.35)] active:scale-95 shrink-0">
               <Send size={13} className="text-white ml-0.5"/>
