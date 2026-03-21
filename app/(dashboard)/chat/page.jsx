@@ -13,7 +13,6 @@ import { ThemeProvider, ThemeSwitcher, useTheme } from '@/components/ui/ThemePro
 import { useWakeWord, WakeWordIndicator } from '@/components/chat/WakeWord';
 import DailyBrief from '@/components/chat/DailyBrief';
 import WorkflowProgress from '@/components/chat/WorkflowProgress';
-import ClipboardMonitor from '@/components/chat/ClipboardMonitor';
 import SmartNotifications from '@/components/pwa/SmartNotifications';
 import ScreenOCR from '@/components/chat/ScreenOCR';
 import { puterFallbackChat, puterStream, puterSearchChat, puterGenerateImage, puterAnalyzeImage, backupChatToPuter, puterSet, puterGet, PUTER_MODELS } from '@/lib/ai/puter-client';
@@ -370,7 +369,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
             {msg.followUps.slice(0,3).map(q=>(
               <button key={q} onClick={()=>onFollowUp(q)}
                 style={{flexShrink:0,whiteSpace:"nowrap"}}
-                className="text-[9px] text-blue-400/50 border border-blue-500/10 px-1.5 py-0.5 rounded-md transition-all active:bg-blue-500/10">
+                className="text-[9px] text-slate-500 border border-white/8 px-1.5 py-0.5 rounded-md transition-all active:bg-white/5">
                 {q.length > 20 ? q.slice(0,18)+'…' : q}
               </button>
             ))}
@@ -1210,8 +1209,7 @@ export default function ChatPage() {
                         ? 'bg-blue-600/20 border-blue-500/40 text-white'
                         : 'bg-white/[0.04] border-white/[0.07] text-slate-400 hover:text-white'
                     }`}>
-                    <span className="text-base">{m.label.split(' ')[0]}</span>
-                    <span className="text-[12px] font-medium">{m.id.charAt(0).toUpperCase()+m.id.slice(1)}</span>
+                      <span className="text-[13px] font-semibold">{m.id.charAt(0).toUpperCase()+m.id.slice(1)}</span>
                     {mode===m.id && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400"/>}
                   </button>
                 ))}
@@ -1361,7 +1359,6 @@ export default function ChatPage() {
           onClose={() => setOcrOpen(false)}
         />
       )}
-      <ClipboardMonitor onSend={(text) => send(text)} enabled={true}/>
 
       {/* Pinned Messages Panel */}
       {pinsOpen && (
@@ -1406,8 +1403,7 @@ export default function ChatPage() {
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-black text-white tracking-wide">JARVIS</p>
             <p className="text-[10px] text-slate-500">
-              Prashant · {MODES.find(m=>m.id===mode)?.id||'auto'}
-              {timeCtx?.currentTime && <span className="ml-1 text-slate-600">{timeCtx.currentTime}</span>}
+              Prashant · {mode}
             </p>
             {newBadge && (
               <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-yellow-500/90 text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg animate-bounce whitespace-nowrap">

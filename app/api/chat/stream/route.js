@@ -136,7 +136,19 @@ export async function POST(req) {
   const istMin = nowIST.getMinutes();
   const istTime12 = `${istHour % 12 || 12}:${String(istMin).padStart(2,'0')} ${istHour >= 12 ? 'PM' : 'AM'}`;
   const istDate = nowIST.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const userCity = profile?.city?.split(',')[0]?.trim() || 'Rewa';
+  // Get city from profile OR from GPS reverse geocode (if available)
+  let userCity = profile?.city?.split(',')[0]?.trim() || '';
+  if (!userCity && userLocation) {
+    // Try to get city from GPS coordinates
+    try {
+      const geoR = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${userLocation.lat}&longitude=${userLocation.lng}&count=1&language=en`).catch(()=>null);
+      if (geoR?.ok) {
+        const geoD = await geoR.json();
+        userCity = geoD.results?.[0]?.name || geoD.results?.[0]?.admin2 || '';
+      }
+    } catch {}
+  }
+  if (!userCity) userCity = 'India';
   const locationStr = userCity; // GPS used internally only - not shown to AI to avoid leaking in reply
   toolCtx += `\n[SYSTEM: Current IST time = ${istTime12}. Date = ${istDate}. User city = ${userCity}. IMPORTANT: Agar time poochha toh sirf "${istTime12}" bolo. Agar date poochha toh sirf "${istDate}" bolo. Agar location poochha toh sirf "${userCity}" bolo. KABHI BHI coordinates, GPS, ya brackets reply mein mat dikhao. Natural Hinglish mein bolo.]`;
   // Phone command pre-detection (fast regex — tells LLM what happened)
