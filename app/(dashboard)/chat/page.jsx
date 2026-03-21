@@ -791,17 +791,33 @@ export default function ChatPage() {
   }
 
   // ── Generate follow-up suggestions ───────────────────────────
-  async function generateFollowUps(reply, question) {
-    try {
-      const r = await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          message:`Based on this Q&A, suggest 3 short follow-up questions in Hinglish (max 6 words each). Return ONLY a JSON array of strings.\nQ: ${question.slice(0,100)}\nA: ${reply.slice(0,200)}`,
-          history:[], mode:'flash'
-        })});
-      const d = await r.json();
-      const arr = JSON.parse(d.reply.replace(/```json|```/g,'').trim());
-      return Array.isArray(arr) ? arr.slice(0,3) : [];
-    } catch { return []; }
+  function generateFollowUps(reply, question) {
+    // Local generation — no API call (prevents system prompt leaking in chat)
+    const q = (question || '').toLowerCase();
+    const r = (reply || '').toLowerCase();
+    if (/weather|mausam|temp|barish|rain/.test(q+r))
+      return ['7-day forecast batao', 'Kal ka weather?', 'Rain aayegi kya?'];
+    if (/news|khabar|headline|india|world/.test(q+r))
+      return ['Aur news batao', 'India mein kya hua?', 'Global updates?'];
+    if (/time|samay|baje|kitne/.test(q+r))
+      return ['Aaj ka schedule?', 'Timer set karo', 'Reminder laga do'];
+    if (/location|kahan|city|jagah|ghar/.test(q+r))
+      return ['Nearby places?', 'Weather yahan ka?', 'Maps kholo'];
+    if (/neet|study|padhai|exam|bio|physics|chem/.test(q+r))
+      return ['Practice questions do', 'Topic explain karo', 'Study plan banao'];
+    if (/code|python|javascript|error|bug/.test(q+r))
+      return ['Example dikhao', 'Optimize karo', 'Debug karo'];
+    if (/instagram|insta|reels|post/.test(q+r))
+      return ['Caption ideas do', 'Best posting time?', 'Instagram kholo'];
+    if (/recipe|khana|food|cook/.test(q+r))
+      return ['Ingredients list?', 'Quick version?', 'Healthy option?'];
+    if (/song|music|gaana|playlist/.test(q+r))
+      return ['Similar songs?', 'Spotify mein add', 'Artist ke baare mein'];
+    if (/goal|plan|future|career/.test(q+r))
+      return ['Step by step plan', 'Timeline set karo', 'Progress track karo'];
+    // Generic — context aware
+    if (reply.length > 200) return ['Summarize karo', 'Key points?', 'Aur detail mein?'];
+    return [];
   }
 
   // ── Main send function (streaming) ───────────────────────────
@@ -1142,10 +1158,10 @@ export default function ChatPage() {
       if(fullText&&msg.length>8) {
         // Auto-title (first message only)
         if (!titleGenerated && convId) generateTitle(convId, msg, fullText);
-        setTimeout(async()=>{
-          const fups = await generateFollowUps(fullText, msg);
+        setTimeout(()=>{
+          const fups = generateFollowUps(fullText, msg);
           if(fups.length>0) setMsgs(p=>p.map(m=>m.id===aiId?{...m,followUps:fups}:m));
-        }, 1200);
+        }, 500);
       }
     }
   }
