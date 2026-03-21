@@ -1239,6 +1239,20 @@ export default function ChatPage() {
                 ))}
               </div>
             </div>
+
+            {/* SHORTCUTS section */}
+            <div className="border-t border-white/[0.06] mx-4"/>
+            <div className="px-4 pt-3 pb-4">
+              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Shortcuts</p>
+              <div className="flex flex-wrap gap-1.5">
+                {JARVIS_QUICK_CMDS.slice(0,8).map(q=>(
+                  <button key={q.cmd} onClick={()=>{send(q.cmd);setPlusOpen(false);}}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.07] text-white/70 text-[11px] hover:bg-white/[0.09] hover:text-white active:scale-95 transition-all">
+                    <span>{q.emoji}</span><span>{q.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1445,31 +1459,6 @@ export default function ChatPage() {
           </div>
       </div>
 
-      {/* Mode Bar + Quick Cmd toggle */}
-      <div className="px-2 py-0.5 flex gap-1 overflow-x-auto shrink-0 no-scrollbar items-center">
-        {MODES.map(m=>(
-          <button key={m.id} onClick={()=>setMode(m.id)}
-            className={`shrink-0 px-2 py-0.5 rounded-lg text-[10px] font-medium border transition-all ${mode===m.id?m.bg+' '+m.text+' border-current/30':'bg-transparent border-transparent text-slate-700 hover:text-slate-500'}`}>
-            {m.label}
-            {mode==='auto'&&detected===m.id&&m.id!=='auto'&&<span className="inline-block w-1 h-1 rounded-full bg-current animate-pulse ml-1"/>}
-          </button>
-        ))}
-        <button onClick={()=>setShowCmdChips(v=>!v)}
-          className={`shrink-0 ml-auto px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${showCmdChips?'bg-yellow-500/15 border-yellow-500/30 text-yellow-400':'bg-transparent border-transparent text-slate-600 hover:text-yellow-400'}`}
-          title="Quick commands">⚡ Cmds</button>
-      </div>
-
-      {/* Quick Command Chips — chat se directly actions */}
-      {showCmdChips && (
-        <div className="px-2 py-1 flex gap-1 overflow-x-auto shrink-0 no-scrollbar border-b border-white/5">
-          {JARVIS_QUICK_CMDS.map(q => (
-            <button key={q.cmd} onClick={()=>send(q.cmd)}
-              className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white/70 text-[11px] hover:bg-white/10 hover:text-white active:scale-95 transition-all">
-              <span>{q.emoji}</span><span>{q.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Messages */}
       <div className="flex-1 min-h-0 overflow-y-auto px-2 py-1 no-scrollbar jarvis-scroll">
