@@ -136,19 +136,21 @@ export async function POST(req) {
   const istMin = nowIST.getMinutes();
   const istTime12 = `${istHour % 12 || 12}:${String(istMin).padStart(2,'0')} ${istHour >= 12 ? 'PM' : 'AM'}`;
   const istDate = nowIST.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  // Get city from profile OR from GPS reverse geocode (if available)
-  let userCity = profile?.city?.split(',')[0]?.trim() || '';
-  if (!userCity && userLocation) {
-    // Try to get city from GPS coordinates
+  // City: from GPS cache (has city), or from GPS reverse geocode, or from profile
+  let userCity = '';
+  if (userLocation?.city) {
+    userCity = userLocation.city; // Already reverse geocoded on client
+  } else if (profile?.city) {
+    userCity = profile.city.split(',')[0].trim();
+  } else if (userLocation?.lat) {
     try {
       const geoR = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${userLocation.lat}&longitude=${userLocation.lng}&count=1&language=en`).catch(()=>null);
       if (geoR?.ok) {
-        const geoD = await geoR.json();
-        userCity = geoD.results?.[0]?.name || geoD.results?.[0]?.admin2 || '';
+        const d = await geoR.json();
+        userCity = d.results?.[0]?.name || '';
       }
     } catch {}
   }
-  if (!userCity) userCity = 'India';
   const locationStr = userCity; // GPS used internally only - not shown to AI to avoid leaking in reply
   const cityInfo = userLocation 
     ? `User ki confirmed location: ${userCity}`

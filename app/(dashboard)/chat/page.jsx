@@ -647,14 +647,36 @@ export default function ChatPage() {
       if (fonts[savedStyle]) document.documentElement.style.fontFamily = fonts[savedStyle];
     }
 
-    // Pre-fetch location on mount (cached for 10 min)
+    // Pre-fetch location on mount + reverse geocode to city name
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        p => {
-          const loc = {lat:p.coords.latitude.toFixed(4), lng:p.coords.longitude.toFixed(4), ts:Date.now()};
-          try { localStorage.setItem('jarvis_user_location', JSON.stringify(loc)); } catch {}
+        async (p) => {
+          const lat = p.coords.latitude.toFixed(4);
+          const lng = p.coords.longitude.toFixed(4);
+          let city = '';
+          try {
+            const r = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lng}&count=1&language=en`);
+            const d = await r.json();
+            city = d.results?.[0]?.name || d.results?.[0]?.admin2 || '';
+          } catch {}
+          const loc = {lat, lng, city, ts: Date.now()};
+          try {
+            localStorage.setItem('jarvis_user_location', JSON.stringify(loc));
+            // Also save city in profile for AI to use
+            if (city) {
+              const profile = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
+              if (!profile.city) {
+                profile.city = city;
+                localStorage.setItem('jarvis_profile', JSON.stringify(profile));
+              }
+            }
+          } catch {}
         },
-        () => {}, {timeout:5000, maximumAge:120000}
+        (err) => {
+          // Permission denied — save a flag so we know
+          try { localStorage.setItem('jarvis_location_denied', 'true'); } catch {}
+        },
+        {timeout:8000, maximumAge:300000, enableHighAccuracy:false}
       );
     }
 
@@ -954,6 +976,18 @@ export default function ChatPage() {
       } catch {}
     }
 
+    // ── STEP 0a: App Open (deep links) — runs FIRST ───────────
+    // "Instagram", "WhatsApp", "YouTube", "Spotify" etc → opens app
+    if (msg) {
+      const deepResult = handleClientCommand(msg);
+      if (deepResult) {
+        const deepMsg = {id:`dl${Date.now()}`,role:'assistant',content:`${deepResult} 📱`,ts:Date.now(),mode:'flash'};
+        const userMsg2 = {id:`u${Date.now()}`,role:'user',content:msg,ts:Date.now()};
+        setMsgs(p=>[...p,userMsg2,deepMsg]);
+        return;
+      }
+    }
+
     // ── STEP 0: Chat Command Engine — highest priority ────────
     // Handles: app open, theme change, WhatsApp msg, routine, alarm, search, settings
     if (msg && !imgB64) {
@@ -1027,16 +1061,7 @@ export default function ChatPage() {
       }
     }
 
-    // 1. Try deep link first (open apps directly)
-    if (msg) {
-      const deepResult = handleClientCommand(msg);
-      if (deepResult) {
-        const deepMsg = {id:`dl${Date.now()}`,role:'assistant',content:`${deepResult} 📱`,ts:Date.now(),mode:'flash'};
-        const userMsg2 = {id:`u${Date.now()}`,role:'user',content:msg,ts:Date.now()};
-        setMsgs(p=>[...p,userMsg2,deepMsg]);
-        return;
-      }
-    }
+    // (deep link check moved above)
 
     // 2. Try MacroDroid automation
     if (msg) {
@@ -1136,24 +1161,23 @@ export default function ChatPage() {
       }
 
       const history = msgs.slice(-12).map(m=>({role:m.role,content:m.content}));
-      // Get location from cache or request fresh
+      // Get location from cache (pre-fetched on mount)
       let userLoc = null;
       try {
         const cachedLoc = localStorage.getItem('jarvis_user_location');
         if (cachedLoc) {
           const parsed = JSON.parse(cachedLoc);
-          if (Date.now() - parsed.ts < 10 * 60 * 1000) userLoc = parsed; // 10 min cache
+          // Use cache up to 30 min
+          if (Date.now() - parsed.ts < 30 * 60 * 1000) userLoc = parsed;
         }
       } catch {}
-      if (!userLoc && navigator.geolocation) {
+      // If no cache and not denied, try quick fetch
+      const locDenied = localStorage.getItem('jarvis_location_denied') === 'true';
+      if (!userLoc && !locDenied && navigator.geolocation) {
         try {
           userLoc = await new Promise(res => navigator.geolocation.getCurrentPosition(
-            p => {
-              const loc = {lat:p.coords.latitude.toFixed(4), lng:p.coords.longitude.toFixed(4), ts:Date.now()};
-              try { localStorage.setItem('jarvis_user_location', JSON.stringify(loc)); } catch {}
-              res(loc);
-            },
-            () => res(null), {timeout:3000, maximumAge:120000}
+            p => res({lat:p.coords.latitude.toFixed(4), lng:p.coords.longitude.toFixed(4)}),
+            () => res(null), {timeout:2000, maximumAge:300000}
           ));
         } catch {}
       }
