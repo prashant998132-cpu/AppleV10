@@ -1192,46 +1192,90 @@ export default function ChatPage() {
       {/* History Sidebar */}
       <HistorySidebar open={historyOpen} onClose={()=>setHistoryOpen(false)} onLoad={loadConversation} onDelete={deleteConversation}/>
 
-      {/* ── Slide-in Nav Menu ─────────────────────────────────── */}
+      {/* ── Slide-in Nav Menu — Image 3 Style ───────────────────── */}
       {navOpen && (
         <div className="fixed inset-0 z-[9990]" onClick={()=>setNavOpen(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
-          <div className="absolute right-0 top-0 bottom-0 w-60 bg-[#080c14] border-l border-white/[0.07] flex flex-col"
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"/>
+          <div className="absolute right-0 top-0 bottom-0 w-72 bg-[#080c14] border-l border-white/[0.06] flex flex-col"
             onClick={e=>e.stopPropagation()}>
-            {/* Nav header */}
-            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center">
-                  <span className="text-white font-black text-xs">J</span>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-5 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-[0_0_15px_rgba(26,86,219,0.4)]">
+                  <span className="text-white font-black text-sm">J</span>
                 </div>
-                <span className="font-bold text-white text-sm">JARVIS</span>
+                <div>
+                  <p className="text-white font-bold text-sm">JARVIS</p>
+                  <p className="text-slate-600 text-[10px]">Prashant · auto</p>
+                </div>
               </div>
-              <button onClick={()=>setNavOpen(false)} className="text-slate-500 hover:text-white p-1">✕</button>
+              <button onClick={()=>setNavOpen(false)} className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-slate-500 hover:text-white">✕</button>
             </div>
-            {/* Nav links */}
-            <nav className="flex-1 overflow-y-auto py-2 no-scrollbar">
-              {[
-                { href:'/',           icon:'⚡', label:'Dashboard'  },
-                { href:'/chat',       icon:'💬', label:'Chat'       },
-                { href:'/phone',      icon:'📱', label:'Phone'      },
-                { href:'/studio',     icon:'✨', label:'Studio'     },
-                { href:'/analytics',  icon:'📊', label:'Analytics'  },
-                { href:'/goals',      icon:'🎯', label:'Goals'      },
-                { href:'/memory',     icon:'🧠', label:'Memory'     },
-                { href:'/knowledge',  icon:'📚', label:'Knowledge'  },
-                { href:'/automation', icon:'⚙️', label:'Automation' },
-                { href:'/settings',   icon:'🔧', label:'Settings'   },
-              ].map(({ href, icon, label }) => (
-                <Link key={href} href={href} onClick={()=>setNavOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-white hover:bg-white/5 transition-all text-sm">
-                  <span className="text-base w-6 text-center">{icon}</span>
-                  <span>{label}</span>
-                </Link>
-              ))}
-            </nav>
-            {/* Footer */}
-            <div className="px-4 py-3 border-t border-white/[0.06]">
-              <p className="text-[10px] text-slate-700 text-center">apple-v10.vercel.app</p>
+
+            <div className="flex-1 overflow-y-auto no-scrollbar px-3 pb-4">
+
+              {/* EXPLORE */}
+              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mt-3 mb-2">Explore</p>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {[
+                  { href:'/studio',     icon:'🌸', label:'Anime',     sub:'Watchlist'   },
+                  { href:'/studio',     icon:'🎨', label:'Studio',    sub:'AI art'      },
+                  { href:'/knowledge',  icon:'🖼️', label:'Canva',    sub:'Designs', url:'https://canva.com' },
+                  { href:'/knowledge',  icon:'🇮🇳', label:'India Hub', sub:'Bharat'     },
+                ].map((item,i) => (
+                  <button key={i} onClick={()=>{ setNavOpen(false); if(item.url) window.open(item.url,'_blank'); else window.location.href=item.href; }}
+                    className="flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-3 py-2.5 hover:bg-white/[0.07] active:scale-95 transition-all text-left">
+                    <span className="text-xl">{item.icon}</span>
+                    <div>
+                      <p className="text-white text-[12px] font-semibold">{item.label}</p>
+                      <p className="text-slate-600 text-[10px]">{item.sub}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* TOOLS */}
+              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mb-2">Tools</p>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {[
+                  { href:'/automation', icon:'🔗', label:'Apps',       sub:'150+ apps'           },
+                  { href:'/analytics',  icon:'🧮', label:'Calculator', sub:'SIP/EMI/GST'         },
+                  { href:'/knowledge',  icon:'📁', label:'Media',      sub:'Files'               },
+                  { href:'/chat',       icon:'🎙️', label:'Voice',     sub:'Speech'              },
+                  { href:'/',           icon:'📊', label:'Dashboard',  sub:'Tasks + Goals'       },
+                  { href:'/phone',      icon:'⚡', label:'System',     sub:'Phone control'       },
+                ].map((item,i) => (
+                  <button key={i} onClick={()=>{ setNavOpen(false); window.location.href=item.href; }}
+                    className="flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-3 py-2.5 hover:bg-white/[0.07] active:scale-95 transition-all text-left">
+                    <span className="text-xl">{item.icon}</span>
+                    <div>
+                      <p className="text-white text-[12px] font-semibold">{item.label}</p>
+                      <p className="text-slate-600 text-[10px]">{item.sub}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* SYSTEM */}
+              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mb-2">System</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { href:'/phone',    icon:'📱', label:'Phone',    sub:'Control'       },
+                  { href:'/settings', icon:'🔌', label:'APIs',     sub:'Integrations'  },
+                  { href:'/settings', icon:'⚙️', label:'Settings', sub:'Preferences'   },
+                ].map((item,i) => (
+                  <button key={i} onClick={()=>{ setNavOpen(false); window.location.href=item.href; }}
+                    className="flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-3 py-2.5 hover:bg-white/[0.07] active:scale-95 transition-all text-left">
+                    <span className="text-xl">{item.icon}</span>
+                    <div>
+                      <p className="text-white text-[12px] font-semibold">{item.label}</p>
+                      <p className="text-slate-600 text-[10px]">{item.sub}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
             </div>
           </div>
         </div>
