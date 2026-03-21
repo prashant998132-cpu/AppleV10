@@ -19,8 +19,8 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    load();
-    isPuterAvailable().then(setPuterOn).catch(() => {});
+    // Redirect to chat as main page
+    router.replace('/chat');
   }, []);
 
   async function load() {

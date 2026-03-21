@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import WallpaperPicker, { ChatBackground } from '@/components/chat/WallpaperPicker';
+import InfoBar from '@/components/chat/InfoBar';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { clientSpeak, stopCurrentAudio, speakWithEmotion } from '@/lib/ai/media-client';
 import { useClientCache } from '@/lib/cache/client-cache';
