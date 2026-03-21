@@ -463,6 +463,34 @@ function DynamicGreeting() {
 }
 
 // ─── Main Chat Page ───────────────────────────────────────────
+// ── Live Clock Component ─────────────────────────────────────
+function LiveClock() {
+  const [time, setTime] = useState('');
+  const [ampm, setAmpm] = useState('');
+  const [date, setDate] = useState('');
+  useEffect(() => {
+    function update() {
+      const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Kolkata'}));
+      const h = now.getHours(), m = now.getMinutes();
+      const h12 = h % 12 || 12;
+      setTime(String(h12).padStart(2,'0') + ':' + String(m).padStart(2,'0'));
+      setAmpm(h >= 12 ? 'pm' : 'am');
+      setDate(new Date().toLocaleDateString('hi-IN', {timeZone:'Asia/Kolkata', weekday:'short', day:'numeric', month:'long'}));
+    }
+    update();
+    const t = setInterval(update, 30000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="flex flex-col items-center">
+      <div className="text-[64px] font-black text-white tracking-tight leading-none tabular-nums">
+        {time}<span className="text-2xl font-light text-white/40 ml-2">{ampm}</span>
+      </div>
+      <p className="text-slate-500 text-sm mt-0.5">{date}</p>
+    </div>
+  );
+}
+
 export default function ChatPage() {
   // Export chat as .txt file
   function exportChat() {
