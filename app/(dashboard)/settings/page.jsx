@@ -326,7 +326,7 @@ export default function SettingsPage() {
                   { id:'soft',   label:'Soft Dark',      emoji:'🌫', bg:'#1a1a2e', accent:'#6366f1' },
                   { id:'green',  label:'Matrix Green',   emoji:'🟢', bg:'#020d05', accent:'#00cc44' },
                   { id:'purple', label:'Deep Purple',    emoji:'💜', bg:'#0a0010', accent:'#9333ea' },
-                  { id:'sunset', label:'Night Dark',     emoji:'🌃', bg:'#050d10', accent:'#06b6d4' },
+                  { id:'sunset', label:'Sunset',          emoji:'🌅', bg:'#0f0a00', accent:'#f97316' },
                 ].map(t => {
                   const saved = typeof window!=='undefined' ? localStorage.getItem('jarvis_theme')||'dark' : 'dark';
                   const active = saved === t.id;

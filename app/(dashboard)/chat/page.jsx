@@ -640,6 +640,17 @@ export default function ChatPage() {
     setFreqCmds(getFrequentCommands(4));
     getProactiveAlerts().then(setProAlerts).catch(()=>{});
 
+    // Pre-fetch location on mount (cached for 10 min)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        p => {
+          const loc = {lat:p.coords.latitude.toFixed(4), lng:p.coords.longitude.toFixed(4), ts:Date.now()};
+          try { localStorage.setItem('jarvis_user_location', JSON.stringify(loc)); } catch {}
+        },
+        () => {}, {timeout:5000, maximumAge:120000}
+      );
+    }
+
     // Setup notifications + periodic sync
     (async () => {
       try {
@@ -1118,13 +1129,24 @@ export default function ChatPage() {
       }
 
       const history = msgs.slice(-12).map(m=>({role:m.role,content:m.content}));
-      // Get location if available (non-blocking)
+      // Get location from cache or request fresh
       let userLoc = null;
-      if (navigator.geolocation) {
+      try {
+        const cachedLoc = localStorage.getItem('jarvis_user_location');
+        if (cachedLoc) {
+          const parsed = JSON.parse(cachedLoc);
+          if (Date.now() - parsed.ts < 10 * 60 * 1000) userLoc = parsed; // 10 min cache
+        }
+      } catch {}
+      if (!userLoc && navigator.geolocation) {
         try {
           userLoc = await new Promise(res => navigator.geolocation.getCurrentPosition(
-            p => res({lat:p.coords.latitude.toFixed(4),lng:p.coords.longitude.toFixed(4)}),
-            () => res(null), {timeout:2000,maximumAge:300000}
+            p => {
+              const loc = {lat:p.coords.latitude.toFixed(4), lng:p.coords.longitude.toFixed(4), ts:Date.now()};
+              try { localStorage.setItem('jarvis_user_location', JSON.stringify(loc)); } catch {}
+              res(loc);
+            },
+            () => res(null), {timeout:3000, maximumAge:120000}
           ));
         } catch {}
       }

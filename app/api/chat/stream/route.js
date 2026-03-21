@@ -332,7 +332,10 @@ export async function POST(req) {
           usedProvider = 'offline';
         }
 
-        const cleanReply = fullReply.replace(/\[MEMORY: [^\]]+\]/g, '').trim();
+        // Strip AI's habit of adding time at end of messages
+        let cleanReply = fullReply.replace(/\[MEMORY: [^\]]+\]/g, '').trim();
+        cleanReply = cleanReply.replace(/\.?\s*\d{1,2}:\d{2}\s*(?:AM|PM)\s*(?:ho raha hai|hai ab|baj(?:e hain|\s*rahe hain))[.!]?\s*$/gi, '').trim();
+        cleanReply = cleanReply.replace(/\.?\s*Abhi\s+\d{1,2}:\d{2}\s*(?:AM|PM)[^.]*[.!]?\s*$/gi, '').trim();
         const memories   = (fullReply.match(/\[MEMORY: ([^\]]+)\]/g) || []).map(m => {
           const raw = m.replace('[MEMORY: ', '').replace(']', '');
           const [k, ...v] = raw.split('=');
