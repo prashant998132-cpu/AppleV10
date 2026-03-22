@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import { puterSaveFile, puterListFiles } from '@/lib/ai/puter-client';
 import { useState, useEffect } from 'react';
 import { Brain, Plus, Search, Trash2, Tag, X, RefreshCw } from 'lucide-react';

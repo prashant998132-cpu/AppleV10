@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import { startAriaAutoMessages, updateLastActivity } from '@/lib/aria-auto-msg';
 import { WeatherWidget, TimerWidget, CalculatorWidget, NeetScheduleWidget, DashboardWidget, PriceWidget, ReminderWidget, detectWidget, parseTimerSeconds } from '@/components/chat/InlineWidgets';
 import Sounds from '@/lib/sound/sounds';

@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { clientSpeak, clientImage, clientMusic, stopCurrentAudio, pollinationsUrl } from '@/lib/ai/media-client';
 import { puterGenerateImage, puterStream, PUTER_MODELS } from '@/lib/ai/puter-client';

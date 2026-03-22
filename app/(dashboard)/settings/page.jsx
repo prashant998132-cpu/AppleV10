@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import { BiometricSettings } from '@/components/security/BiometricLock';
 import { useState, useEffect, Suspense } from 'react';
 import { User, Bell, Shield, Palette, Brain, Zap, Download, Trash2, Key, Check, X, ChevronRight, AlertTriangle, RefreshCw, Link } from 'lucide-react';
