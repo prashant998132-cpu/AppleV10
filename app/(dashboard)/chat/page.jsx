@@ -243,7 +243,7 @@ function CopyButton({ text }) {
   );
 }
 
-function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, setPinnedMsgs, msgs, exportChat, titleGenerated, setTitleGenerated, convId, reactions, setReactions }) {
+function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, setPinnedMsgs, msgs, exportChat, titleGenerated, setTitleGenerated, convId, reactions, setReactions, lastUserMsg }) {
   const isUser = msg.role === 'user';
   const [showC, setShowC] = useState(false);
   const [compressed, setCompressed] = useState(null);
@@ -1858,7 +1858,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             {msgs.map(m=>(
               m.streaming&&m.content===''
                 ? <TypingDots key={m.id} mode={m.mode}/>
-                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId} reactions={reactions} setReactions={setReactions}/></div>
+                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId} reactions={reactions} setReactions={setReactions} lastUserMsg={lastUserMsg}/></div>
             ))}
             {loading&&<TypingDots mode={mode==='auto'?(detected||'flash'):mode}/>}
             {/* Workflow Progress */}

@@ -53,7 +53,8 @@ function buildBriefMessage(brief, hour) {
 function buildLocalBrief(hour) {
   const greet = hour < 12 ? '🌅 Good morning' : hour < 17 ? '☀️ Good afternoon' : '🌙 Good evening';
   const day = new Date().toLocaleDateString('hi-IN', { weekday: 'long', day: 'numeric', month: 'long' });
-  return `${greet} Pranshu!\n\n📅 ${day}\n🤖 JARVIS ready hai — aaj kya karna hai?`;
+  const name = (() => { try { return JSON.parse(localStorage.getItem('jarvis_profile') || '{}')?.name || ''; } catch { return ''; } })();
+  return `${greet}${name ? ' ' + name : ''}!\n\n📅 ${day}\n🤖 JARVIS ready hai — aaj kya karna hai?`;
 }
 
 async function scheduleNotification(brief) {

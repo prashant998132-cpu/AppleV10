@@ -1,6 +1,6 @@
 # 🤖 JARVIS — Master Context Document
 ### For: New Claude Chat Sessions + Developer Reference
-### Version: 6.0 | Updated: March 2026
+### Version: 10.9 | Updated: March 2026
 
 ---
 
@@ -273,6 +273,8 @@ npm run dev
 
 ## 🔴 KNOWN ISSUES / TODO
 
+0. **Memory is localStorage-only** — Supabase is intentionally disabled (SUPABASE_ENABLED=false). All data (memories, conversations, goals, profile) stored in browser localStorage. This means: different browser = different data. This is by design for privacy. To enable cross-device sync: set SUPABASE keys in .env and update supabase.js.
+
 1. **pgvector needs manual DB setup** — `schema_v6_migration.sql` run karna padega Supabase mein. Bina iske semantic search silently fallback karega keyword search pe — app crash nahi karega.
 
 2. **n8n workflows not set up** — Daily brief, weekly report automation abhi manual hai. n8n self-hosted ya cloud se connect karna baaki hai.
@@ -368,5 +370,5 @@ export default function NewPage() {
 
 ---
 
-*Last updated: JARVIS v6.0 — March 2026*
-*Sessions history: v1 (PWA basics) → v2 (84 features) → v3 (agentic) → v4 (creative studio) → v5 (personality + auth) → v6 (semantic memory + ReAct agent)*
+*Last updated: JARVIS v10.9 — March 2026*
+*Sessions history: v1 (PWA basics) → v2 (84 features) → v3 (agentic) → v4 (creative studio) → v5 (personality + auth) → v6 (semantic memory + ReAct agent) → v7-v10 (smart router, ARIA, integrations, Llama4)*

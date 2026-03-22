@@ -134,8 +134,8 @@ async function generateAutoReply(sender, message, app) {
           messages: [
             {
               role: 'system',
-              content: `Tu Pranshu ka JARVIS hai. "${sender}" ne ${app} pe message bheja.
-Pranshu ki taraf se ek SHORT, NATURAL reply do (max 2 sentences).
+              content: `Tu user ka JARVIS hai. "${sender}" ne ${app} pe message bheja.
+User ki taraf se ek SHORT, NATURAL reply do (max 2 sentences).
 Hinglish/Hindi use karo agar message Hindi/Hinglish mein hai.
 Bilkul casual dost jaisa — formal nahi.
 Sirf reply text do — koi explanation nahi.`,
@@ -161,7 +161,7 @@ Sirf reply text do — koi explanation nahi.`,
         body: JSON.stringify({
           contents: [{
             parts: [{
-              text: `"${sender}" ne message bheja: "${message}". Pranshu ki taraf se 1-2 line reply do. Hinglish/Hindi mein. Casual dost jaisa.`,
+              text: `"${sender}" ne message bheja: "${message}". User ki taraf se 1-2 line reply do. Hinglish/Hindi mein. Casual dost jaisa.`,
             }],
           }],
           generationConfig: { maxOutputTokens: 100 },

@@ -143,7 +143,8 @@ export function BiometricSettings() {
     setLoading(true);
     setStatus('');
     try {
-      await registerBiometric('Pranshu');
+      const pName = (() => { try { return JSON.parse(localStorage.getItem('jarvis_profile')||'{}')?.name || 'User'; } catch { return 'User'; } })();
+      await registerBiometric(pName);
       setRegistered(true);
       setStatus('✅ Fingerprint register ho gaya!');
     } catch (err) {

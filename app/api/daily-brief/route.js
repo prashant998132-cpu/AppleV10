@@ -29,7 +29,7 @@ async function buildBrief(user) {
   } catch {}
 
   const messages = [
-    `${greet} Pranshu! ☀️ ${day}`,
+    `${greet}! ☀️ ${day}`,
     goalsText || '🤖 JARVIS ready hai — aaj kya plan hai?',
     '💬 Chat, goals, studio sab ready hain!',
   ];

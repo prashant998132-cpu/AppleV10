@@ -12,7 +12,7 @@ const CACHE_SHELL  = `${VERSION}-shell`;
 const CACHE_API    = `${VERSION}-api`;
 const CACHE_MEDIA  = `${VERSION}-media`;
 
-const SHELL_URLS = ['/ ', '/chat', '/analytics', '/goals', '/memory',
+const SHELL_URLS = ['/', '/chat', '/analytics', '/goals', '/memory',
   '/knowledge', '/settings', '/offline', '/phone'];
 
 // NEET 2026 Study Schedule
