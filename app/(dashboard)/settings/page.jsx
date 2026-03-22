@@ -47,6 +47,10 @@ export default function SettingsPage() {
   const [pinInput, setPinInput]     = useState('');
   const [pinMsg, setPinMsg]         = useState('');
   const [saving, setSaving]       = useState(false);
+  const [storageMode, setStorageModeState]     = useState('local');
+  const [storageInfo, setStorageInfoState]     = useState(null);
+  const [migrating, setMigrating]              = useState(false);
+  const [migrateMsg, setMigrateMsg]            = useState('');
   const [customInstr, setCustomInstr] = useState('');
   const [saved, setSaved]         = useState(false);
   const [activeTab, setActiveTab] = useState('profile');

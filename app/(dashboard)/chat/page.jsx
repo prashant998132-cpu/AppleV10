@@ -27,6 +27,18 @@ import { detectWorkflow, generateAIPlan, executeWorkflow } from '@/lib/ai/task-p
 import { handleClientCommand } from '@/lib/automation/deep-links';
 import { getTimeContext, trackUsage, getFrequentCommands, getProactiveAlerts } from '@/lib/ai/smart-context';
 
+const PERSONALITY_LABELS = {
+  normal:       '🤖 JARVIS',
+  motivational: '💪 Coach',
+  fun:          '😄 Fun',
+  sarcastic:    '😏 Sarcastic',
+  coach:        '🎯 Coach',
+  roast:        '🔥 Roast',
+  study:        '📚 Study',
+  executive:    '💼 Executive',
+  girlfriend:   '💕 ARIA',
+};
+
 // ─── Constants ────────────────────────────────────────────────
 const MODES = [
   { id:'auto',  label:'🤖 Auto',  bg:'bg-cyan-500/15 border-cyan-500/40',    text:'text-cyan-400'   },
@@ -545,6 +557,9 @@ export default function ChatPage() {
   const [loading, setLoading]   = useState(false);
   const [mode, setMode]         = useState('auto');
   const [detected, setDetected] = useState(null);
+  // Profile — name + personality for header display
+  const [profileName, setProfileName]           = useState('');
+  const [profilePersonality, setProfilePersonality] = useState('normal');
   const [voiceOn, setVoiceOn]   = useState(false);
   const [convMode, setConvMode] = useState('casual');
   const [newBadge, setNewBadge] = useState(null);   // {emoji, name} for toast
@@ -602,6 +617,13 @@ export default function ChatPage() {
 
   // ── Keyboard shortcuts ───────────────────────────────────────
   useEffect(() => {
+    // Load profile for header display
+    try {
+      const p = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
+      if (p.name) setProfileName(p.name);
+      if (p.personality) setProfilePersonality(p.personality);
+    } catch {}
+
     function onKey(e) {
       // Ctrl/Cmd+K → focus input
       if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); taRef.current?.focus(); }
@@ -1551,7 +1573,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                 </div>
                 <div>
                   <p className="text-white font-bold text-sm">JARVIS</p>
-                  <p className="text-slate-600 text-[10px]">Prashant · auto</p>
+                  <p className="text-slate-600 text-[10px]">{profileName || 'JARVIS'} · {PERSONALITY_LABELS[profilePersonality] || 'Normal'}</p>
                 </div>
               </div>
               <button onClick={()=>setNavOpen(false)} className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-slate-500 hover:text-white">✕</button>
@@ -1715,7 +1737,11 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-black text-white tracking-wide">JARVIS</p>
             <div className="flex items-center gap-1.5">
-              <p className="text-[10px] text-slate-500">Prashant · {mode}</p>
+              <p className="text-[10px] text-slate-500">
+                {profileName && <span className="text-slate-400">{profileName} · </span>}
+                <span className="text-blue-400/80">{PERSONALITY_LABELS[profilePersonality] || '🤖 JARVIS'}</span>
+                <span className="text-slate-600"> · {mode}</span>
+              </p>
               {typeof navigator !== 'undefined' && !navigator.onLine && (
                 <span className="text-[9px] bg-orange-500/20 text-orange-400 border border-orange-500/30 px-1.5 py-0.5 rounded-full">Offline</span>
               )}
@@ -1809,7 +1835,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             <div className="flex flex-col items-center pt-6 pb-3 select-none">
               <LiveClock/>
               <p className="text-slate-400 text-base mt-2 font-medium">
-                {(()=>{const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();return h<5?'Raat ko jaaga? 🌙':h<12?'Kya scene hai, Prashant? 👋':h<17?'Good afternoon, Prashant ☀️':h<21?'Good evening, Prashant 🌇':'Raat ka mood kya hai? 🌙';})()}
+                {(()=>{const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();return h<5?'Raat ko jaaga? 🌙':h<12?(`Kya scene hai${profileName ? ', ' + profileName : ''}? 👋`):h<17?(`Good afternoon${profileName ? ', ' + profileName : ''} ☀️`):h<21?(`Good evening${profileName ? ', ' + profileName : ''} 🌇`):'Raat ka mood kya hai? 🌙';})()}
               </p>
               {/* NEET countdown + progress */}
               {(()=>{
