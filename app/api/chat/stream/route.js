@@ -8,6 +8,9 @@ import { offlineFallback } from '@/lib/ai/offline-fallback';
 import { generateFollowUps } from '@/lib/ai/follow-up';
 import { getProviderOrder, streamProvider, incrementUsage, getUsageStats, detectComplexity, PROVIDERS } from '@/lib/ai/smart-router';
 import { detectToolCall, executeTool } from '@/lib/tools';
+import { detectMood, getMoodInjection } from '@/lib/mood';
+import { buildMemoryContext as buildAriaMemCtx, extractMemoryFromMsg, saveAriaMemory } from '@/lib/aria-memory';
+import { buildAriaContext } from '@/lib/responseBuilder';
 
 const CEREBRAS_URL = 'https://api.cerebras.ai/v1/chat/completions';
 

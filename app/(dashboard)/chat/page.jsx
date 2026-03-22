@@ -1,4 +1,5 @@
 'use client';
+import { startAriaAutoMessages, updateLastActivity } from '@/lib/aria-auto-msg';
 import { WeatherWidget, TimerWidget, CalculatorWidget, NeetScheduleWidget, DashboardWidget, PriceWidget, ReminderWidget, detectWidget, parseTimerSeconds } from '@/components/chat/InlineWidgets';
 import Sounds from '@/lib/sound/sounds';
 import Link from 'next/link';
@@ -662,6 +663,12 @@ export default function ChatPage() {
       if (fonts[savedStyle]) document.documentElement.style.fontFamily = fonts[savedStyle];
     }
 
+    // ARIA auto messages
+    startAriaAutoMessages((ariaMsg) => {
+      const autoMsg = {id:`aria_auto_${Date.now()}`,role:'assistant',content:ariaMsg,streaming:false,ts:Date.now(),mode:'flash',modelUsed:'💕 ARIA'};
+      setMsgs(p => [...p, autoMsg]);
+    });
+
     // Pre-fetch location on mount + reverse geocode to city name
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -1158,9 +1165,16 @@ export default function ChatPage() {
     setPreview(null); setImgB64(null); setDetected(null);
 
     setLastUserMsg(msg);
+    updateLastActivity();
     setMsgError(null);
     const userMsg = {id:`u${Date.now()}`,role:'user',content:msg,cameraPreview:prev,ts:Date.now()};
     const aiId    = `a${Date.now()}`;
+    // ARIA: human-like delay if girlfriend mode
+    const isAriaMode = typeof localStorage !== 'undefined' && localStorage.getItem('jarvis_profile') && JSON.parse(localStorage.getItem('jarvis_profile') || '{}')?.personality === 'girlfriend';
+    if (isAriaMode) {
+      const delay = 800 + Math.floor(Math.random() * 1800);
+      await new Promise(r => setTimeout(r, delay));
+    }
     const aiMsg   = {id:aiId,role:'assistant',content:'',streaming:true,thinking:null,ts:Date.now(),mode:finalMode};
 
     setMsgs(p=>[...p,userMsg]);
