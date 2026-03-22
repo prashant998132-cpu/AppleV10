@@ -5,8 +5,8 @@ import { useState } from 'react';
 
 const REACTIONS = ['❤️', '🔥', '😂', '🤔', '💪', '🙌'];
 
-export default function MessageReactions({ messageId, onReact }) {
-  const [selected, setSelected] = useState(null);
+export default function MessageReactions({ messageId, onReact, currentReaction }) {
+  const [selected, setSelected] = useState(currentReaction || null);
   const [showPicker, setShowPicker] = useState(false);
 
   function pickReaction(emoji) {
@@ -30,7 +30,7 @@ export default function MessageReactions({ messageId, onReact }) {
       {/* Add reaction button */}
       <button
         onClick={() => setShowPicker(p => !p)}
-        className="text-[10px] text-slate-700 hover:text-slate-400 transition-colors opacity-0 group-hover:opacity-100"
+        className="text-[10px] text-slate-700 hover:text-slate-400 transition-colors"
         title="React karo"
       >
         😊+

@@ -383,6 +383,13 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
           </div>
         )}
 
+        {/* Emoji Reactions */}
+        {!isUser && !msg.streaming && (
+          <MessageReactions messageId={msg.id} onReact={(id, emoji) => {
+            setReactions(p => ({ ...p, [id]: emoji }));
+          }} currentReaction={reactions[msg.id]}/>
+        )}
+
         {/* Follow-up chips — tiny horizontal scroll */}
         {!isUser && !msg.streaming && msg.followUps?.length > 0 && (
           <div className="flex gap-1 mt-0.5 overflow-x-scroll no-scrollbar" style={{maxWidth:"90%",flexWrap:"nowrap"}}>
@@ -667,6 +674,14 @@ export default function ChatPage() {
     };
     window.addEventListener('jarvis-theme-change', onTheme);
 
+    // Apply saved theme on mount
+    const savedTheme = localStorage.getItem('jarvis_theme') || 'dark';
+    const THEMES = {'dark': {'bg': '#050810', 'accent': '#1A56DB'}, 'amoled': {'bg': '#000000', 'accent': '#3b82f6'}, 'soft': {'bg': '#1a1a2e', 'accent': '#6366f1'}, 'green': {'bg': '#020d05', 'accent': '#00cc44'}, 'purple': {'bg': '#0a0010', 'accent': '#9333ea'}, 'sunset': {'bg': '#0f0a00', 'accent': '#f97316'}, 'ocean': {'bg': '#00080f', 'accent': '#0ea5e9'}, 'rose': {'bg': '#0f0008', 'accent': '#f43f5e'}, 'gold': {'bg': '#0a0800', 'accent': '#eab308'}};
+    const t = THEMES[savedTheme] || THEMES['dark'];
+    document.body.style.background = t.bg;
+    document.documentElement.style.setProperty('--bg', t.bg);
+    document.documentElement.style.setProperty('--accent', t.accent);
+
     // Apply saved text style on mount
     const savedStyle = localStorage.getItem('jarvis_text_style');
     if (savedStyle && savedStyle !== 'default') {
@@ -752,19 +767,40 @@ export default function ChatPage() {
     }).catch(()=>{});
   }, []);
 
-  // Pull-to-refresh (mobile touch gesture)
+  // Pull-to-refresh + Swipe gestures (mobile)
   useEffect(() => {
-    let startY = 0;
+    let startX = 0, startY = 0;
     const el = document.querySelector('.jarvis-scroll');
     if (!el) return;
-    const onTouchStart = (e) => { startY = e.touches[0].clientY; };
+    const onTouchStart = (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    };
     const onTouchEnd = (e) => {
+      const dx = e.changedTouches[0].clientX - startX;
       const dy = e.changedTouches[0].clientY - startY;
-      if (dy > 80 && el.scrollTop === 0 && !refreshing) {
+      const absDx = Math.abs(dx), absDy = Math.abs(dy);
+
+      // Pull-to-refresh (swipe down)
+      if (dy > 80 && absDy > absDx && el.scrollTop === 0 && !refreshing) {
         setRefreshing(true);
         navigator.vibrate?.(50);
-        // Reload last conversation
         setTimeout(() => setRefreshing(false), 1200);
+        return;
+      }
+
+      // Swipe right → History sidebar
+      if (dx > 70 && absDx > absDy * 1.5 && startX < 40) {
+        setHistoryOpen(true);
+        navigator.vibrate?.(30);
+        return;
+      }
+
+      // Swipe left → New chat (only from right edge)
+      if (dx < -70 && absDx > absDy * 1.5 && startX > window.innerWidth - 40) {
+        setMsgs([]); setConvId(null); setTitleGenerated(false);
+        navigator.vibrate?.(30);
+        return;
       }
     };
     el.addEventListener('touchstart', onTouchStart, { passive: true });
@@ -773,7 +809,7 @@ export default function ChatPage() {
       el.removeEventListener('touchstart', onTouchStart);
       el.removeEventListener('touchend', onTouchEnd);
     };
-  }, [msgs]);
+  }, [msgs, refreshing]);
 
   useEffect(()=>{ endRef.current?.scrollIntoView({behavior:'smooth'}); },[msgs, loading]);
 
