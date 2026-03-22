@@ -87,10 +87,15 @@ export default function SettingsPage() {
   async function saveProfile() {
     setSaving(true);
     try {
+      // Save to localStorage FIRST (instant, reliable)
+      const profileData = { ...profile, custom_instructions: customInstr };
+      const existing = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
+      localStorage.setItem('jarvis_profile', JSON.stringify({...existing, ...profileData}));
+      // Also save to API
       await fetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...profile, custom_instructions: customInstr }),
+        body: JSON.stringify(profileData),
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
@@ -339,6 +344,9 @@ export default function SettingsPage() {
                       onClick={() => {
                         localStorage.setItem('jarvis_theme', t.id);
                         document.body.style.background = t.bg;
+                        document.documentElement.style.setProperty('--bg', t.bg);
+                        document.documentElement.style.setProperty('--accent', t.accent);
+                        window.dispatchEvent(new CustomEvent('jarvis-theme-change', {detail:{theme:t.id, bg:t.bg, accent:t.accent}}));
                       }}
                       className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${active?'border-blue-500/40 bg-blue-600/15':'border-transparent bg-white/4 hover:border-white/10'}`}>
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{background:t.bg,border:`2px solid ${t.accent}`}}>
