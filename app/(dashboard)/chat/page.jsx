@@ -972,6 +972,20 @@ export default function ChatPage() {
     return [];
   }
 
+
+  // ── Visual viewport — keyboard pe input bar upar aaye ──
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const vp = window.visualViewport;
+    const onResize = () => {
+      const diff = window.innerHeight - vp.height;
+      const bar = document.getElementById('chat-input-bar');
+      if (bar) bar.style.bottom = diff > 50 ? diff + 'px' : '0px';
+    };
+    vp.addEventListener('resize', onResize);
+    return () => vp.removeEventListener('resize', onResize);
+  }, []);
+
   // ── Main send function (streaming) ───────────────────────────
   // ── Client-side cache ──────────────────────────────────
   const { get: cacheGet, set: cacheSet } = useClientCache();
