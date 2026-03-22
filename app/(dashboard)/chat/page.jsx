@@ -462,7 +462,24 @@ function HistorySidebar({ open, onClose, onLoad, onDelete }) {
             </div>
           ))}
         </div>
-        <div className="p-3 border-t border-white/[0.06]">
+        <div className="p-3 border-t border-white/[0.06] space-y-2">
+          {/* Quick Nav */}
+          <div className="grid grid-cols-3 gap-1.5 mb-2">
+            {[
+              { href:'/phone',    icon:'📱', label:'Phone'   },
+              { href:'/studio',   icon:'🎨', label:'Studio'  },
+              { href:'/goals',    icon:'🎯', label:'Goals'   },
+              { href:'/analytics',icon:'📊', label:'Stats'   },
+              { href:'/memory',   icon:'🧠', label:'Memory'  },
+              { href:'/settings', icon:'⚙️', label:'Settings'},
+            ].map(({href,icon,label})=>(
+              <a key={href} href={href} onClick={onClose}
+                className="flex flex-col items-center gap-0.5 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] transition-colors active:scale-95">
+                <span className="text-base">{icon}</span>
+                <span className="text-[9px] text-slate-500">{label}</span>
+              </a>
+            ))}
+          </div>
           <button onClick={()=>{onLoad(null);onClose();}} className="w-full py-2.5 rounded-xl border border-white/10 text-xs text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-2">
             <Plus size={13}/> Naya Chat
           </button>
