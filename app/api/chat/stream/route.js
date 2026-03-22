@@ -229,12 +229,12 @@ export async function POST(req) {
   let contextSummary = '';
   if (history.length > 20) {
     const older = history.slice(0, history.length - 20);
-    const summaryPrompt = `Summarize this conversation briefly in 3-5 lines (Hinglish). Key facts, decisions, topics discussed:\n${older.map(m=>`${m.role}: ${m.content}`).join('\n').slice(0,2000)}`;
+    const summaryPrompt = `Summarize this conversation briefly in 3-5 lines. Match the user's preferred language. Key facts, decisions, topics discussed:\n${older.map(m=>`${m.role}: ${m.content}`).join('\n').slice(0,2000)}`;
     try {
       if (keys.GROQ_API_KEY) {
         const sr = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${keys.GROQ_API_KEY}`},
-          body: JSON.stringify({ model:'llama3-8b-8192', messages:[{role:'user',content:summaryPrompt}], temperature:0.3, max_tokens:200 })
+          body: JSON.stringify({ model:'llama-3.1-8b-instant', messages:[{role:'user',content:summaryPrompt}], temperature:0.3, max_tokens:200 })
         });
         const sd = await sr.json();
         contextSummary = sd.choices?.[0]?.message?.content || '';
