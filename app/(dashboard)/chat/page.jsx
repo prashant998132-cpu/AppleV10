@@ -730,6 +730,16 @@ export default function ChatPage() {
     })();
   }, []);
 
+  // ── Header Battery ────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.getBattery) return;
+    navigator.getBattery().then(b => {
+      setHeaderBattery({ level: Math.round(b.level * 100), charging: b.charging });
+      b.addEventListener('levelchange', () => setHeaderBattery({ level: Math.round(b.level * 100), charging: b.charging }));
+      b.addEventListener('chargingchange', () => setHeaderBattery({ level: Math.round(b.level * 100), charging: b.charging }));
+    }).catch(() => {});
+  }, []);
+
   // Load pinned messages on mount
   useEffect(() => {
     fetch('/api/messages/pin').then(r=>r.json()).then(d=>{
@@ -930,6 +940,8 @@ export default function ChatPage() {
 
   // ── Wake Word "Hey JARVIS" ────────────────────────────────────
   const [wakeWordOn, setWakeWordOn] = useState(false);
+  const [headerBattery, setHeaderBattery] = useState(null);
+  const [moreOpen, setMoreOpen] = useState(false);
   const { listening: wakeListening, wakeDetected } = useWakeWord({
     enabled: wakeWordOn,
     onWake: () => {
@@ -1634,12 +1646,52 @@ export default function ChatPage() {
           )}
 
           {/* Right action buttons — compact */}
-          <div className="flex items-center gap-0.5 shrink-0">
-            {/* Sound */}
+          <div className="flex items-center gap-0.5 shrink-0 relative">
+            {/* Battery inline */}
+            {headerBattery && (
+              <div className="flex items-center gap-0.5 px-1 shrink-0">
+                <span className="text-[10px]">{headerBattery.charging ? '⚡' : '🔋'}</span>
+                <span className={`text-[10px] font-medium tabular-nums ${
+                  headerBattery.level <= 20 ? 'text-red-400' :
+                  headerBattery.level <= 40 ? 'text-orange-400' : 'text-slate-500'
+                }`}>{headerBattery.level}%</span>
+              </div>
+            )}
+            {/* UI Sound toggle */}
+            <button onClick={()=>{ Sounds.toggleMute(); navigator.vibrate?.([5]); }}
+              title="UI sounds"
+              className="p-1.5 rounded-full text-slate-600 hover:text-slate-300 transition-all text-[13px]">
+              🔈
+            </button>
+            {/* Voice/TTS sound */}
             <button onClick={()=>{stopCurrentAudio();setSpeaking(false);setVoiceOn(v=>!v);}}
               className={`p-1.5 rounded-full transition-all ${voiceOn||speaking?'text-blue-400':'text-slate-600'}`}>
               {voiceOn||speaking?<Volume2 size={15}/>:<VolumeX size={15}/>}
             </button>
+            {/* ⋯ More — Search, Pin, Wake */}
+            <div className="relative">
+              <button onClick={()=>setMoreOpen(v=>!v)}
+                className={`p-1.5 rounded-full transition-all text-base leading-none ${moreOpen?'text-white':'text-slate-600 hover:text-white'}`}>
+                ···
+              </button>
+              {moreOpen && (
+                <div className="absolute right-0 top-9 z-50 bg-[#0d1117] border border-white/10 rounded-2xl shadow-2xl p-1.5 flex flex-col gap-0.5 min-w-[140px]"
+                  onClick={()=>setMoreOpen(false)}>
+                  <button onClick={()=>setSearchOpen(true)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-slate-400 hover:text-white text-[13px]">
+                    <Search size={14}/> Chat Search
+                  </button>
+                  <button onClick={()=>setPinsOpen(true)}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-[13px] ${pinnedMsgs.length>0?'text-yellow-400':'text-slate-400 hover:text-white'}`}>
+                    📌 Pinned {pinnedMsgs.length>0&&<span className="ml-auto text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 rounded-full">{pinnedMsgs.length}</span>}
+                  </button>
+                  <button onClick={()=>setWakeWordOn(w=>!w)}
+                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-[13px] ${wakeWordOn?'text-blue-400':'text-slate-400 hover:text-white'}`}>
+                    {wakeWordOn?(wakeDetected?'🎤':'👂'):'🔕'} Hey JARVIS
+                  </button>
+                </div>
+              )}
+            </div>
             {/* New chat */}
             <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}}
               className="p-1.5 rounded-full text-slate-600 hover:text-white transition-all">
