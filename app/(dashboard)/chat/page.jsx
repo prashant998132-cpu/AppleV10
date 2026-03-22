@@ -1031,6 +1031,12 @@ export default function ChatPage() {
             // Try to use ThemeProvider if available
             if (typeof localStorage !== 'undefined') localStorage.setItem('jarvis_theme', id);
             window.dispatchEvent(new CustomEvent('jarvis-theme-change', { detail: { theme: id } }));
+            // Apply immediately
+            const thBgs = {dark:'#050810',amoled:'#000000',soft:'#1a1a2e',green:'#020d05',purple:'#0a0010',sunset:'#0f0a00',ocean:'#00080f',rose:'#0f0008',gold:'#0a0800'};
+            const thAcs = {dark:'#1A56DB',amoled:'#3b82f6',soft:'#6366f1',green:'#00cc44',purple:'#9333ea',sunset:'#f97316',ocean:'#0ea5e9',rose:'#f43f5e',gold:'#eab308'};
+            document.documentElement.style.setProperty('--bg', thBgs[id]||'#050810');
+            document.documentElement.style.setProperty('--accent', thAcs[id]||'#1A56DB');
+            document.body.style.background = thBgs[id]||'#050810';
           },
           navigate: (path) => {
             if (typeof window !== 'undefined') window.location.href = path;
