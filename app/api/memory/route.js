@@ -1,3 +1,4 @@
+import { getSupabaseServer } from '@/lib/db/supabase';
 // app/api/memory/route.js
 import { getMemories, saveMemory, deleteMemory, exportAllData, deleteAllUserData, saveFeedback } from '@/lib/db/queries';
 import { saveLearningPattern } from '@/lib/ai/self-learning';
