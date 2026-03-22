@@ -44,30 +44,9 @@ async function fetchRates() {
   return null;
 }
 
-async function fetchWeather(lat, lng) {
-  try {
-    const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,weathercode&timezone=auto`,
-    );
-    if (res.ok) {
-      const d = await res.json();
-      const temp = d.current?.temperature_2m;
-      const code = d.current?.weathercode;
-      const icon = code <= 1 ? '☀️' : code <= 3 ? '⛅' : code <= 67 ? '🌧️' : '⛈️';
-      return { temp: Math.round(temp), icon };
-    }
-  } catch {}
-  return null;
-}
 
-function getBattery() {
-  if (typeof navigator === 'undefined') return null;
-  if (!navigator.getBattery) return null;
-  return navigator.getBattery().then(b => ({
-    level: Math.round(b.level * 100),
-    charging: b.charging,
-  })).catch(() => null);
-}
+
+
 
 export default function InfoBar() {
   const [info, setInfo] = useState(() => {
@@ -126,19 +105,11 @@ export default function InfoBar() {
   }, []);
 
   // Don't render if nothing to show
-  const hasContent = info.gold10g || info.silver10g || info.weather || info.battery;
+  const hasContent = info.gold10g || info.silver10g;
   if (!hasContent) return null;
 
   return (
     <div className="flex items-center gap-0 px-3 py-1.5 border-b border-white/[0.05] overflow-x-auto no-scrollbar shrink-0 bg-black/10">
-
-      {/* Weather */}
-      {info.weather && (
-        <div className="flex items-center gap-1 shrink-0 mr-3">
-          <span className="text-sm">{info.weather.icon}</span>
-          <span className="text-[11px] text-slate-400 font-medium">{info.weather.temp}°</span>
-        </div>
-      )}
 
       {/* Gold rate */}
       {info.gold10g > 0 && (
@@ -162,16 +133,7 @@ export default function InfoBar() {
         </div>
       )}
 
-      {/* Battery */}
-      {info.battery && (
-        <div className="flex items-center gap-1 shrink-0 ml-auto">
-          <span className="text-[10px]">{info.battery.charging ? '⚡' : '🔋'}</span>
-          <span className={`text-[10px] font-medium ${
-            info.battery.level <= 20 ? 'text-red-400' :
-            info.battery.level <= 40 ? 'text-orange-400' : 'text-slate-400'
-          }`}>{info.battery.level}%</span>
-        </div>
-      )}
+
     </div>
   );
 }

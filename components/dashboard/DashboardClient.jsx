@@ -215,25 +215,6 @@ export default function DashboardClient({ children, user, profile }) {
 
 
 
-      {/* ── Mobile Bottom Navigation Bar ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 glass border-t border-white/[0.06]"
-           style={{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
-        <div className="flex items-center justify-around h-16">
-          {MOBILE_NAV.map(({ href, icon: Icon, label }) => {
-            const active = href === '/' ? path === '/' : path.startsWith(href);
-            return (
-              <Link key={href} href={href}
-                className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all active:scale-95 ${active ? 'text-blue-400' : 'text-slate-600'}`}>
-                <div className={`p-1.5 rounded-xl transition-all ${active ? 'bg-blue-500/15' : ''}`}>
-                  <Icon size={20}/>
-                </div>
-                <span className={`text-[10px] font-medium ${active ? 'text-blue-400' : 'text-slate-600'}`}>{label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-
       {/* Mobile sidebar overlay */}
       {sidebar && (
         <div className="fixed inset-0 z-50 lg:hidden">

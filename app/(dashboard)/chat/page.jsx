@@ -436,7 +436,7 @@ function HistorySidebar({ open, onClose, onLoad, onDelete }) {
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/60" onClick={onClose}/>
-      <div className="fixed left-0 top-0 bottom-0 z-50 w-72 bg-[#080c14] border-r border-white/[0.06] flex flex-col">
+      <div className="fixed right-0 top-0 bottom-0 z-50 w-72 bg-[#080c14] border-l border-white/[0.06] flex flex-col">
         <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between">
           <p className="font-bold text-white text-sm">Chat History</p>
           <button onClick={onClose}><X size={16} className="text-slate-600"/></button>
@@ -1493,7 +1493,6 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       <HistorySidebar open={historyOpen} onClose={()=>setHistoryOpen(false)} onLoad={loadConversation} onDelete={deleteConversation}/>
 
       {/* ── Daily Info Bar — Gold/Silver/Weather/Battery ───────── */}
-      <InfoBar/>
 
       {/* ── Plus Menu Popup ───────────────────────────────────── */}
       {plusOpen && (
@@ -1765,16 +1764,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
 
           {/* Right action buttons — compact */}
           <div className="flex items-center gap-0.5 shrink-0 relative">
-            {/* Battery inline */}
-            {headerBattery && (
-              <div className="flex items-center gap-0.5 px-1 shrink-0">
-                <span className="text-[10px]">{headerBattery.charging ? '⚡' : '🔋'}</span>
-                <span className={`text-[10px] font-medium tabular-nums ${
-                  headerBattery.level <= 20 ? 'text-red-400' :
-                  headerBattery.level <= 40 ? 'text-orange-400' : 'text-slate-500'
-                }`}>{headerBattery.level}%</span>
-              </div>
-            )}
+
             {/* UI Sound toggle */}
             <button onClick={()=>{ Sounds.toggleMute(); navigator.vibrate?.([5]); }}
               title="UI sounds"
