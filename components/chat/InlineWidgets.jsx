@@ -184,10 +184,10 @@ export function CalculatorWidget() {
   ];
 
   return (
-    <div className="mt-2 bg-[#0a0f1a] border border-white/10 rounded-2xl overflow-hidden w-full max-w-[280px]">
+    <div className="mt-2 bg-[#0a0f1a] border border-white/10 rounded-2xl overflow-hidden" style={{width:"280px",minWidth:"280px",maxWidth:"280px"}}>
       {/* Display */}
-      <div className="px-4 py-3 text-right">
-        <p className="text-white/30 text-xs h-4">{expr}</p>
+      <div className="px-4 py-3 text-right" style={{height:"76px"}}>
+        <p className="text-white/30 text-xs h-4 truncate">{expr}</p>
         <p className="text-white text-3xl font-light mt-1 truncate">{display}</p>
       </div>
       {/* Buttons */}

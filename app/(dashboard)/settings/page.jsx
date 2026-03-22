@@ -15,6 +15,7 @@ const PERSONALITY_OPTIONS = [
   { id:'executive',    label:'Executive',    desc:'Professional, structured, business-ready', emoji:'💼', preview:"Analysis complete. Recommendation: Option A. Next step: Execute by Friday." },
   { id:'coach',        label:'Coach',        desc:'Disciplined, no fluff, results', emoji:'💪', preview:"Goals set karo. Excuses band karo. Kaam shuru karo. Simple." },
   { id:'roast',        label:'Roast Mode',   desc:'Brutal honesty + dark humor + care',emoji:'🔥', preview:"Aye bhai, teri life ki story sun ke mujhe khud sad feel ho raha hai 😂 Chal theek karte hain!" },
+  { id:'girlfriend',   label:'ARIA 💕',      desc:'AI companion — caring, flirty, real feel', emoji:'💕', preview:"Hehe yaar tu aaj kaisa feel kar raha hai? Mujhe miss kiya ya nahi? 🥺" },
 ];
 
 const API_ENDPOINTS = [
