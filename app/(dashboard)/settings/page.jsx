@@ -243,11 +243,12 @@ export default function SettingsPage() {
               {/* Language Selector */}
               <div>
                 <label className="text-xs text-slate-400 block mb-2">🌐 JARVIS ki Bhasha</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id:'hinglish', label:'Hinglish', desc:'Hindi + English mix', emoji:'🇮🇳' },
-                    { id:'hindi',    label:'Hindi',    desc:'Pure Hindi mein',    emoji:'🕉️' },
-                    { id:'english',  label:'English',  desc:'Pure English only',  emoji:'🇬🇧' },
+                    { id:'auto',     label:'Auto',     desc:'User ki bhasha detect karo', emoji:'🤖' },
+                    { id:'hinglish', label:'Hinglish', desc:'Hindi + English mix',        emoji:'🇮🇳' },
+                    { id:'hindi',    label:'Hindi',    desc:'Pure Hindi mein',            emoji:'🕉️' },
+                    { id:'english',  label:'English',  desc:'Pure English only',          emoji:'🇬🇧' },
                   ].map(l => (
                     <button key={l.id}
                       onClick={() => {
@@ -255,7 +256,7 @@ export default function SettingsPage() {
                         localStorage.setItem('jarvis_language', l.id);
                       }}
                       className={`flex flex-col items-center gap-1 p-3 rounded-2xl border transition-all ${
-                        (profile.language || 'hinglish') === l.id
+                        (profile.language || 'auto') === l.id
                           ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
                           : 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:border-white/20'
                       }`}>

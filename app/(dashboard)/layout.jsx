@@ -10,7 +10,7 @@ export default async function DashboardLayout({ children }) {
   const finalUser = user || LOCAL_USER;
 
   // Try to get profile (silent fail if no Supabase)
-  let profile = { name: 'Pranshu', personality: 'normal', city: 'Rewa', language: 'hinglish' };
+  let profile = { name: 'Pranshu', personality: 'normal', city: 'Rewa', language: 'auto' };
   try {
     const supabase = await getSupabaseServer();
     const { data: p } = await supabase
