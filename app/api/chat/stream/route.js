@@ -8,7 +8,7 @@ import { offlineFallback } from '@/lib/ai/offline-fallback';
 import { generateFollowUps } from '@/lib/ai/follow-up';
 import { getProviderOrder, streamProvider, incrementUsage, getUsageStats, detectComplexity, PROVIDERS } from '@/lib/ai/smart-router';
 import { detectToolCall, executeTool } from '@/lib/tools';
-import { detectMood, getMoodInjection } from '@/lib/mood';
+import { detectMood, getMoodInjection, updateAttachment } from '@/lib/mood';
 import { buildMemoryContext as buildAriaMemCtx, extractMemoryFromMsg, saveAriaMemory } from '@/lib/aria-memory';
 import { buildAriaContext } from '@/lib/responseBuilder';
 
@@ -132,6 +132,21 @@ export async function POST(req) {
 
   // ── Parallel tool execution (was sequential, now concurrent) ─
   let toolCtx = '';
+  // Ultra ARIA mode
+  const isAria = profile?.personality === 'girlfriend';
+  const userMood = detectMood(message);
+  if (isAria) {
+    const ariaMemory = (() => { try { return JSON.parse(profile?.aria_memory || '{}'); } catch { return {}; } })();
+    const attachment = (() => {
+      let lvl = parseFloat(ariaMemory?.attachment || 3);
+      if (userMood === 'sad') lvl += 0.3;
+      else if (userMood === 'missing') lvl += 0.5;
+      else if (userMood === 'happy') lvl += 0.2;
+      return Math.min(10, parseFloat(lvl.toFixed(1)));
+    })();
+    const lastAIReply = history?.slice().reverse().find(h => h?.role === 'assistant')?.content || '';
+    toolCtx += '\n' + buildAriaContext({ userMsg: message, mood: userMood, memory: ariaMemory, lastReply: lastAIReply, attachment });
+  }
 
   // ── ALWAYS inject real IST time + location context ──────────
   const nowIST = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Kolkata'}));
