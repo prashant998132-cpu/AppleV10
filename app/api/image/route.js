@@ -114,7 +114,7 @@ export async function POST(req) {
         // ✅ Key fix: save to Supabase Storage, return CDN URL — not base64 through Vercel
         const publicUrl = await base64ToSupabaseUrl(b64, user.id, finalPrompt);
         if (publicUrl) return { url: publicUrl, provider: 'Gemini Imagen (Supabase CDN)' };
-        throw new Error('Supabase storage unavailable');
+        return Response.json({ error: 'Image storage not configured — use direct URL', url: null }, { status: 503 });
       },
     },
     {

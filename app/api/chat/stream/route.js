@@ -32,6 +32,7 @@ export async function POST(req) {
     name:                dbProfile?.name                || user.email?.split('@')[0] || APP.defaultName,
     city:                dbProfile?.city                || APP.defaultCity,
     personality:         dbProfile?.personality         || 'normal',
+    language:            dbProfile?.language            || 'auto',
     custom_instructions: dbProfile?.custom_instructions || null,
   };
 
