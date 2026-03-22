@@ -1,4 +1,5 @@
 'use client';
+import { WeatherWidget, TimerWidget, CalculatorWidget, NeetScheduleWidget, DashboardWidget, PriceWidget, ReminderWidget, detectWidget, parseTimerSeconds } from '@/components/chat/InlineWidgets';
 import Sounds from '@/lib/sound/sounds';
 import Link from 'next/link';
 import WallpaperPicker, { ChatBackground } from '@/components/chat/WallpaperPicker';
@@ -1051,17 +1052,19 @@ export default function ChatPage() {
       }
     }
 
-    // 0.5 INSTANT WIDGET COMMANDS (before AI)
-    const instantWidget = detectWidget(msg);
+
+
+    // ── INSTANT WIDGET COMMANDS (runs before AI/deeplink) ────
+    const instantWidget = detectWidget(msg || '');
     if (instantWidget && ['calculator','neet_schedule','dashboard','reminder'].includes(instantWidget)) {
       const userMsg0 = {id:`u${Date.now()}`,role:'user',content:msg,ts:Date.now()};
-      const widgetMsgs = {
-        calculator: '🧮 Calculator kholte hain!',
+      const widgetResponses = {
+        calculator:    '🧮 Calculator:',
         neet_schedule: '📚 Aaj ka NEET schedule:',
-        dashboard: '📊 Tera dashboard:',
-        reminder: '⏰ Reminder set karo:',
+        dashboard:     '📊 Tera dashboard:',
+        reminder:      '⏰ Reminder set karo:',
       };
-      const aiMsg0 = {id:`w${Date.now()}`,role:'assistant',content:widgetMsgs[instantWidget],streaming:false,ts:Date.now(),widget:instantWidget,widgetData:{},modelUsed:'⚡ instant'};
+      const aiMsg0 = {id:`w${Date.now()}`,role:'assistant',content:widgetResponses[instantWidget],streaming:false,ts:Date.now(),widget:instantWidget,widgetData:{},modelUsed:'⚡ instant'};
       setMsgs(p=>[...p,userMsg0,aiMsg0]);
       setInput('');
       return;
