@@ -315,7 +315,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
           {compressing
             ? <span className="text-slate-400 text-xs animate-pulse">Compress ho raha hai...</span>
             : isUser ? text
-            : <>{text}{msg.streaming && <span className="inline-block w-0.5 h-4 bg-blue-400 ml-0.5 animate-pulse align-middle"/>}</>
+            : <><MdContent text={text}/>{msg.streaming && <span className="inline-block w-0.5 h-4 bg-blue-400 ml-0.5 animate-pulse align-middle"/>}</>
           }
         </div>
 
@@ -545,6 +545,8 @@ export default function ChatPage() {
   const [listening, setListening]= useState(false);
   const [preview, setPreview]   = useState(null);
   const [imgB64, setImgB64]     = useState(null);
+  const [pdfText, setPdfText]   = useState(null); // extracted PDF text
+  const [pdfName, setPdfName]   = useState('');   // PDF filename
   const [cameraOn, setCameraOn] = useState(false);
   const [convId, setConvId]     = useState(null);
   const [convs, setConvs]       = useState([]);  // conversation list
@@ -999,8 +1001,17 @@ export default function ChatPage() {
   }
 
   async function send(text=input, modeOvr=null) {
-    const msg=text?.trim(); if((!msg&&!imgB64)||loading) return;
+    const msg=text?.trim(); if((!msg&&!imgB64&&!pdfText)||loading) return;
     setInput(''); navigator.vibrate?.([10]); Sounds.sent();
+    // If PDF attached, prepend context to message
+    const effectiveMsg = pdfText
+      ? `[PDF: ${pdfName}]
+
+${pdfText.slice(0, 6000)}
+
+---
+Sawaal: ${msg || 'Is PDF ka summary batao'}`
+      : msg;
 
     // Track usage for smart suggestions
     trackUsage(msg);
@@ -1033,7 +1044,7 @@ export default function ChatPage() {
 
     // ── STEP 0: Chat Command Engine — highest priority ────────
     // Handles: app open, theme change, WhatsApp msg, routine, alarm, search, settings
-    if (msg && !imgB64) {
+    if (effectiveMsg && !imgB64) {
       const parsed = parseCommand(msg);
       if (parsed.type !== null) {
         // Show user message first
@@ -1189,12 +1200,12 @@ export default function ChatPage() {
     const activeMode = modeOvr||mode;
     const finalMode  = activeMode==='auto'?(detected||'flash'):activeMode;
     const b64=imgB64, prev=preview;
-    setPreview(null); setImgB64(null); setDetected(null);
+    setPreview(null); setImgB64(null); setPdfText(null); setPdfName(''); setDetected(null);
 
     setLastUserMsg(msg);
     updateLastActivity();
     setMsgError(null);
-    const userMsg = {id:`u${Date.now()}`,role:'user',content:msg,cameraPreview:prev,ts:Date.now()};
+    const userMsg = {id:`u${Date.now()}`,role:'user',content:pdfText?`📄 ${pdfName}${msg?' — '+msg:''}`:msg,cameraPreview:prev,ts:Date.now()};
     const aiId    = `a${Date.now()}`;
     // ARIA: human-like delay if girlfriend mode
     const isAriaMode = typeof localStorage !== 'undefined' && localStorage.getItem('jarvis_profile') && JSON.parse(localStorage.getItem('jarvis_profile') || '{}')?.personality === 'girlfriend';
@@ -1446,7 +1457,7 @@ export default function ChatPage() {
                 {[
                   { icon:'📷', label:'Camera',  action: ()=>{ setPlusOpen(false); startCamera(); } },
                   { icon:'🖼️', label:'Image',  action: ()=>{ setPlusOpen(false); document.getElementById('img-upload')?.click(); } },
-                  { icon:'📄', label:'PDF',     action: ()=>{ setPlusOpen(false); setInput(v=>v+'[Attach PDF — coming soon] '); } },
+                  { icon:'📄', label:'PDF',     action: ()=>{ setPlusOpen(false); document.getElementById('pdf-upload')?.click(); } },
                   { icon:'🎙️', label:'Voice',  action: ()=>{ setPlusOpen(false); startVoice(); } },
                 ].map(item=>(
                   <button key={item.label} onClick={item.action}
@@ -1570,6 +1581,37 @@ export default function ChatPage() {
         setMsgs(p => p.length === 0 ? [briefMsg] : p);
       }}/>
       <SmartNotifications/>
+      {/* Hidden file inputs */}
+      <input id="pdf-upload" type="file" accept=".pdf,application/pdf" className="hidden" onChange={async(e)=>{
+        const file = e.target.files?.[0]; if(!file) return;
+        setPdfName(file.name);
+        try {
+          // Load PDF.js from CDN
+          if (!window.pdfjsLib) {
+            await new Promise((res,rej)=>{
+              const s=document.createElement('script');
+              s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+              s.onload=res; s.onerror=rej;
+              document.head.appendChild(s);
+            });
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          }
+          const arrayBuf = await file.arrayBuffer();
+          const pdf = await window.pdfjsLib.getDocument({data:arrayBuf}).promise;
+          let text='';
+          const maxPages = Math.min(pdf.numPages, 20); // max 20 pages
+          for(let i=1;i<=maxPages;i++){
+            const page=await pdf.getPage(i);
+            const tc=await page.getTextContent();
+            text+=tc.items.map(it=>it.str).join(' ')+'\n';
+          }
+          setPdfText(text.trim()||'[PDF text extract nahi hua — scanned image PDF ho sakta hai]');
+          navigator.vibrate?.([30]);
+        } catch(err) {
+          setPdfText('[PDF read error: '+err.message+']');
+        }
+        e.target.value='';
+      }}/>
       {ocrOpen && (
         <ScreenOCR
           onSendWithImage={(text, imgB64) => {
@@ -1813,6 +1855,17 @@ export default function ChatPage() {
         </div>
       )}
 
+      {/* PDF Preview bar */}
+      {pdfText && (
+        <div className="px-3 py-2 border-t border-white/[0.05] flex items-center gap-2 shrink-0 bg-blue-500/5">
+          <span className="text-lg">📄</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-blue-300 font-medium truncate">{pdfName}</p>
+            <p className="text-[10px] text-slate-500">{pdfText.length > 100 ? Math.round(pdfText.length/1000)+'k chars extracted' : 'Ready'}</p>
+          </div>
+          <button onClick={()=>{setPdfText(null);setPdfName('');}} className="text-slate-600 hover:text-red-400 transition-colors"><X size={14}/></button>
+        </div>
+      )}
       {/* Scroll to bottom FAB */}
       {showScrollBtn && (
         <button
