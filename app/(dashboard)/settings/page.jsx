@@ -2,7 +2,7 @@
 import { BiometricSettings } from '@/components/security/BiometricLock';
 import { useState, useEffect, Suspense } from 'react';
 import { User, Bell, Shield, Palette, Brain, Zap, Download, Trash2, Key, Check, X, ChevronRight, AlertTriangle, RefreshCw, Link, Database } from 'lucide-react';
-
+import { STORAGE_MODES, getStorageMode, setStorageMode, migrateToStorage, getStorageInfo } from '@/lib/storage/unified';
 import ConnectedApps from '@/components/dashboard/ConnectedApps';
 import IntegrationSettings from '@/components/settings/IntegrationSettings';
 
