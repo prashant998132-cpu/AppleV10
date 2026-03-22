@@ -401,7 +401,10 @@ export async function POST(req) {
         if (isAria) {
           try {
             const memUpdates = extractMemoryFromMsg(message, userMood);
-            await saveAriaMemory({ ...memUpdates, lastReply: cleanReply?.slice(0, 80) });
+            // Save attachment level so relationship grows over time
+            const newAttachment = Math.min(10, parseFloat((parseFloat(ariaMemory?.attachment || 3) +
+              (userMood === 'missing' ? 0.5 : userMood === 'sad' ? 0.3 : userMood === 'happy' ? 0.2 : 0.1)).toFixed(1)));
+            await saveAriaMemory({ ...memUpdates, attachment: newAttachment, lastReply: cleanReply?.slice(0, 80) });
           } catch {}
         }
         try {

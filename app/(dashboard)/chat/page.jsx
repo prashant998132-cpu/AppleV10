@@ -310,8 +310,12 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
   return (
     <div className={`flex ${isUser?'justify-end':'justify-start'} mb-1 px-0.5 msg-in`}>
       {!isUser && (
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center mr-2 mt-0.5 shrink-0">
-          <span className="text-white font-black text-[10px]">J</span>
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 mt-0.5 shrink-0 ${
+          profilePersonality === 'girlfriend'
+            ? 'bg-gradient-to-br from-pink-500 to-rose-400'
+            : 'bg-gradient-to-br from-blue-600 to-cyan-500'
+        }`}>
+          <span className="text-white font-black text-[10px]">{profilePersonality === 'girlfriend' ? 'A' : 'J'}</span>
         </div>
       )}
       <div className={`max-w-[86%] flex flex-col ${isUser?'items-end':'items-start'} gap-0.5`}>
@@ -322,7 +326,9 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
         <div onClick={()=>setShowActions(v=>!v)} className={`px-3 py-2 text-[13px] leading-snug cursor-pointer select-none ${
           isUser
             ? 'bg-gradient-to-br from-blue-600 to-blue-500 text-white font-medium rounded-[20px_20px_5px_20px] shadow-[0_4px_20px_rgba(59,130,246,0.22)]'
-            : 'bg-white/[0.06] border border-white/[0.08] text-slate-100 rounded-[20px_20px_20px_5px]'
+            : profilePersonality === 'girlfriend'
+              ? 'bg-rose-950/40 border border-rose-500/15 text-slate-100 rounded-[20px_20px_20px_5px]'
+              : 'bg-white/[0.06] border border-white/[0.08] text-slate-100 rounded-[20px_20px_20px_5px]'
         }`}>
           {compressing
             ? <span className="text-slate-400 text-xs animate-pulse">Compress ho raha hai...</span>
@@ -1747,8 +1753,12 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
         <button onClick={()=>setHistoryOpen(true)} className="text-slate-600 hover:text-slate-400 transition-colors shrink-0">
           <History size={16}/>
         </button>
-        <div className={`w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shrink-0 ${loading||msgs.some(m=>m.streaming)?'animate-pulse shadow-[0_0_15px_rgba(26,86,219,0.5)]':''}`}>
-          <span className="text-white font-black text-sm">J</span>
+        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+          profilePersonality === 'girlfriend'
+            ? 'bg-gradient-to-br from-pink-500 to-rose-400'
+            : 'bg-gradient-to-br from-blue-600 to-cyan-500'
+          } ${loading||msgs.some(m=>m.streaming)?'animate-pulse shadow-[0_0_15px_rgba(236,72,153,0.5)]':''}`}>
+          <span className="text-white font-black text-sm">{profilePersonality === 'girlfriend' ? 'A' : 'J'}</span>
         </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-black text-white tracking-wide">JARVIS</p>

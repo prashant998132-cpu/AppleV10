@@ -127,3 +127,11 @@ textarea { touch-action: pan-y; }
 
 /* ── Safe area bottom for home indicator ── */
 .pb-safe-nav { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 64px); }
+
+/* ── ARIA Mode — Rose/Pink theme ── */
+.aria-mode .msg-bubble-ai  { background: rgba(159,18,57,0.15); border-color: rgba(244,63,94,0.12); }
+.aria-mode .orb-pulse       { animation: aria-pulse 2.5s ease-in-out infinite; }
+@keyframes aria-pulse {
+  0%,100% { box-shadow: 0 0 20px rgba(236,72,153,0.3); }
+  50%      { box-shadow: 0 0 35px rgba(236,72,153,0.6); }
+}
