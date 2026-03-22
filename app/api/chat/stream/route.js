@@ -8,7 +8,7 @@ import { offlineFallback } from '@/lib/ai/offline-fallback';
 import { generateFollowUps } from '@/lib/ai/follow-up';
 import { getProviderOrder, streamProvider, incrementUsage, getUsageStats, detectComplexity, PROVIDERS } from '@/lib/ai/smart-router';
 import { detectToolCall, executeTool } from '@/lib/tools';
-import { detectMood, getMoodInjection, updateAttachment } from '@/lib/mood';
+import { detectMood, detectIntent, getMoodInjection, updateAttachment } from '@/lib/mood';
 import { buildMemoryContext as buildAriaMemCtx, extractMemoryFromMsg, saveAriaMemory } from '@/lib/aria-memory';
 import { buildAriaContext } from '@/lib/responseBuilder';
 
@@ -135,7 +135,8 @@ export async function POST(req) {
   let toolCtx = '';
   // Ultra ARIA mode
   const isAria = profile?.personality === 'girlfriend';
-  const userMood = detectMood(message);
+  const userMood   = detectMood(message);
+  const userIntent = detectIntent(message);
   if (isAria) {
     const ariaMemory = (() => { try { return JSON.parse(profile?.aria_memory || '{}'); } catch { return {}; } })();
     const attachment = (() => {
@@ -146,7 +147,10 @@ export async function POST(req) {
       return Math.min(10, parseFloat(lvl.toFixed(1)));
     })();
     const lastAIReply = history?.slice().reverse().find(h => h?.role === 'assistant')?.content || '';
-    toolCtx += '\n' + buildAriaContext({ userMsg: message, mood: userMood, memory: ariaMemory, lastReply: lastAIReply, attachment });
+    // Pass last 6 messages as context so ARIA knows what was already said
+    const recentHistory = history?.slice(-6).map(h => `${h.role === 'user' ? 'Him' : 'Aria'}: ${h.content?.slice(0, 60)}`).join('\n') || '';
+    toolCtx += '\n' + buildAriaContext({ userMsg: message, mood: userMood, intent: userIntent, memory: ariaMemory, lastReply: lastAIReply, attachment });
+    if (recentHistory) toolCtx += `\n[CONVERSATION SO FAR:\n${recentHistory}\nDo NOT repeat questions already asked above.]`;
   }
 
   // ── ALWAYS inject real IST time + location context ──────────
@@ -392,6 +396,13 @@ export async function POST(req) {
         if (convId && cleanReply) {
           await saveMessage(user.id, convId, { role: 'assistant', content: cleanReply, metadata: { mode, provider: usedProvider } }).catch(() => {});
           await updateConversation(user.id, convId, { updated_at: new Date().toISOString() }).catch(() => {});
+        }
+        // Save ARIA memory after response (was imported but never called — fixed)
+        if (isAria) {
+          try {
+            const memUpdates = extractMemoryFromMsg(message, userMood);
+            await saveAriaMemory({ ...memUpdates, lastReply: cleanReply?.slice(0, 80) });
+          } catch {}
         }
         try {
           await saveLLMLog(user.id, {
