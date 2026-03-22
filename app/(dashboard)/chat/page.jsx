@@ -656,6 +656,15 @@ export default function ChatPage() {
     setFreqCmds(getFrequentCommands(4));
     getProactiveAlerts().then(setProAlerts).catch(()=>{});
 
+    // Listen for theme changes from Settings page
+    const onTheme = (e) => {
+      const {bg, accent} = e.detail || {};
+      if (bg) document.body.style.background = bg;
+      if (bg) document.documentElement.style.setProperty('--bg', bg);
+      if (accent) document.documentElement.style.setProperty('--accent', accent);
+    };
+    window.addEventListener('jarvis-theme-change', onTheme);
+
     // Apply saved text style on mount
     const savedStyle = localStorage.getItem('jarvis_text_style');
     if (savedStyle && savedStyle !== 'default') {
