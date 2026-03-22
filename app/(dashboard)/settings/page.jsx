@@ -229,9 +229,8 @@ export default function SettingsPage() {
             <div className="glass-card p-4 space-y-4">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Personal Info</p>
               {[
-                { key:'name',     label:'Tumhara naam',       placeholder:'Apna naam' },
-                { key:'city',     label:'City / Sheher',     placeholder:'Delhi, Mumbai...' },
-                { key:'language', label:'Preferred Language', placeholder:'hinglish' },
+                { key:'name', label:'Tumhara naam', placeholder:'Apna naam' },
+                { key:'city', label:'City / Sheher', placeholder:'Delhi, Mumbai...' },
               ].map(f => (
                 <div key={f.key}>
                   <label className="text-xs text-slate-400 block mb-1.5">{f.label}</label>
@@ -240,6 +239,33 @@ export default function SettingsPage() {
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm placeholder-slate-600 focus:border-blue-500/40 transition-colors"/>
                 </div>
               ))}
+
+              {/* Language Selector */}
+              <div>
+                <label className="text-xs text-slate-400 block mb-2">🌐 JARVIS ki Bhasha</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id:'hinglish', label:'Hinglish', desc:'Hindi + English mix', emoji:'🇮🇳' },
+                    { id:'hindi',    label:'Hindi',    desc:'Pure Hindi mein',    emoji:'🕉️' },
+                    { id:'english',  label:'English',  desc:'Pure English only',  emoji:'🇬🇧' },
+                  ].map(l => (
+                    <button key={l.id}
+                      onClick={() => {
+                        setProfile(p => ({ ...p, language: l.id }));
+                        localStorage.setItem('jarvis_language', l.id);
+                      }}
+                      className={`flex flex-col items-center gap-1 p-3 rounded-2xl border transition-all ${
+                        (profile.language || 'hinglish') === l.id
+                          ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                          : 'bg-white/[0.03] border-white/[0.08] text-slate-400 hover:border-white/20'
+                      }`}>
+                      <span className="text-xl">{l.emoji}</span>
+                      <span className="text-xs font-bold">{l.label}</span>
+                      <span className="text-[9px] text-slate-600 text-center leading-tight">{l.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button onClick={saveProfile} disabled={saving}
                 className={`w-full py-3 rounded-xl font-semibold text-sm transition-all ${saved ? 'bg-green-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'} disabled:opacity-50`}>
                 {saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save Profile'}
