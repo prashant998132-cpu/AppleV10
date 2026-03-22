@@ -368,6 +368,19 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
           </span>
         </div>}
 
+        {/* Inline Widget — renders inside message */}
+        {!isUser && !msg.streaming && msg.widget && (
+          <div className="w-full max-w-[360px] mt-1">
+            {msg.widget === 'weather' && <WeatherWidget city={msg.widgetData?.city} lat={msg.widgetData?.lat} lng={msg.widgetData?.lng}/>}
+            {msg.widget === 'timer' && <TimerWidget seconds={msg.widgetData?.seconds || 60} label={msg.widgetData?.label}/>}
+            {msg.widget === 'calculator' && <CalculatorWidget/>}
+            {msg.widget === 'neet_schedule' && <NeetScheduleWidget/>}
+            {msg.widget === 'dashboard' && <DashboardWidget/>}
+            {msg.widget === 'price' && <PriceWidget items={msg.widgetData?.items || ['gold','bitcoin']}/>}
+            {msg.widget === 'reminder' && <ReminderWidget/>}
+          </div>
+        )}
+
         {/* Follow-up chips — tiny horizontal scroll */}
         {!isUser && !msg.streaming && msg.followUps?.length > 0 && (
           <div className="flex gap-1 mt-0.5 overflow-x-scroll no-scrollbar" style={{maxWidth:"90%",flexWrap:"nowrap"}}>
@@ -536,6 +549,7 @@ export default function ChatPage() {
   const [phase, setPhase]       = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
   const [navOpen, setNavOpen]         = useState(false);
+  const [activeWidget, setActiveWidget] = useState(null); // {type, data}
   const [plusOpen, setPlusOpen]       = useState(false);
   const [resuming, setResuming] = useState(true);   // auto-resume last chat
   const [searchOpen, setSearchOpen] = useState(false);
@@ -1037,6 +1051,22 @@ export default function ChatPage() {
       }
     }
 
+    // 0.5 INSTANT WIDGET COMMANDS (before AI)
+    const instantWidget = detectWidget(msg);
+    if (instantWidget && ['calculator','neet_schedule','dashboard','reminder'].includes(instantWidget)) {
+      const userMsg0 = {id:`u${Date.now()}`,role:'user',content:msg,ts:Date.now()};
+      const widgetMsgs = {
+        calculator: '🧮 Calculator kholte hain!',
+        neet_schedule: '📚 Aaj ka NEET schedule:',
+        dashboard: '📊 Tera dashboard:',
+        reminder: '⏰ Reminder set karo:',
+      };
+      const aiMsg0 = {id:`w${Date.now()}`,role:'assistant',content:widgetMsgs[instantWidget],streaming:false,ts:Date.now(),widget:instantWidget,widgetData:{},modelUsed:'⚡ instant'};
+      setMsgs(p=>[...p,userMsg0,aiMsg0]);
+      setInput('');
+      return;
+    }
+
     // 0. Puter Image Generation — "image banao X"
     if (msg) {
       const imgMatch = msg.match(/^(?:image|photo|picture|tasveer|banao|generate|create).*?(?:banao|of|ka|ki|bana|draw|make)(.+)|^(.+)(?:image|photo|tasveer|picture)\s*(?:banao|bana|generate)$/i);
@@ -1257,6 +1287,23 @@ export default function ChatPage() {
       }
     } finally {
       setPhase('');
+      // Detect and attach inline widget to AI response
+      const widgetType = detectWidget(msg || '');
+      if (widgetType) {
+        let widgetData = {};
+        if (widgetType === 'weather') {
+          const locCache = localStorage.getItem('jarvis_user_location');
+          if (locCache) { const l = JSON.parse(locCache); widgetData = {lat:l.lat, lng:l.lng, city:l.city}; }
+        }
+        if (widgetType === 'timer') {
+          widgetData.seconds = parseTimerSeconds(msg || '');
+          widgetData.label = msg?.replace(/timer|set|karo|laga|do/gi,'').trim().slice(0,30);
+        }
+        if (widgetType === 'price') {
+          widgetData.items = /bitcoin|crypto/.test((msg||'').toLowerCase()) ? ['bitcoin','ethereum'] : ['gold','silver','bitcoin'];
+        }
+        setMsgs(p => p.map(m => m.id === aiId ? {...m, widget: widgetType, widgetData} : m));
+      }
       if(voiceOn&&fullText) speak(fullText);
       // Save to client cache for repeat queries
       if(fullText && msg.length > 8 && !imgB64) {
