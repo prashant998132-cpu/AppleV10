@@ -1,8 +1,7 @@
 'use client';
-export const dynamic = 'force-dynamic';
 import { BiometricSettings } from '@/components/security/BiometricLock';
 import { useState, useEffect, Suspense } from 'react';
-import { User, Bell, Shield, Palette, Brain, Zap, Download, Trash2, Key, Check, X, ChevronRight, AlertTriangle, RefreshCw, Link } from 'lucide-react';
+import { User, Bell, Shield, Palette, Brain, Zap, Download, Trash2, Key, Check, X, ChevronRight, AlertTriangle, RefreshCw, Link, Database } from 'lucide-react';
 
 import ConnectedApps from '@/components/dashboard/ConnectedApps';
 import IntegrationSettings from '@/components/settings/IntegrationSettings';
@@ -61,6 +60,9 @@ export default function SettingsPage() {
   const [addHabit, setAddHabit]   = useState(false);
 
   useEffect(() => {
+    setStorageModeState(getStorageMode());
+    getStorageInfo().then(setStorageInfoState);
+
     loadProfile(); checkNotif(); loadHabits();
     // Restore PIN state from localStorage
     if (typeof window !== 'undefined') {
@@ -185,6 +187,7 @@ export default function SettingsPage() {
     { id:'apis',     icon:<Key size={15}/>,     label:'APIs'       },
     { id:'security', icon:<Shield size={15}/>,  label:'Security'   },
     { id:'connect',  icon:<Link size={15}/>,    label:'Apps'       },
+    { id:'storage',  icon:<Database size={15}/>, label:'Storage'    },
   ];
 
   async function togglePIN() {
@@ -744,6 +747,93 @@ export default function SettingsPage() {
         )}
 
         {/* ─── CONNECTED APPS TAB ─── */}
+
+        {activeTab === 'storage' && (
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm font-semibold text-white mb-1">Storage Layer</p>
+              <p className="text-xs text-slate-500 mb-3">Apna data kahan store karna chahte ho? Best se worst order mein hain.</p>
+              <div className="space-y-2">
+                {STORAGE_MODES.map(m => (
+                  <button key={m.id} onClick={async () => {
+                    setStorageModeState(m.id);
+                    setMigrateMsg('');
+                  }} className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${storageMode === m.id ? 'bg-blue-600/15 border-blue-500/40' : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06]'}`}>
+                    <span className="text-xl">{m.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{m.label}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          m.badgeColor === 'green'  ? 'bg-green-500/20 text-green-400' :
+                          m.badgeColor === 'purple' ? 'bg-purple-500/20 text-purple-400' :
+                          m.badgeColor === 'blue'   ? 'bg-blue-500/20 text-blue-400' :
+                          'bg-white/10 text-slate-400'
+                        }`}>{m.badge}</span>
+                        {m.crossDevice && <span className="text-[10px] bg-cyan-500/15 text-cyan-400 px-1.5 py-0.5 rounded-full">Cross-device ✓</span>}
+                        {m.needsKey && <span className="text-[10px] bg-orange-500/15 text-orange-400 px-1.5 py-0.5 rounded-full">Keys needed</span>}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">{m.desc}</p>
+                    </div>
+                    {storageMode === m.id && <span className="text-blue-400 text-lg">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {storageMode !== getStorageMode() && (
+              <button onClick={async () => {
+                setMigrating(true);
+                setMigrateMsg('');
+                try {
+                  const result = await migrateToStorage(storageMode);
+                  setMigrateMsg(`✅ ${result.migrated} items migrate ho gaye!`);
+                } catch(e) {
+                  setMigrateMsg('❌ Migration fail — ' + e.message);
+                } finally { setMigrating(false); }
+              }} disabled={migrating} className="w-full py-3 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400 text-sm font-semibold hover:bg-blue-600/30 transition-all disabled:opacity-50">
+                {migrating ? '⏳ Migrate ho raha hai...' : `📦 Existing data ko "${STORAGE_MODES.find(m=>m.id===storageMode)?.label}" mein copy karo`}
+              </button>
+            )}
+
+            {migrateMsg && <p className="text-sm text-center text-slate-300">{migrateMsg}</p>}
+
+            {storageInfo && (
+              <div className="glass-card p-3 space-y-2">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Storage Info</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="bg-white/[0.03] rounded-lg p-2">
+                    <p className="text-slate-500">localStorage</p>
+                    <p className="text-white font-semibold">{storageInfo.localStorage} KB <span className="text-slate-600">/ ~5MB</span></p>
+                  </div>
+                  {storageInfo.estimate && (
+                    <div className="bg-white/[0.03] rounded-lg p-2">
+                      <p className="text-slate-500">Browser Storage</p>
+                      <p className="text-white font-semibold">{storageInfo.estimate.used}MB <span className="text-slate-600">/ {storageInfo.estimate.quota}MB</span></p>
+                    </div>
+                  )}
+                  <div className="bg-white/[0.03] rounded-lg p-2">
+                    <p className="text-slate-500">Puter.js</p>
+                    <p className={storageInfo.puterAvailable ? 'text-green-400 font-semibold' : 'text-slate-600'}>
+                      {storageInfo.puterAvailable ? '✓ Available' : 'Not loaded'}
+                    </p>
+                  </div>
+                  <div className="bg-white/[0.03] rounded-lg p-2">
+                    <p className="text-slate-500">Active Mode</p>
+                    <p className="text-blue-400 font-semibold capitalize">{storageInfo.mode}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="glass-card p-3">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Cross-device sync chahiye?</p>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Doosre browser/phone pe same data chahiye toh <strong className="text-purple-400">Puter.js</strong> (free, no account) ya <strong className="text-green-400">Supabase</strong> (.env mein keys) use karo. Sirf is device ke liye <strong className="text-blue-400">IndexedDB</strong> best hai (500MB+).
+              </p>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'connect' && (
           <Suspense fallback={<div className="text-slate-500 text-sm text-center py-8">Loading...</div>}>
             <IntegrationSettings />
