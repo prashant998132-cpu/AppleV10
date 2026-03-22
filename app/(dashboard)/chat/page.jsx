@@ -1635,29 +1635,10 @@ export default function ChatPage() {
 
           {/* Right action buttons — compact */}
           <div className="flex items-center gap-0.5 shrink-0">
-          {/* Sound */}
+            {/* Sound */}
             <button onClick={()=>{stopCurrentAudio();setSpeaking(false);setVoiceOn(v=>!v);}}
               className={`p-1.5 rounded-full transition-all ${voiceOn||speaking?'text-blue-400':'text-slate-600'}`}>
               {voiceOn||speaking?<Volume2 size={15}/>:<VolumeX size={15}/>}
-            </button>
-            <button onClick={()=>{ const m=Sounds.toggleMute(); navigator.vibrate?.([5]); }}
-              title="UI sounds toggle"
-              className="p-1.5 rounded-full text-slate-700 hover:text-slate-400 transition-all text-[11px]">
-              🔈
-            </button>
-            {/* Search */}
-            <button onClick={()=>setSearchOpen(true)} className="p-1.5 rounded-full text-slate-600 hover:text-white transition-all">
-              <Search size={15}/>
-            </button>
-            {/* Pin */}
-            <button onClick={()=>setPinsOpen(true)} className={`p-1.5 rounded-full text-sm transition-all relative ${pinnedMsgs.length>0?'text-yellow-400':'text-slate-600'}`}>
-              📌
-              {pinnedMsgs.length>0 && <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-yellow-500 rounded-full text-[7px] text-black font-bold flex items-center justify-center">{pinnedMsgs.length}</span>}
-            </button>
-            {/* Notif / Wake word */}
-            <button onClick={()=>setWakeWordOn(w=>!w)}
-              className={`p-1.5 rounded-full text-sm transition-all ${wakeWordOn?'text-blue-400':'text-slate-600'}`}>
-              {wakeWordOn?(wakeDetected?'🎤':'👂'):'🔕'}
             </button>
             {/* New chat */}
             <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}}
