@@ -62,39 +62,69 @@ const JARVIS_QUICK_CMDS = [
 ];
 
 // Time-aware quick starters — evaluated at render time
-function getQuickStarters() {
+function getQuickStarters(personality) {
   const h = new Date().getHours();
+  const neet = Math.max(0, Math.round((new Date('2026-05-03') - new Date()) / 86400000));
+
+  // ARIA girlfriend mode — different starters
+  if (personality === 'girlfriend') {
+    if (h < 6)  return [
+      { t:'Neend nahi aa rahi...',           i:'🌙' },
+      { t:'Kuch baat karo na',               i:'💬' },
+      { t:'Aaj ka din kaisa tha?',           i:'☺️' },
+      { t:'Koi story sunao',                 i:'📖' },
+    ];
+    if (h < 12) return [
+      { t:'Good morning! 🌅',               i:'☀️' },
+      { t:'Chai piya kya?',                  i:'☕' },
+      { t:'Aaj kya plan hai?',              i:'🗓️' },
+      { t:'Kuch interesting batao',          i:'💡' },
+    ];
+    if (h < 17) return [
+      { t:'Kya kar rahe ho?',               i:'👀' },
+      { t:'Bore ho raha hoon yaar',         i:'😴' },
+      { t:'Koi mast baat batao',            i:'😄' },
+      { t:'Miss kar raha tha',              i:'🥺' },
+    ];
+    return [
+      { t:'Din kaisa tha?',                 i:'🌆' },
+      { t:'Kuch baat karni thi...',         i:'💭' },
+      { t:'Kal ke plans kya hain?',         i:'🗓️' },
+      { t:'Koi kahani sunao',               i:'📖' },
+    ];
+  }
+
+  // NEET-focused starters
   if (h < 6)  return [
     { t:'Nind nahi aa rahi, kya karu?',    i:'🌙' },
     { t:'Raat ko productive kaise rahun?', i:'⚡' },
-    { t:'Kya yaad hai mujhse?',             i:'🧠' },
-    { t:'Honest baat karo mujhse',         i:'💬' },
+    { t:'Kya yaad hai mujhse?',            i:'🧠' },
     { t:'Ek dark joke sunao yaar',         i:'😈' },
   ];
   if (h < 12) return [
-    { t:'Aaj ka plan kya hona chahiye?', i:'🌅' },
-    { t:'Morning motivation chahiye',    i:'🔥' },
-    { t:'Kya yaad hai mujhse?',          i:'🧠' },
-    { t:'Aaj ka mausam kaisa hai?',      i:'🌤️' },
-    { t:'Koi fresh idea do mujhe',       i:'💡' },
+    { t:'Aaj ka NEET plan banao',          i:'📚' },
+    { t:'Morning motivation chahiye',      i:'🔥' },
+    { t:`NEET mein ${neet} din baaki`, i:'⏳' },
+    { t:'Aaj ka mausam kaisa hai?',        i:'🌤️' },
+    { t:'Biology ka concept samjhao',      i:'🧬' },
   ];
   if (h < 17) return [
-    { t:'Focus nahi ho raha kaam pe',   i:'😵' },
-    { t:'Quick decision leni hai',      i:'⚡' },
-    { t:'Kuch interesting batao',       i:'🧠' },
-    { t:'Thoda entertain karo',         i:'😄' },
+    { t:'Focus nahi ho raha',              i:'😵' },
+    { t:'Physics numerical solve karo',    i:'⚡' },
+    { t:'Chemistry MCQ do mujhe',          i:'⚗️' },
+    { t:'Thoda entertain karo',            i:'😄' },
   ];
   if (h < 21) return [
-    { t:'Aaj ka din kaisa raha?',       i:'📊' },
-    { t:'Kal ke liye ready karo mujhe', i:'🎯' },
-    { t:'Kuch naya seekhna hai',        i:'📚' },
-    { t:'Stress hai, baat karni hai',   i:'💙' },
+    { t:'Aaj ka revision karo',            i:'📖' },
+    { t:'Kal ke liye plan banao',          i:'🎯' },
+    { t:'Aaj ka din kaisa raha?',          i:'📊' },
+    { t:'Stress hai, baat karni hai',      i:'💙' },
   ];
   return [
-    { t:'Din review karo mera',          i:'🌙' },
-    { t:'Kal ke liye ek goal set karo',  i:'🎯' },
-    { t:'Neend se pehle motivation',     i:'✨' },
-    { t:'Koi mast kahani sunao',         i:'📖' },
+    { t:'NEET revision karte hain',        i:'📚' },
+    { t:'Kal ke liye goal set karo',       i:'🎯' },
+    { t:'Neend se pehle motivation',       i:'✨' },
+    { t:'Din review karo mera',            i:'🌙' },
   ];
 }
 
@@ -255,7 +285,7 @@ function CopyButton({ text }) {
   );
 }
 
-function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, setPinnedMsgs, msgs, exportChat, titleGenerated, setTitleGenerated, convId, reactions, setReactions, lastUserMsg }) {
+function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, setPinnedMsgs, msgs, exportChat, titleGenerated, setTitleGenerated, convId, reactions, setReactions, lastUserMsg, profilePersonality }) {
   const isUser = msg.role === 'user';
   const [showC, setShowC] = useState(false);
   const [compressed, setCompressed] = useState(null);
@@ -1473,7 +1503,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
     }
   }
 
-  const QUICK = getQuickStarters(); // re-evaluated each render
+  const QUICK = getQuickStarters(profilePersonality); // personality-aware
   const [showCmdChips, setShowCmdChips] = useState(false);
   const [showWallpaper, setShowWallpaper]   = useState(false);
   const curM  = MODES.find(m=>m.id===mode)||MODES[0];
@@ -1915,7 +1945,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             {msgs.map(m=>(
               m.streaming&&m.content===''
                 ? <TypingDots key={m.id} mode={m.mode}/>
-                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId} reactions={reactions} setReactions={setReactions} lastUserMsg={lastUserMsg}/></div>
+                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId} reactions={reactions} setReactions={setReactions} lastUserMsg={lastUserMsg} profilePersonality={profilePersonality}/></div>
             ))}
             {loading&&<TypingDots mode={mode==='auto'?(detected||'flash'):mode}/>}
             {/* Workflow Progress */}
