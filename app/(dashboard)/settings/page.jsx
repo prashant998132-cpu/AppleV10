@@ -96,16 +96,16 @@ export default function SettingsPage() {
 
   async function loadProfile() {
     try {
-      const r = await fetch('/api/profile');
-      const d = await r.json();
-      if (d.profile && Object.keys(d.profile).length) {
-        setCustomInstr(d.profile?.custom_instructions || '');
+      // Read from localStorage DIRECTLY — API can't read localStorage (server-side)
+      const saved = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
+      if (saved && Object.keys(saved).length) {
+        setCustomInstr(saved.custom_instructions || '');
         setProfile(prev => ({
           ...prev,
-          name:        d.profile.name        || prev.name,
-          city:        d.profile.city        || prev.city,
-          personality: d.profile.personality || prev.personality,
-          language:    d.profile.language    || prev.language,
+          name:        saved.name        || prev.name,
+          city:        saved.city        || prev.city,
+          personality: saved.personality || localStorage.getItem('jarvis_personality') || prev.personality,
+          language:    saved.language    || prev.language,
         }));
       }
     } catch {}
@@ -360,7 +360,16 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 {PERSONALITY_OPTIONS.map(opt => (
-                  <button key={opt.id} onClick={() => setProfile(p => ({ ...p, personality: opt.id }))}
+                  <button key={opt.id} onClick={() => {
+                    const newP = opt.id;
+                    setProfile(p => ({ ...p, personality: newP }));
+                    // AUTO-SAVE immediately — no button needed
+                    try {
+                      const existing = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
+                      localStorage.setItem('jarvis_profile', JSON.stringify({...existing, personality: newP}));
+                      localStorage.setItem('jarvis_personality', newP);
+                    } catch {}
+                  }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${profile.personality === opt.id ? 'bg-blue-600/20 border border-blue-500/30' : 'bg-white/4 border border-transparent hover:border-white/10'}`}>
                     <span className="text-xl">{opt.emoji}</span>
                     <div className="flex-1 min-w-0">

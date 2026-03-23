@@ -4,8 +4,9 @@ import { getProfile, updateProfile } from '@/lib/db/queries';
 export async function GET(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
   if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const profile = await getProfile(user.id);
-  return Response.json({ profile: profile || {} });
+  // NOTE: getProfile reads localStorage which doesn't exist server-side
+  // Return empty — client (settings page) reads localStorage directly
+  return Response.json({ profile: {} });
 }
 
 export async function POST(req) {
