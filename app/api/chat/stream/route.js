@@ -413,7 +413,8 @@ export async function POST(req) {
 
         // XP + badges
         try {
-          const xpResult = await addXP(user.id, 5, 'message');
+          const xpAmount = mode === 'think' ? 15 : mode === 'deep' ? 25 : mode === 'flash' ? 8 : 10;
+          const xpResult = await addXP(user.id, xpAmount, 'message');
           const newBadges = await checkAndAwardBadges(user.id);
           const convMode = autoDetectConvMode(message);
           if (xpResult.levelUp || newBadges.length > 0) {
@@ -441,6 +442,14 @@ export async function POST(req) {
             await saveAriaMemory({ ...memUpdates, attachment: newAttachment, lastReply: cleanReply?.slice(0, 80) });
           } catch {}
         }
+        // Save daily usage stats
+        try {
+          const today = new Date().toISOString().slice(0,10);
+          const dayKey = 'jarvis_day_' + today;
+          const day = JSON.parse(localStorage?.getItem?.(dayKey) || '{}');
+          // Note: server-side can't access localStorage, but client will track
+        } catch {}
+
         try {
           await saveLLMLog(user.id, {
             model: usedProvider,

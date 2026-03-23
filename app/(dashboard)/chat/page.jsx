@@ -974,9 +974,22 @@ export default function ChatPage() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) return;
       if (srRef.current) { srRef.current.stop(); return; }
-      const r = new SR(); r.lang = 'hi-IN'; r.interimResults = false; srRef.current = r;
+      const r = new SR();
+      r.lang = (() => { try { const l=localStorage.getItem('jarvis_language'); return l==='hindi'?'hi-IN':l==='english'?'en-US':'hi-IN'; } catch { return 'hi-IN'; } })();
+      r.interimResults = true;
+      r.continuous = false;
+      srRef.current = r;
       r.onstart = () => setListening(true);
-      r.onresult = e => { setInput(e.results[0][0].transcript); navigator.vibrate?.(40); };
+      r.onresult = e => {
+        const transcript = Array.from(e.results).map(r=>r[0].transcript).join('');
+        setInput(transcript);
+        navigator.vibrate?.(10);
+        // Auto-send if final result (sentence ended)
+        if (e.results[e.results.length-1].isFinal && transcript.length > 3) {
+          navigator.vibrate?.([30,20,30]);
+          setTimeout(() => { send(transcript); setInput(''); }, 300);
+        }
+      };
       r.onend = () => { setListening(false); srRef.current = null; };
       r.onerror = () => { setListening(false); srRef.current = null; };
       r.start();
@@ -1976,7 +1989,17 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                 ? <TypingDots key={m.id} mode={m.mode}/>
                 : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId} reactions={reactions} setReactions={setReactions} lastUserMsg={lastUserMsg} profilePersonality={profilePersonality}/></div>
             ))}
-            {loading&&<TypingDots mode={mode==='auto'?(detected||'flash'):mode}/>}
+            {loading&&(
+              profilePersonality==='girlfriend'
+                ? <div className="flex items-center gap-2 px-3 py-2">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-pink-500 to-rose-400 flex items-center justify-center text-white text-xs font-black">A</div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[11px] text-pink-400/70">Aira likh rahi hai</span>
+                      <span className="flex gap-0.5 ml-1">{[0,1,2].map(i=><span key={i} className="w-1 h-1 bg-pink-400/60 rounded-full animate-bounce" style={{animationDelay:`${i*150}ms`}}/>)}</span>
+                    </div>
+                  </div>
+                : <TypingDots mode={mode==='auto'?(detected||'flash'):mode}/>
+            )}
             {/* Workflow Progress */}
             {activeWorkflow && (
               <WorkflowProgress
@@ -2076,8 +2099,9 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
 
             {/* Voice */}
             <button onClick={startVoice}
-              className={`p-1.5 rounded-full transition-all shrink-0 ${listening?'text-red-400':'text-slate-500 hover:text-slate-300'}`}>
-              {listening?<MicOff size={17}/>:<Mic size={17}/>}
+              className={`flex items-center gap-1 px-2 py-1 rounded-full transition-all shrink-0 ${listening?'bg-red-500/20 text-red-400 border border-red-500/30':'text-slate-500 hover:text-slate-300'}`}>
+              {listening?<MicOff size={15}/>:<Mic size={15}/>}
+              {listening && <span className="text-[10px] font-medium">Bol...</span>}
             </button>
 
             {/* Send */}
