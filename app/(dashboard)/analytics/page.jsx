@@ -79,12 +79,12 @@ export default function AnalyticsPage() {
             {/* Key Stats */}
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label:'Avg Mood',    val:`${data?.avgMood}/10`,        color:'text-purple-400' },
-                { label:'Avg Prod',    val:`${data?.avgProductivity}/10`, color:'text-blue-400' },
-                { label:'Consistency', val:`${data?.consistencyScore}%`,  color:'text-orange-400' },
-                { label:'Focus Hrs',   val:`${data?.totalFocusHours}h`,   color:'text-cyan-400' },
+                { label:'Avg Mood',    val:`${data?.avgMood || 0}/10`,    color:'text-purple-400' },
+                { label:'Avg Prod',    val:`${data?.avgProductivity || 0}/10`, color:'text-blue-400' },
+                { label:'Consistency', val:`${data?.consistencyScore || 0}%`, color:'text-orange-400' },
+                { label:'Focus Hrs',   val:`${data?.totalFocusHours || 0}h`, color:'text-cyan-400' },
                 { label:'Active Goals',val:data?.activeGoals || 0,        color:'text-green-400' },
-                { label:'Habit Streak',val:`${data?.avgHabitStreak}d`,    color:'text-yellow-400' },
+                { label:'Habit Streak',val:`${data?.avgHabitStreak || 0}d`, color:'text-yellow-400' },
               ].map(s => (
                 <div key={s.label} className="glass-card p-3 text-center">
                   <div className={`text-xl font-black ${s.color}`}>{s.val}</div>

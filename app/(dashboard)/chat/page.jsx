@@ -1927,20 +1927,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             <div className="flex flex-col items-center pt-6 pb-3 select-none">
               <LiveClock/>
               <p className="text-slate-400 text-base mt-2 font-medium">
-                {(()=>{
-                  const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();
-                  if(profilePersonality==='girlfriend'){
-                    const ariaGreets=[
-                      h<5?'Itni raat ko jaag rahe ho? 🌙 sab theek hai?':
-                      h<12?`Good morning${profileName?', '+profileName:''}! ☀️ Uthna hua?`:
-                      h<17?`Hey${profileName?', '+profileName:''}! Kya chal raha hai? 😊`:
-                      h<21?`Shaam ho gayi${profileName?', '+profileName:''}... din kaisa raha? 🌆`:
-                      `Raat ko${profileName?', '+profileName:''} — neend nahi aa rahi? 🌙`
-                    ];
-                    return ariaGreets[0];
-                  }
-                  return h<5?'Raat ko jaaga? 🌙':h<12?(`Kya scene hai${profileName ? ', ' + profileName : ''}? 👋`):h<17?(`Good afternoon${profileName ? ', ' + profileName : ''} ☀️`):h<21?(`Good evening${profileName ? ', ' + profileName : ''} 🌇`):'Raat ka mood kya hai? 🌙';
-                })()}
+                {(()=>{const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();return h<5?'Raat ko jaaga? 🌙':h<12?(`Kya scene hai${profileName ? ', ' + profileName : ''}? 👋`):h<17?(`Good afternoon${profileName ? ', ' + profileName : ''} ☀️`):h<21?(`Good evening${profileName ? ', ' + profileName : ''} 🌇`):'Raat ka mood kya hai? 🌙';})()}
               </p>
               {/* NEET countdown + progress */}
               {(()=>{
@@ -1963,7 +1950,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                     <p className="text-[10px] text-slate-600 mt-1">3 May 2026 · {pct}% journey complete</p>
                   </div>
                 ):(<div className="mt-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-2xl"><p className="text-[11px] text-green-400 font-bold">🎉 NEET 2026 aa gaya! Best of luck!</p></div>);
-              })()}}
+              })()}
             </div>
 
             {/* ── Quick Action Cards ────────────────────────── */}

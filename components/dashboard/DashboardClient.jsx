@@ -192,7 +192,7 @@ export default function DashboardClient({ children, user, profile }) {
             })}
           </nav>
           <div className="p-3 border-t border-white/5">
-            <div className="text-xs text-slate-600 text-center">JARVIS v10.9</div>
+            <div className="text-xs text-slate-600 text-center">JARVIS v11.0</div>
           </div>
         </aside>
 

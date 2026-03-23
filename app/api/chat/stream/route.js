@@ -20,7 +20,7 @@ export async function POST(req) {
   const reqStart = Date.now(); // LLM latency tracking
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
 
-  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto', userLocation, personality: clientPersonality } = await req.json();
+  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto', userLocation, personality: clientPersonality, ariaMemory: clientAriaMemory } = await req.json();
   if (!message?.trim() && !imageBase64) return new Response('Empty', { status: 400 });
 
   const keys = getKeys();
@@ -144,7 +144,8 @@ export async function POST(req) {
   const userMood   = detectMood(message);
   const userIntent = detectIntent(message);
   if (isAria) {
-    const ariaMemory = (() => { try { return JSON.parse(profile?.aria_memory || '{}'); } catch { return {}; } })();
+    // Use client-sent ariaMemory (localStorage) — server can't read browser storage
+    const ariaMemory = (() => { try { return JSON.parse(clientAriaMemory || profile?.aria_memory || '{}'); } catch { return {}; } })();
     const attachment = (() => {
       let lvl = parseFloat(ariaMemory?.attachment || 3);
       if (userMood === 'sad') lvl += 0.3;
