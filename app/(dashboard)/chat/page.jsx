@@ -2081,7 +2081,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
           <div className="px-4 pt-3 pb-1">
             <textarea ref={taRef} value={input} onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}
-              placeholder={profilePersonality === "girlfriend" ? "Aira se kuch bolo..." : profilePersonality === "study" ? "Kuch poochho — Kuch poochho..." : profilePersonality === "roast" ? "Roast ke liye ready ho? 😈" : "Kuch poocho ya batao..."}
+              placeholder={profilePersonality === "girlfriend" ? "Aira se kuch bolo..." : profilePersonality === "study" ? "Kuch poochho, kuch seekhna hai..." : profilePersonality === "roast" ? "Roast ke liye ready ho? 😈" : "Kuch poocho ya batao..."}
               rows={1} style={{resize:'none',minHeight:'24px',maxHeight:'96px',overflowY:'auto'}}
               className="w-full bg-transparent text-white text-[15px] placeholder-slate-600 outline-none leading-relaxed"/>
           </div>

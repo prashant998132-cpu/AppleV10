@@ -17,8 +17,22 @@ export async function POST(req) {
 
   try {
     if (type === 'text' || type === 'url') {
-      const content = text || '';
-      const analysis = await analyzeDocument(content, type, keys.GEMINI_API_KEY);
+      let content = text || '';
+      // For URLs — fetch actual content via Jina AI reader (free, no key)
+      if (type === 'url' && content.startsWith('http')) {
+        try {
+          const jinaUrl = `https://r.jina.ai/${content}`;
+          const jr = await fetch(jinaUrl, { 
+            headers: { 'Accept': 'text/plain' }, 
+            signal: AbortSignal.timeout(8000) 
+          });
+          if (jr.ok) {
+            const fetched = await jr.text();
+            content = fetched.slice(0, 8000); // max 8k chars
+          }
+        } catch { /* use URL as-is if fetch fails */ }
+      }
+      const analysis = await analyzeDocument(content || text, type, keys.GEMINI_API_KEY);
       const saved = await saveKnowledge(user.id, {
         title: analysis.title,
         content,
