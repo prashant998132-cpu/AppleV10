@@ -325,16 +325,44 @@ export function ReminderWidget({ onSet }) {
   const handleSet = () => {
     if (!time) return;
     const [h, m] = time.split(':').map(Number);
-    // Deep link to Android alarm
-    window.location.href = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.ALARM_HOUR=${h};i.android.intent.extra.ALARM_MINUTES=${m};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(label||'JARVIS Reminder')};end`;
+    const now = new Date();
+    const target = new Date();
+    target.setHours(h, m, 0, 0);
+    if (target <= now) target.setDate(target.getDate() + 1);
+    const msUntil = target - now;
+    const lbl = label || 'JARVIS Reminder';
+
+    // Browser notification (works in PWA + Chrome)
+    if ('Notification' in window) {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') {
+          setTimeout(() => {
+            new Notification(`⏰ ${lbl}`, {
+              body: `JARVIS: ${lbl} — Time ho gaya!`,
+              icon: '/icons/icon-192.png',
+              badge: '/icons/icon-96.png',
+              vibrate: [200, 100, 200],
+              tag: 'jarvis-reminder',
+            });
+          }, msUntil);
+        }
+      });
+    }
+
+    // Also try Android alarm deep link as backup
+    try {
+      window.location.href = `intent:#Intent;action=android.intent.action.SET_ALARM;i.android.intent.extra.ALARM_HOUR=${h};i.android.intent.extra.ALARM_MINUTES=${m};S.android.intent.extra.alarm.MESSAGE=${encodeURIComponent(lbl)};end`;
+    } catch {}
+
     setSetDone(true);
     onSet?.({ time, label });
   };
 
   if (set) return (
     <div className="mt-2 bg-green-500/10 border border-green-500/20 rounded-2xl px-4 py-3">
-      <p className="text-green-400 text-sm font-medium">✅ Reminder set ho gaya!</p>
-      <p className="text-green-300/60 text-xs mt-0.5">{label || 'Reminder'} at {time}</p>
+      <p className="text-green-400 text-sm font-bold">✅ Reminder set ho gaya!</p>
+      <p className="text-green-300/60 text-xs mt-1">{label || 'Reminder'} at {time}</p>
+      <p className="text-slate-600 text-[10px] mt-1">Browser notification + Android alarm — dono set kiya</p>
     </div>
   );
 

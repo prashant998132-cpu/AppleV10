@@ -1,50 +1,39 @@
 // JARVIS v10.9 — Service Worker
 // ═══════════════════════════════════════════════════════════════
 // 1. Smart caching (shell, API, media)
-// 2. Periodic Sync — NEET reminders + daily brief
+// 2. Periodic Sync — productivity reminders + daily brief
 // 3. Push notifications — rich with actions
 // 4. Background sync — offline message queue
-// 5. Study schedule notifications
+// 5. Smart schedule notifications
 // ═══════════════════════════════════════════════════════════════
 
-const VERSION = 'jarvis-v10.9';
+const VERSION = 'jarvis-v11.0';
 const CACHE_SHELL  = `${VERSION}-shell`;
 const CACHE_API    = `${VERSION}-api`;
 const CACHE_MEDIA  = `${VERSION}-media`;
 
-const SHELL_URLS = ['/', '/chat', '/analytics', '/goals', '/memory',
-  '/knowledge', '/settings', '/offline', '/phone'];
+const SHELL_URLS = ['/', '/chat', '/voice', '/analytics', '/goals', '/memory',
+  '/knowledge', '/settings', '/offline', '/phone', '/studio', '/profile'];
 
-// NEET 2026 Study Schedule
+// Daily Productivity Schedule (generic — customizable)
 const STUDY_SCHEDULE = [
-  { hour:5,  min:30, title:'🌅 Uth ja!',           body:'NEET 2026 — aaj shuru karo. Paani pi, stretch karo.',        tag:'wake',     url:'/chat' },
-  { hour:6,  min:0,  title:'📚 Physics Session',    body:'2.5 ghante — fresh brain best time. Focus mode on!',         tag:'study1',   url:'/chat' },
-  { hour:8,  min:30, title:'☕ Break Time',          body:'15 min naashta. Phone nahi, bas relax karo.',                tag:'break1',   url:'/' },
-  { hour:9,  min:0,  title:'🧬 Biology Session',    body:'NCERT + diagrams — 2 ghante. Sabse important!',             tag:'study2',   url:'/chat' },
-  { hour:11, min:0,  title:'⚗️ Chemistry Session',  body:'Reactions + organic — 2 ghante. Concentrate!',              tag:'study3',   url:'/chat' },
-  { hour:13, min:0,  title:'🍽️ Lunch Break',        body:'30 min. Proper khana khao — energy chahiye.',               tag:'lunch',    url:'/' },
-  { hour:14, min:0,  title:'⚡ Numericals Session',  body:'Problems + PYQ — 3 ghante. Ek ek question solve karo.',    tag:'study4',   url:'/chat' },
-  { hour:17, min:30, title:'🏃 Exercise Time',       body:'30 min walk/stretch. Dimaag reset hoga!',                  tag:'exercise', url:'/' },
-  { hour:18, min:15, title:'📖 Revision Session',   body:'Aaj jo padha — 2 ghante revision. Notes banana.',           tag:'study5',   url:'/chat' },
-  { hour:20, min:30, title:'🌙 Dinner Time',         body:'30 min. Khana khao, aaj ka review karo mentally.',          tag:'dinner',   url:'/' },
-  { hour:21, min:0,  title:'📝 Night Review',        body:'Light notes + formulas — 1.5 ghante. Brain consolidation.', tag:'study6',   url:'/chat' },
-  { hour:22, min:30, title:'😴 So Jao!',             body:'7.5 ghante neend = better memory. Kal phir full josh! 🔥',  tag:'sleep',    url:'/' },
+  { hour:6,  min:30, title:'🌅 Good Morning!',        body:'JARVIS ready hai — aaj ka din shuru karo!',             tag:'morning',  url:'/chat' },
+  { hour:9,  min:0,  title:'📋 Kaam ka time!',         body:'Aaj ke goals check karo — kya karna hai?',             tag:'work',     url:'/goals' },
+  { hour:13, min:0,  title:'🍽️ Lunch break!',          body:'Kha lo yaar — energy maintain karo.',                  tag:'lunch',    url:'/chat' },
+  { hour:15, min:30, title:'⚡ Focus time!',            body:'Afternoon productivity window — deep work karo.',      tag:'focus',    url:'/chat' },
+  { hour:19, min:0,  title:'📊 Din ka review',          body:'Aaj kya kiya? JARVIS se review karo.',                 tag:'review',   url:'/analytics' },
+  { hour:22, min:0,  title:'🌙 Neend ka time!',         body:'Kal ke liye plan ready karo, phir so jao.',            tag:'sleep',    url:'/chat' },
 ];
 
 const MOTIVATIONAL = [
   'Har practice test teri rank improve karti hai. Chalta reh! 🔥',
   'Biology mein tera goal 360/360 hai. Ek chapter ek din — kar sakta hai!',
   'Topper woh nahi jo zyada padhta hai — woh jo smart padhta hai. Tu smart hai!',
-  '48 din mein NEET crack karna possible hai — tu bhi karega!',
-  'Chemistry ke formulas teri dost hain. Unhe baar baar dekho — yaad ho jayenge.',
+    'Chemistry ke formulas teri dost hain. Unhe baar baar dekho — yaad ho jayenge.',
   'Aaj jo padh raha hai woh exam mein kaam aayega. Waste nahi ho raha kuch bhi!',
 ];
 
-function getDaysLeft() {
-  const neet = new Date('2026-05-03');
-  const today = new Date(); today.setHours(0,0,0,0); neet.setHours(0,0,0,0);
-  return Math.max(0, Math.round((neet-today)/(864e5)));
-}
+function getDaysLeft() { return 0; } // Legacy — no longer used
 
 // ─── INSTALL ──────────────────────────────────────────────────
 self.addEventListener('install', e => {
@@ -144,7 +133,7 @@ async function checkStudyTime() {
       await setKV('shown_' + s.tag, todayKey);
       await self.registration.showNotification(s.title, {
         body: s.body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png',
-        tag: 'neet-' + s.tag, data: {url: s.url},
+        tag: 'jarvis-' + s.tag, data: {url: s.url},
         vibrate: [200,100,200,100,300],
         requireInteraction: s.tag.includes('study') || s.tag === 'wake',
         actions: [
