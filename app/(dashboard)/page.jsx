@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { BarChart2, Target, Brain, Zap, TrendingUp, MessageSquare, BookOpen, Calendar, ChevronRight, RefreshCw, Flame, Cpu, Wifi } from 'lucide-react';
 import { isPuterAvailable } from '@/lib/ai/puter-client';
 import { LineChart, Line, ResponsiveContainer, Tooltip, AreaChart, Area } from 'recharts';
@@ -16,11 +15,29 @@ export default function DashboardPage() {
   const [saving, setSaving]     = useState(false);
   const [genReport, setGenReport] = useState(false);
   const [puterOn, setPuterOn]   = useState(false);
-  const router = useRouter();
+
+  const [time, setTime] = useState('');
+  const [greeting, setGreeting] = useState('');
+  const [date, setDate] = useState('');
 
   useEffect(() => {
-    // Redirect to chat as main page
-    router.replace('/chat');
+    function tick() {
+      const now = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+      const h = now.getHours();
+      const m = now.getMinutes();
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hr = h % 12 || 12;
+      setTime(`${String(hr).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`);
+      setGreeting(h<5?'Raat ho gayi 🌙':h<12?'Good Morning! 🌅':h<17?'Kya chal raha hai? ☀️':h<21?'Shaam ho gayi 🌆':'Raat ho gayi 🌙');
+      setDate(now.toLocaleDateString('hi-IN',{weekday:'long',day:'numeric',month:'long'}));
+    }
+    tick();
+    const iv = setInterval(tick, 1000);
+    // Load dashboard data
+    load();
+    // Puter check
+    isPuterAvailable().then(setPuterOn).catch(()=>{});
+    return () => clearInterval(iv);
   }, []);
 
   async function load() {
@@ -59,7 +76,6 @@ export default function DashboardPage() {
   // First visit detection
   const isNew = !data?.logs?.length && !data?.goals?.length;
 
-  const hour = new Date().getHours();
   const loadingQuips = [
     'Teri files dhundh raha hoon...',
     'Memory load ho rahi hai...',
@@ -89,21 +105,23 @@ export default function DashboardPage() {
     <div className="h-full overflow-y-auto">
       <div className="p-4 pb-20 lg:pb-6 space-y-4 max-w-4xl mx-auto">
 
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-black text-white">
-              {hour < 6 ? '🌙 Raat ka JARVIS' : hour < 12 ? '🌅 Good Morning!' : hour < 17 ? '☀️ Kya chal raha hai?' : hour < 21 ? '🌆 Shaam ho gayi' : '🌙 Raat ho gayi'}
-            </h1>
-            <p className="text-xs text-slate-500">{new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' })}</p>
-          </div>
-          <div className="flex gap-2">
+        {/* Live Clock Header */}
+        <div className="glass-card p-5 border border-white/[0.06] text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-cyan-500/5"/>
+          <p className="text-5xl font-black text-white tracking-tight relative">{time}</p>
+          <p className="text-slate-500 text-sm mt-1 relative">{date}</p>
+          <p className="text-blue-300/80 text-sm mt-2 font-medium relative">{greeting}</p>
+          <div className="flex gap-2 mt-4 justify-center relative">
             <button onClick={() => setLogOpen(true)}
-              className="px-3 py-2 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-xl text-xs font-medium hover:bg-blue-600/30 transition-colors">
-              + Log Day
+              className="px-4 py-2 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-xl text-xs font-semibold hover:bg-blue-600/30 transition-colors">
+              + Aaj ka Log
             </button>
-            <button onClick={load} className="p-2 glass-card text-slate-500 hover:text-white transition-colors rounded-xl">
-              <RefreshCw size={15} className={loading ? 'animate-spin' : ''}/>
+            <button onClick={getWeeklyReport} disabled={genReport}
+              className="px-4 py-2 bg-purple-600/20 border border-purple-500/30 text-purple-400 rounded-xl text-xs font-semibold hover:bg-purple-600/30 transition-colors disabled:opacity-50">
+              {genReport ? '...' : '📊 Weekly Report'}
+            </button>
+            <button onClick={load} className="p-2 bg-white/5 border border-white/10 text-slate-500 hover:text-white transition-colors rounded-xl">
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''}/>
             </button>
           </div>
         </div>
@@ -288,21 +306,13 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Weekly Report */}
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-white">Weekly AI Report</p>
-            <button onClick={getWeeklyReport} disabled={genReport}
-              className="text-xs px-3 py-1.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-colors disabled:opacity-50">
-              {genReport ? 'Generating...' : 'Generate'}
-            </button>
-          </div>
-          {report ? (
+        {/* Weekly Report Result */}
+        {report && (
+          <div className="glass-card p-4 border border-purple-500/20">
+            <p className="text-xs font-semibold text-purple-400 mb-2 uppercase tracking-wider">📊 Weekly AI Report</p>
             <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{report}</p>
-          ) : (
-            <p className="text-xs text-slate-600">JARVIS tumhara weekly AI analysis generate karega</p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Day Log Modal */}
