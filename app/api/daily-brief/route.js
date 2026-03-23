@@ -12,11 +12,6 @@ async function buildBrief(user) {
   const day  = now.toLocaleDateString('hi-IN', { weekday: 'long', day: 'numeric', month: 'long' });
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-  // NEET countdown
-  const neetDays = Math.max(0, Math.round((new Date('2026-05-03') - now) / 86400000));
-  const neetLine = neetDays > 0
-    ? `📚 NEET 2026: ${neetDays} din baaki — aaj ka plan ready hai?`
-    : '🎉 NEET exam aa gaya! All the best!';
 
   // Goals
   let goalsLine = '';
@@ -39,7 +34,6 @@ async function buildBrief(user) {
   const motiv = motivLines[timeKey][Math.floor(Math.random() * motivLines[timeKey].length)];
 
   const bodyLines = [
-    neetLine,
     goalsLine,
     motiv,
   ].filter(Boolean);

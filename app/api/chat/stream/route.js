@@ -190,12 +190,6 @@ export async function POST(req) {
   if (/\b(wifi|bluetooth|torch|flashlight|hotspot|screenshot|mute|volume|brightness|dark.mode|dnd|study.mode|sleep.mode|gym.mode|drive.mode)\b/i.test(msgLow)) {
     toolCtx += '\n[PHONE_CMD_DETECTED: Tell user the action will be executed via MacroDroid. Keep reply short like "WiFi on kar diya" or "Karo, MacroDroid ke through chal raha hai"]';
   }
-  // NEET countdown context — inject when relevant
-  if (/neet|jee|medical|entrance|exam.*date|kitne.*din|days.*left|countdown/.test(msgLow)) {
-    const neetDays = Math.max(0, Math.round((new Date('2026-05-03') - new Date()) / 86400000));
-    const urgency = neetDays < 30 ? 'CRITICAL — last month!' : neetDays < 60 ? 'very close!' : neetDays < 100 ? 'getting close' : 'time hai';
-    toolCtx += `\n[NEET 2026: ${neetDays} din baaki (3 May 2026). Urgency: ${urgency}. Use this naturally in reply.]`;
-  }
   const toolSources = []; // for source badges in UI
   const m = msgLow;
   try {

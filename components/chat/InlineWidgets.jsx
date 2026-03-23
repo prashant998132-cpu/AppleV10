@@ -212,72 +212,6 @@ export function CalculatorWidget() {
   );
 }
 
-// ── NEET SCHEDULE WIDGET ─────────────────────────────────────
-export function NeetScheduleWidget() {
-  const now = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-  const cur = now.getHours() * 60 + now.getMinutes();
-
-  const sessions = [
-    {time:'05:30',h:5,m:30,label:'Uthna',icon:'🌅',color:'text-orange-300'},
-    {time:'06:00',h:6,m:0,label:'Physics',icon:'⚡',dur:'2.5h',color:'text-blue-300'},
-    {time:'08:30',h:8,m:30,label:'Break',icon:'☕',color:'text-yellow-300'},
-    {time:'09:00',h:9,m:0,label:'Biology',icon:'🧬',dur:'2h',color:'text-green-300'},
-    {time:'11:00',h:11,m:0,label:'Chemistry',icon:'⚗️',dur:'2h',color:'text-purple-300'},
-    {time:'13:00',h:13,m:0,label:'Lunch',icon:'🍽️',color:'text-yellow-300'},
-    {time:'14:00',h:14,m:0,label:'Numericals',icon:'🔢',dur:'3h',color:'text-cyan-300'},
-    {time:'17:30',h:17,m:30,label:'Exercise',icon:'🏃',color:'text-orange-300'},
-    {time:'18:15',h:18,m:15,label:'Revision',icon:'📖',dur:'2h',color:'text-blue-300'},
-    {time:'20:30',h:20,m:30,label:'Dinner',icon:'🌙',color:'text-slate-400'},
-    {time:'21:00',h:21,m:0,label:'Night Review',icon:'📝',dur:'1.5h',color:'text-indigo-300'},
-    {time:'22:30',h:22,m:30,label:'So Jao',icon:'😴',color:'text-slate-500'},
-  ];
-
-  const days = Math.max(0, Math.round((new Date('2026-05-03') - new Date()) / 86400000));
-
-  return (
-    <div className="mt-2 bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-white/[0.06] bg-blue-600/10 flex items-center justify-between">
-        <div>
-          <p className="text-white font-bold text-sm">📚 NEET 2026 Schedule</p>
-          <p className="text-blue-300/60 text-xs">3 May 2026 · {days} din baaki</p>
-        </div>
-        <div className="text-right">
-          <p className="text-white/40 text-xs">{now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</p>
-        </div>
-      </div>
-      {/* Timeline */}
-      <div className="max-h-72 overflow-y-auto no-scrollbar">
-        {sessions.map((s, i) => {
-          const st = s.h * 60 + s.m;
-          const isDone = st + 30 < cur;
-          const isCurrent = !isDone && st <= cur && (sessions[i+1] ? (sessions[i+1].h*60+sessions[i+1].m) > cur : true);
-          return (
-            <div key={i} className={`flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.04] last:border-0 transition-all ${
-              isCurrent ? 'bg-blue-600/10' : isDone ? 'opacity-40' : ''
-            }`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0 ${
-                isCurrent ? 'bg-blue-600/30 border-2 border-blue-500/50' :
-                isDone ? 'bg-white/5' : 'bg-white/[0.06]'
-              }`}>
-                {isDone ? '✅' : isCurrent ? s.icon : s.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <p className={`text-[13px] font-medium ${isCurrent ? 'text-white' : 'text-white/70'}`}>{s.label}</p>
-                  {s.dur && <span className="text-[10px] text-white/30">{s.dur}</span>}
-                  {isCurrent && <span className="text-[9px] bg-blue-500/30 text-blue-300 px-1.5 py-0.5 rounded-full">NOW ▶</span>}
-                </div>
-              </div>
-              <p className="text-[11px] text-white/30 shrink-0">{s.time}</p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ── MINI DASHBOARD WIDGET ─────────────────────────────────────
 export function DashboardWidget() {
   const [data, setData] = useState(null);
@@ -290,7 +224,7 @@ export function DashboardWidget() {
       const goals = JSON.parse(localStorage.getItem('jarvis_goals') || '[]');
       const convs = JSON.parse(localStorage.getItem('jarvis_conversations') || '[]');
       setData({
-        name: profile.name || 'Prashant',
+        name: profile.name || '',
         memories: memories.length,
         goals: goals.filter(g => !g.completed).length,
         totalGoals: goals.length,
@@ -300,7 +234,7 @@ export function DashboardWidget() {
     } catch {}
   }, []);
 
-  const days = Math.max(0, Math.round((new Date('2026-05-03') - new Date()) / 86400000));
+  const days = 0;
 
   return (
     <div className="mt-2 bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden">
@@ -312,7 +246,6 @@ export function DashboardWidget() {
           {label:'Goals Active', value: data ? `${data.goals}/${data.totalGoals}` : '—', icon:'🎯', color:'text-blue-400'},
           {label:'Memories Saved', value: data?.memories || '—', icon:'🧠', color:'text-purple-400'},
           {label:'Chat Sessions', value: data?.convs || '—', icon:'💬', color:'text-cyan-400'},
-          {label:'NEET Days Left', value: days, icon:'📚', color:'text-orange-400'},
         ].map((item, i) => (
           <div key={i} className="bg-[#050810] px-4 py-3">
             <p className="text-white/40 text-[10px] mb-1">{item.icon} {item.label}</p>
@@ -430,7 +363,6 @@ export function detectWidget(text) {
   if (/\bweather\b|mausam|temperature|barish/.test(t)) return 'weather';
   if (/calculator|calc\b|calculate/.test(t)) return 'calculator';
   if (/(\d+)\s*(min|minute|second|sec|ghante|hour)\s*(ka\s+)?timer/.test(t) || /timer.*(\d+)/.test(t)) return 'timer';
-  if (/neet.*schedule|aaj.*schedule|schedule.*dikhao/.test(t)) return 'neet_schedule';
   if (/mera\s*(account|dashboard|stats)|dashboard\s*dikhao/.test(t)) return 'dashboard';
   if (/bitcoin|crypto|ethereum|gold\s*rate|silver\s*rate/.test(t)) return 'price';
   if (/reminder\s*set|set\s*reminder|alarm\s*set/.test(t) && !/\d{1,2}:\d{2}/.test(t)) return 'reminder';

@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 import { startAriaAutoMessages, updateLastActivity } from '@/lib/aria-auto-msg';
-import { WeatherWidget, TimerWidget, CalculatorWidget, NeetScheduleWidget, DashboardWidget, PriceWidget, ReminderWidget, detectWidget, parseTimerSeconds } from '@/components/chat/InlineWidgets';
+import { WeatherWidget, TimerWidget, CalculatorWidget, DashboardWidget, PriceWidget, ReminderWidget, detectWidget, parseTimerSeconds } from '@/components/chat/InlineWidgets';
 import Sounds from '@/lib/sound/sounds';
 import Link from 'next/link';
 import WallpaperPicker, { ChatBackground } from '@/components/chat/WallpaperPicker';
@@ -65,7 +65,6 @@ const JARVIS_QUICK_CMDS = [
 // Time-aware quick starters — evaluated at render time
 function getQuickStarters(personality) {
   const h = new Date().getHours();
-  const neet = Math.max(0, Math.round((new Date('2026-05-03') - new Date()) / 86400000));
 
   // ARIA girlfriend mode — different starters
   if (personality === 'girlfriend') {
@@ -95,7 +94,7 @@ function getQuickStarters(personality) {
     ];
   }
 
-  // NEET-focused starters
+  // Study starters
   if (h < 6)  return [
     { t:'Nind nahi aa rahi, kya karu?',    i:'🌙' },
     { t:'Raat ko productive kaise rahun?', i:'⚡' },
@@ -103,26 +102,26 @@ function getQuickStarters(personality) {
     { t:'Ek dark joke sunao yaar',         i:'😈' },
   ];
   if (h < 12) return [
-    { t:'Aaj ka NEET plan banao',          i:'📚' },
+    { t:'Aaj ka plan banao',      i:'📋' },
     { t:'Morning motivation chahiye',      i:'🔥' },
-    { t:`NEET mein ${neet} din baaki`, i:'⏳' },
+    
     { t:'Aaj ka mausam kaisa hai?',        i:'🌤️' },
-    { t:'Biology ka concept samjhao',      i:'🧬' },
+    { t:'Kuch interesting batao', i:'🧠' },
   ];
   if (h < 17) return [
     { t:'Focus nahi ho raha',              i:'😵' },
-    { t:'Physics numerical solve karo',    i:'⚡' },
-    { t:'Chemistry MCQ do mujhe',          i:'⚗️' },
+    { t:'Quick calculation karo', i:'🧮' },
+    { t:'Kuch naya seekhna hai',  i:'💡' },
     { t:'Thoda entertain karo',            i:'😄' },
   ];
   if (h < 21) return [
-    { t:'Aaj ka revision karo',            i:'📖' },
+    { t:'Aaj ka review karo',     i:'📖' },
     { t:'Kal ke liye plan banao',          i:'🎯' },
     { t:'Aaj ka din kaisa raha?',          i:'📊' },
     { t:'Stress hai, baat karni hai',      i:'💙' },
   ];
   return [
-    { t:'NEET revision karte hain',        i:'📚' },
+    { t:'Goals check karo',       i:'🎯' },
     { t:'Kal ke liye goal set karo',       i:'🎯' },
     { t:'Neend se pehle motivation',       i:'✨' },
     { t:'Din review karo mera',            i:'🌙' },
@@ -133,7 +132,7 @@ function getQuickStarters(personality) {
 function detectMode(msg) {
   const m = msg.toLowerCase(), w = m.split(/\s+/).length;
   if (w <= 4 || /^(hi|hello|ok|haan|thanks|bye|namaste|kya hal)[\s!?.]*$/i.test(m)) return 'flash';
-  if (/\b(why|kyu|explain|code|math|solve|debug|compare|neet|jee|logic|reason)\b/.test(m)) return 'think';
+  if (/\b(why|kyu|explain|code|math|solve|debug|compare|logic|reason)\b/.test(m)) return 'think';
   if (/\b(plan|roadmap|write|email|research|strategy|career|analyze|create)\b/.test(m) || w > 20) return 'deep';
   return 'flash';
 }
@@ -425,7 +424,6 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
             {msg.widget === 'weather' && <WeatherWidget city={msg.widgetData?.city} lat={msg.widgetData?.lat} lng={msg.widgetData?.lng}/>}
             {msg.widget === 'timer' && <TimerWidget seconds={msg.widgetData?.seconds || 60} label={msg.widgetData?.label}/>}
             {msg.widget === 'calculator' && <CalculatorWidget/>}
-            {msg.widget === 'neet_schedule' && <NeetScheduleWidget/>}
             {msg.widget === 'dashboard' && <DashboardWidget/>}
             {msg.widget === 'price' && <PriceWidget items={msg.widgetData?.items || ['gold','bitcoin']}/>}
             {msg.widget === 'reminder' && <ReminderWidget/>}
@@ -1031,7 +1029,7 @@ export default function ChatPage() {
       return ['Aaj ka schedule?', 'Timer set karo', 'Reminder laga do'];
     if (/location|kahan|city|jagah|ghar/.test(q+r))
       return ['Nearby places?', 'Weather yahan ka?', 'Maps kholo'];
-    if (/neet|study|padhai|exam|bio|physics|chem/.test(q+r))
+    if (/study|padhai|exam/.test(q+r))
       return ['Practice questions do', 'Topic explain karo', 'Study plan banao'];
     if (/code|python|javascript|error|bug/.test(q+r))
       return ['Example dikhao', 'Optimize karo', 'Debug karo'];
@@ -1143,7 +1141,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
     trackUsage(msg);
     setFreqCmds(getFrequentCommands(4));
     // Track study streak
-    if (/neet|study|padhai|physics|biology|chemistry|revision|mcq|ncert/i.test(msg)) {
+    if (/study|padhai|revision/i.test(msg)) {
       try {
         const data = JSON.parse(localStorage.getItem('jarvis_study_streak') || '{}');
         const today = new Date().toDateString();
@@ -1207,9 +1205,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
           if (result.response && result.response.length < 200) speak(result.response);
           return;
         }
-        // neet_schedule type — show formatted message
-        if (result.type === 'neet_schedule' && result.message) {
-          const schedMsg = { id: `ns${Date.now()}`, role: 'assistant', content: result.message, streaming: false, ts: Date.now(), mode: 'flash', modelUsed: '📚 NEET' };
+        if (false) {
           setMsgs(p => [...p, schedMsg]);
           return;
         }
@@ -1227,11 +1223,10 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
 
     // ── INSTANT WIDGET COMMANDS (runs before AI/deeplink) ────
     const instantWidget = detectWidget(msg || '');
-    if (instantWidget && ['calculator','neet_schedule','dashboard','reminder'].includes(instantWidget)) {
+    if (instantWidget && ['calculator','dashboard','reminder'].includes(instantWidget)) {
       const userMsg0 = {id:`u${Date.now()}`,role:'user',content:msg,ts:Date.now()};
       const widgetResponses = {
         calculator:    '🧮 Calculator:',
-        neet_schedule: '📚 Aaj ka NEET schedule:',
         dashboard:     '📊 Tera dashboard:',
         reminder:      '⏰ Reminder set karo:',
       };
@@ -1939,28 +1934,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                   return h<5?'Raat ko jaaga? 🌙':h<12?(`Kya scene hai${profileName ? ', ' + profileName : ''}? 👋`):h<17?(`Good afternoon${profileName ? ', ' + profileName : ''} ☀️`):h<21?(`Good evening${profileName ? ', ' + profileName : ''} 🌇`):'Raat ka mood kya hai? 🌙';
                 })()}
               </p>
-              {/* NEET countdown + progress */}
-              {(()=>{
-                const d=Math.max(0,Math.round((new Date('2026-05-03')-new Date())/86400000));
-                const total=365; // roughly 1 year prep
-                const done=Math.max(0,total-d);
-                const pct=Math.round((done/total)*100);
-                return d>0?(
-                  <div className="mt-2 w-full max-w-[300px] bg-blue-600/10 border border-blue-500/20 rounded-2xl px-4 py-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">📚</span>
-                        <p className="text-[12px] text-blue-300 font-bold">NEET 2026</p>
-                      </div>
-                      <p className="text-[11px] text-blue-400 font-black">{d} din</p>
-                    </div>
-                    <div className="w-full bg-white/5 rounded-full h-1.5">
-                      <div className="bg-gradient-to-r from-blue-600 to-cyan-500 h-1.5 rounded-full transition-all" style={{width:`${Math.min(pct,100)}%`}}/>
-                    </div>
-                    <p className="text-[10px] text-slate-600 mt-1">3 May 2026 · {pct}% journey complete</p>
-                  </div>
-                ):(<div className="mt-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-2xl"><p className="text-[11px] text-green-400 font-bold">🎉 NEET 2026 aa gaya! Best of luck!</p></div>);
-              })()}
+              
             </div>
 
             {/* ── Quick Action Cards ────────────────────────── */}
@@ -1977,9 +1951,9 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                   ...(timeCtx?.suggestions || []).slice(0,4).map(q=>({icon:q.icon,title:q.text,sub:null,cmd:q.cmd||q.text})),
                   ...(timeCtx?.suggestions?.length < 4 ? [
                     {icon:'☀️',title:'Aaj ka mausam?',sub:'Live weather + forecast',cmd:'Aaj ka weather batao'},
-                    {icon:'📚',title:'NEET study plan',sub:'Aaj ka biology/physics/chemistry',cmd:'Aaj ka NEET study plan banao'},
-                    {icon:'🧠',title:'Biology samjhao',sub:'NCERT concept clear karo',cmd:'Biology ka koi important NEET topic samjhao'},
-                    {icon:'⚡',title:'Physics numericals',sub:'Practice problems do',cmd:'NEET physics ke 3 practice numericals do'},
+                    {icon:'📚',title:'Study plan banao',sub:'Aaj ka padhai ka plan',cmd:'Aaj ke liye study plan banao'},
+                    {icon:'🧠',title:'Kuch seekhna hai',sub:'Interesting topic',cmd:'Koi interesting topic samjhao'},
+                    {icon:'⚡',title:'Quick quiz',sub:'Test your knowledge',cmd:'Mujhe koi interesting quiz do'},
                     {icon:'📰',title:'Aaj ki khabar?',sub:'India & world news',cmd:'Aaj ki top 5 news batao'},
                     {icon:'🪙',title:'Gold & crypto rate?',sub:'Live prices',cmd:'Aaj ka gold rate aur bitcoin price batao'},
                   ] : []),
@@ -2073,7 +2047,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
           <div className="px-4 pt-3 pb-1">
             <textarea ref={taRef} value={input} onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}
-              placeholder={profilePersonality === "girlfriend" ? "Aira se kuch bolo..." : profilePersonality === "study" ? "Kuch poochho — NEET/JEE..." : profilePersonality === "roast" ? "Roast ke liye ready ho? 😈" : "Kuch poocho ya batao..."}
+              placeholder={profilePersonality === "girlfriend" ? "Aira se kuch bolo..." : profilePersonality === "study" ? "Kuch poochho — Kuch poochho..." : profilePersonality === "roast" ? "Roast ke liye ready ho? 😈" : "Kuch poocho ya batao..."}
               rows={1} style={{resize:'none',minHeight:'24px',maxHeight:'96px',overflowY:'auto'}}
               className="w-full bg-transparent text-white text-[15px] placeholder-slate-600 outline-none leading-relaxed"/>
           </div>
