@@ -1,11 +1,11 @@
 'use client';
 // FloatingJarvis — JARVIS on every page
-// Small floating button → tap → quick AI chat overlay
 import { useState, useRef, useEffect } from 'react';
 import { X, Send, Mic, MicOff } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export default function FloatingJarvis() {
+  const path = usePathname();
   const [open, setOpen]       = useState(false);
   const [msgs, setMsgs]       = useState([]);
   const [input, setInput]     = useState('');
@@ -14,11 +14,8 @@ export default function FloatingJarvis() {
   const [listening, setListening] = useState(false);
   const endRef = useRef(null);
   const inputRef = useRef(null);
-  const path = usePathname();
 
-  // Don't show on chat page (JARVIS already there)
-  if (path === '/chat') return null;
-
+  // Load personality
   useEffect(() => {
     try {
       const p = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
@@ -32,6 +29,11 @@ export default function FloatingJarvis() {
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 200);
+  }, [open]);
+
+  // Don't show on chat page — AFTER all hooks
+  if (path === '/chat') return null;
+    } catch {}
   }, [open]);
 
   const isAria = personality === 'girlfriend';
