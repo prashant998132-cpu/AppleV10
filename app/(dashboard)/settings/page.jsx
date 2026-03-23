@@ -21,8 +21,8 @@ const PERSONALITY_OPTIONS = [
 
 const API_ENDPOINTS = [
   // 🔴 REQUIRED (app nahi chalega bina inke)
-  { name:'Gemini AI',       key:'GEMINI_API_KEY',    required:true,  desc:'Main AI brain — aistudio.google.com/apikey',  link:'https://aistudio.google.com/app/apikey', free:true },
-  { name:'Groq',            key:'GROQ_API_KEY',      required:true,  desc:'Flash/Think mode — console.groq.com',         link:'https://console.groq.com/keys',           free:true },
+  { name:'Gemini AI',       key:'GEMINI_API_KEY',    required:true,  desc:'Main AI — Flash-Lite 1000/day + Flash 250/day free',  link:'https://aistudio.google.com/app/apikey', free:true },
+  { name:'Groq',            key:'GROQ_API_KEY',      required:true,  desc:'GPT-OSS 120B + Qwen3 32B + Scout — 500K tokens/day',  link:'https://console.groq.com/keys',     free:true },
   // 🟡 RECOMMENDED (features unlock honge)
   { name:'Cerebras',        key:'CEREBRAS_API_KEY',  required:false, desc:'3000 tokens/sec — inference.cerebras.ai',     link:'https://inference.cerebras.ai',           free:true },
   { name:'Mistral',         key:'MISTRAL_API_KEY',   required:false, desc:'1B free tokens/month — console.mistral.ai',   link:'https://console.mistral.ai/api-keys/',    free:true },
