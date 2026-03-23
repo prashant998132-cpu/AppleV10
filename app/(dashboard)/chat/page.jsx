@@ -1701,6 +1701,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
               <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mt-3 mb-2">Explore</p>
               <div className="grid grid-cols-2 gap-2 mb-4">
                 {[
+                  { href:'/voice',      icon:'🎙️', label:'Voice',     sub:'Hold to speak'  },
                   { href:'/studio',     icon:'🎨', label:'Studio',    sub:'AI art & media' },
                   { href:'/goals',      icon:'🎯', label:'Goals',     sub:'Track progress' },
                   { href:'/analytics',  icon:'📊', label:'Analytics', sub:'Your stats'     },

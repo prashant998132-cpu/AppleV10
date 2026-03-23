@@ -64,7 +64,15 @@ export default function SettingsPage() {
   const [migrateMsg, setMigrateMsg]            = useState('');
   const [customInstr, setCustomInstr] = useState('');
   const [saved, setSaved]         = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Support ?tab=apis URL params
+    if (typeof window !== 'undefined') {
+      const t = new URLSearchParams(window.location.search).get('tab');
+      const valid = ['profile','ai','apis','habits','security','storage','connect'];
+      if (t && valid.includes(t)) return t;
+    }
+    return 'profile';
+  });
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput]     = useState('');
   const [exporting, setExporting] = useState(false);
@@ -198,11 +206,11 @@ export default function SettingsPage() {
   const TABS = [
     { id:'profile',  icon:<User size={15}/>,    label:'Profile'    },
     { id:'ai',       icon:<Brain size={15}/>,   label:'AI & Voice' },
-    { id:'habits',   icon:<Zap size={15}/>,     label:'Habits'     },
     { id:'apis',     icon:<Key size={15}/>,     label:'APIs'       },
+    { id:'habits',   icon:<Zap size={15}/>,     label:'Habits'     },
     { id:'security', icon:<Shield size={15}/>,  label:'Security'   },
-    { id:'connect',  icon:<Link size={15}/>,    label:'Apps'       },
     { id:'storage',  icon:<Database size={15}/>, label:'Storage'    },
+    { id:'connect',  icon:<Link size={15}/>,    label:'Apps'       },
   ];
 
   async function togglePIN() {
