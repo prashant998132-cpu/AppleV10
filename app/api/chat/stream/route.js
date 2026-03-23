@@ -245,8 +245,7 @@ export async function POST(req) {
       fetch('https://data-asg.goldprice.org/dbXRates/INR')
         .then(r=>r.ok?r.json():null)
         .then(d=>{ if(d?.items?.[0]) { const g=Math.round(d.items[0].xauPrice/31.1035*10); const s=Math.round(d.items[0].xagPrice/31.1035*10); toolCtx += `\n[METALS: Gold ₹${g.toLocaleString('en-IN')}/10g, Silver ₹${s.toLocaleString('en-IN')}/10g]`; toolSources.push('🥇 GoldPrice'); }})
-        .catch(()=>{}))
-        ?.catch(() => {})
+        .catch(()=>{})
     );
     if (imageBase64 && keys.GEMINI_API_KEY) toolTasks.push(
       analyzeImage(imageBase64, message, keys.GEMINI_API_KEY)

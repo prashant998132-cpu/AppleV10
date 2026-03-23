@@ -1960,7 +1960,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                     <p className="text-[10px] text-slate-600 mt-1">3 May 2026 · {pct}% journey complete</p>
                   </div>
                 ):(<div className="mt-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-2xl"><p className="text-[11px] text-green-400 font-bold">🎉 NEET 2026 aa gaya! Best of luck!</p></div>);
-              })()}}
+              })()}
             </div>
 
             {/* ── Quick Action Cards ────────────────────────── */}
