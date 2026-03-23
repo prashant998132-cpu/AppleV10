@@ -108,6 +108,7 @@ export default function DashboardClient({ children, user, profile }) {
     setTimeout(() => { try { registerPeriodicSync(); } catch {} }, 3000);
 
     return () => {
+      window.removeEventListener('jarvis-open-sidebar', openSidebar);
       window.removeEventListener('touchstart', touch);
       window.removeEventListener('click', touch);
       window.removeEventListener('devicemotion', handleShake);
@@ -124,6 +125,10 @@ export default function DashboardClient({ children, user, profile }) {
     window.addEventListener('online',  () => setOnline(true));
     window.addEventListener('offline', () => setOnline(false));
     // Live clock
+    // Listen for chat page ≡ button to open this sidebar
+    const openSidebar = () => setSidebar(true);
+    window.addEventListener('jarvis-open-sidebar', openSidebar);
+
     const tick = () => setTime(new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }));
     tick();
     const t = setInterval(tick, 30000);

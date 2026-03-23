@@ -626,7 +626,6 @@ export default function ChatPage() {
   const [convs, setConvs]       = useState([]);  // conversation list
   const [phase, setPhase]       = useState('');
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [navOpen, setNavOpen]         = useState(false);
   const [activeWidget, setActiveWidget] = useState(null); // {type, data}
   const [plusOpen, setPlusOpen]       = useState(false);
   const [resuming, setResuming] = useState(true);   // auto-resume last chat
@@ -1675,46 +1674,6 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       )}
 
       {/* ── Slide-in Nav Menu — Image 3 Style ───────────────────── */}
-      {navOpen && (
-        <div className="fixed inset-0 z-[9990]" onClick={()=>setNavOpen(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
-          <div className="absolute right-0 top-0 bottom-0 w-64 bg-[#080c14] border-l border-white/[0.06] flex flex-col"
-            onClick={e=>e.stopPropagation()}>
-            <div className="flex items-center justify-between px-4 pt-5 pb-4 border-b border-white/[0.06]">
-              <div>
-                <p className={`font-black text-base ${profilePersonality==='girlfriend'?'text-pink-400':'text-blue-400'}`}>
-                  {profilePersonality==='girlfriend'?'ARIA':'JARVIS'}
-                </p>
-                <p className="text-slate-600 text-[10px]">{PERSONALITY_LABELS[profilePersonality]||'Normal'}</p>
-              </div>
-              <button onClick={()=>setNavOpen(false)} className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white">
-                <X size={14}/>
-              </button>
-            </div>
-            <nav className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-0.5">
-              {[
-                { href:'/',           icon:'⚡', label:'Dashboard'  },
-                { href:'/voice',      icon:'🎙️', label:'Voice Mode' },
-                { href:'/goals',      icon:'🎯', label:'Goals'      },
-                { href:'/analytics',  icon:'📊', label:'Analytics'  },
-                { href:'/memory',     icon:'🧠', label:'Memory'     },
-                { href:'/studio',     icon:'🎨', label:'Studio'     },
-                { href:'/knowledge',  icon:'📚', label:'Knowledge'  },
-                { href:'/automation', icon:'🔗', label:'Apps'       },
-                { href:'/phone',      icon:'📱', label:'Phone'      },
-                { href:'/profile',    icon:'👤', label:'Profile'    },
-                { href:'/settings',   icon:'⚙️', label:'Settings'   },
-              ].map(({href,icon,label})=>(
-                <button key={href} onClick={()=>{ setNavOpen(false); window.location.href=href; }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.06] transition-all active:scale-95 text-left text-sm">
-                  <span className="text-base w-5 text-center">{icon}</span>
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
-      )}
 
       {/* Daily Morning Brief */}
       <DailyBrief onBriefMessage={(msg) => {
@@ -1880,7 +1839,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
               <Plus size={15}/>
             </button>
             {/* Menu */}
-            <button onClick={()=>setNavOpen(true)}
+            <button onClick={()=>window.dispatchEvent(new CustomEvent("jarvis-open-sidebar"))}
               className="flex flex-col gap-[3px] items-center justify-center p-1.5 rounded-full text-slate-500 hover:text-white transition-all lg:hidden">
               <span className="block w-3.5 h-[1.5px] bg-current rounded-full"/>
               <span className="block w-3.5 h-[1.5px] bg-current rounded-full"/>
