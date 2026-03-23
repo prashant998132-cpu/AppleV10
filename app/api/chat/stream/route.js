@@ -218,6 +218,34 @@ export async function POST(req) {
     if (m.match(/news|khabar|headlines/)) toolTasks.push(
       AGENTS.news?.()
         ?.then(n => { if(n) { toolCtx += `\n[NEWS: ${JSON.stringify(n).slice(0,400)}]`; toolSources.push('📰 newsdata.io'); } })
+        ?.catch(()=>{})
+    );
+
+    // NEW: Wikipedia for "kya hai", "ke baare mein batao"
+    if (m.match(/kya hai|ke baare mein|wikipedia|history of|inventor|who made|kisne banaya|meaning of/)) {
+      const term = message.replace(/kya hai|ke baare mein batao|wikipedia|history of|meaning of/gi,'').trim().slice(0,50);
+      if (term.length > 3) toolTasks.push(
+        fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`)
+          .then(r=>r.ok?r.json():null)
+          .then(d=>{ if(d?.extract) { toolCtx += `\n[WIKI: ${d.title}: ${d.extract.slice(0,300)}]`; toolSources.push('📖 Wikipedia'); }})
+          .catch(()=>{})
+      );
+    }
+
+    // NEW: Crypto prices (free CoinGecko)
+    if (m.match(/bitcoin|btc|ethereum|eth|crypto|coin price|rate.*coin/)) toolTasks.push(
+      fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=inr,usd')
+        .then(r=>r.ok?r.json():null)
+        .then(d=>{ if(d) { toolCtx += `\n[CRYPTO: BTC ₹${d.bitcoin?.inr?.toLocaleString('en-IN')} ($${d.bitcoin?.usd?.toLocaleString()}), ETH ₹${d.ethereum?.inr?.toLocaleString('en-IN')}, SOL ₹${d.solana?.inr?.toLocaleString('en-IN')}]`; toolSources.push('💹 CoinGecko'); }})
+        .catch(()=>{})
+    );
+
+    // NEW: Gold price (free)
+    if (m.match(/gold.*rate|sona.*rate|chandi|silver.*rate|gold.*price/)) toolTasks.push(
+      fetch('https://data-asg.goldprice.org/dbXRates/INR')
+        .then(r=>r.ok?r.json():null)
+        .then(d=>{ if(d?.items?.[0]) { const g=Math.round(d.items[0].xauPrice/31.1035*10); const s=Math.round(d.items[0].xagPrice/31.1035*10); toolCtx += `\n[METALS: Gold ₹${g.toLocaleString('en-IN')}/10g, Silver ₹${s.toLocaleString('en-IN')}/10g]`; toolSources.push('🥇 GoldPrice'); }})
+        .catch(()=>{}))
         ?.catch(() => {})
     );
     if (imageBase64 && keys.GEMINI_API_KEY) toolTasks.push(

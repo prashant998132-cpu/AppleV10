@@ -20,17 +20,22 @@ const PERSONALITY_OPTIONS = [
 ];
 
 const API_ENDPOINTS = [
-  { name:'Gemini AI',       key:'GEMINI_API_KEY',    required:true,  desc:'Main AI brain — aistudio.google.com (free)' },
-  { name:'Groq',            key:'GROQ_API_KEY',      required:true,  desc:'⚡Flash + 🧠Think mode — console.groq.com (free)' },
-  { name:'OpenRouter',      key:'OPENROUTER_KEY',    required:false, desc:'DeepSeek R1, Mistral, Qwen — openrouter.ai (free models)' },
-  { name:'ElevenLabs TTS',  key:'ELEVENLABS_API_KEY',required:false, desc:'Best Hindi voice — elevenlabs.io (10k chars free)' },
-  { name:'AIMLAPI (Images)',key:'AIMLAPI_KEY',       required:false, desc:'FLUX image gen — aimlapi.com (free tier)' },
-  { name:'fal.ai Images',   key:'FAL_API_KEY',       required:false, desc:'FLUX HD — fal.ai (100 free credits)' },
-  { name:'HuggingFace',     key:'HUGGINGFACE_TOKEN', required:false, desc:'Images + Music — huggingface.co (free)' },
-  { name:'Mubert Music',    key:'MUBERT_API_KEY',    required:false, desc:'Royalty-free music — mubert.com (free tier)' },
-  { name:'Luma Video',      key:'LUMA_API_KEY',      required:false, desc:'Dream Machine video — lumalabs.ai' },
-  { name:'GNews',           key:'GNEWS_API_KEY',     required:false, desc:'Live India news — gnews.io (free)' },
-  { name:'NewsData',        key:'NEWSDATA_KEY',      required:false, desc:'Hindi news — newsdata.io (free 200/day)' },
+  // 🔴 REQUIRED (app nahi chalega bina inke)
+  { name:'Gemini AI',       key:'GEMINI_API_KEY',    required:true,  desc:'Main AI brain — aistudio.google.com/apikey',  link:'https://aistudio.google.com/app/apikey', free:true },
+  { name:'Groq',            key:'GROQ_API_KEY',      required:true,  desc:'Flash/Think mode — console.groq.com',         link:'https://console.groq.com/keys',           free:true },
+  // 🟡 RECOMMENDED (features unlock honge)
+  { name:'Cerebras',        key:'CEREBRAS_API_KEY',  required:false, desc:'3000 tokens/sec — inference.cerebras.ai',     link:'https://inference.cerebras.ai',           free:true },
+  { name:'Mistral',         key:'MISTRAL_API_KEY',   required:false, desc:'1B free tokens/month — console.mistral.ai',   link:'https://console.mistral.ai/api-keys/',    free:true },
+  { name:'OpenRouter',      key:'OPENROUTER_KEY',    required:false, desc:'30+ free models — openrouter.ai',             link:'https://openrouter.ai/keys',              free:true },
+  { name:'Tavily Search',   key:'TAVILY_API_KEY',    required:false, desc:'Web search in chat — tavily.com',             link:'https://app.tavily.com/home',             free:true },
+  // 🎨 MEDIA (image/video/music)
+  { name:'fal.ai Images',   key:'FAL_API_KEY',       required:false, desc:'FLUX HD images — fal.ai (100 free)',          link:'https://fal.ai/dashboard/keys',           free:true },
+  { name:'HuggingFace',     key:'HUGGINGFACE_TOKEN', required:false, desc:'Free AI models — huggingface.co',             link:'https://huggingface.co/settings/tokens',  free:true },
+  { name:'ElevenLabs TTS',  key:'ELEVENLABS_API_KEY',required:false, desc:'Best Hindi voice — elevenlabs.io',            link:'https://elevenlabs.io/app/settings/api',  free:true },
+  { name:'Mubert Music',    key:'MUBERT_API_KEY',    required:false, desc:'AI music — mubert.com',                       link:'https://mubert.com',                      free:false },
+  // 📰 NEWS
+  { name:'GNews',           key:'GNEWS_API_KEY',     required:false, desc:'Live India news — gnews.io (100/day free)',   link:'https://gnews.io/register',               free:true },
+  { name:'NewsData',        key:'NEWSDATA_KEY',      required:false, desc:'Hindi news — newsdata.io (200/day free)',     link:'https://newsdata.io/register',            free:true },
 ];
 
 const FREE_APIS = [
@@ -599,23 +604,28 @@ export default function SettingsPage() {
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Required APIs</p>
               <p className="text-xs text-slate-500 mb-4">Add these in your .env.local file or Vercel environment variables</p>
               <div className="space-y-3">
-                {API_ENDPOINTS.map(api => (
-                  <div key={api.key} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-white">{api.name}</p>
-                        {api.required && <span className="text-[10px] text-red-400 bg-red-500/10 border border-red-500/20 px-1.5 py-0.5 rounded">Required</span>}
+                {API_ENDPOINTS.filter(a=>a.key).map(api => (
+                  <div key={api.key} className="flex items-start gap-3 py-2.5 border-b border-white/5 last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-white">{api.name}</p>
+                        {api.required && <span className="text-[9px] text-red-400 bg-red-500/10 border border-red-500/20 px-1.5 py-0.5 rounded-full">Required</span>}
+                        {api.free && <span className="text-[9px] text-green-400 bg-green-500/10 border border-green-500/20 px-1.5 py-0.5 rounded-full">Free ✓</span>}
                       </div>
-                      <p className="text-xs text-slate-500">{api.desc}</p>
-                      <p className="text-[10px] text-blue-400/70 font-mono mt-0.5">{api.key}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{api.desc}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="text-[10px] text-yellow-400/70">{api.key}</code>
+                        {api.link && (
+                          <a href={api.link} target="_blank"
+                            className="text-[10px] text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full hover:bg-blue-500/20 transition-colors">
+                            Get Key →
+                          </a>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {apiStatus[api.key] === 'testing' && <RefreshCw size={14} className="text-blue-400 animate-spin"/>}
-                      {apiStatus[api.key] === 'ok' && <Check size={14} className="text-green-400"/>}
-                      <button onClick={() => testApi(api)}
-                        className="text-xs px-2 py-1 bg-white/5 text-slate-400 hover:text-white rounded-lg transition-colors">
-                        Test
-                      </button>
+                    <div className="flex items-center gap-1.5 shrink-0 mt-1">
+                      {apiStatus[api.key] === 'testing' && <RefreshCw size={13} className="text-blue-400 animate-spin"/>}
+                      {apiStatus[api.key] === 'ok' && <Check size={13} className="text-green-400"/>}
                     </div>
                   </div>
                 ))}
@@ -636,13 +646,27 @@ export default function SettingsPage() {
             </div>
 
             <div className="glass-card p-4 border border-blue-500/15">
-              <p className="text-xs font-semibold text-blue-400 mb-2">Setup Instructions</p>
-              <div className="space-y-2 text-xs text-slate-400">
-                <p>1. <span className="text-white">Gemini API</span>: aistudio.google.com/app/apikey</p>
-                <p>2. <span className="text-white">Groq API</span>: console.groq.com (free tier)</p>
-                <p>3. <span className="text-white">fal.ai</span>: fal.ai → Dashboard → API Keys</p>
-                <p>4. <span className="text-white">Supabase</span>: supabase.com → Project → Settings → API</p>
-                <p>5. Copy <span className="text-blue-400 font-mono">.env.example</span> → <span className="text-blue-400 font-mono">.env.local</span></p>
+              <p className="text-xs font-semibold text-blue-400 mb-3">⚡ Vercel pe Keys Add Karo</p>
+              <div className="space-y-2.5 text-xs text-slate-400">
+                <div className="bg-white/[0.03] rounded-xl p-3">
+                  <p className="text-white font-semibold mb-1.5">Step by Step:</p>
+                  <p className="mb-1">1. Upar "Get Key →" se har key lo (sab free hain)</p>
+                  <p className="mb-1">2. <a href="https://vercel.com/dashboard" target="_blank" className="text-blue-400 underline">vercel.com/dashboard</a> → Tera project → Settings</p>
+                  <p className="mb-1">3. Environment Variables → Add New</p>
+                  <p className="mb-1">4. Key naam + value paste karo → Save → Redeploy</p>
+                </div>
+                <div className="bg-green-500/5 border border-green-500/15 rounded-xl p-3">
+                  <p className="text-green-400 font-semibold mb-1">Minimum Required (Start karo aaj):</p>
+                  <div className="font-mono text-[10px] space-y-0.5">
+                    <p className="text-yellow-400">GEMINI_API_KEY=AIza...</p>
+                    <p className="text-yellow-400">GROQ_API_KEY=gsk_...</p>
+                  </div>
+                  <p className="text-slate-500 text-[10px] mt-1.5">In 2 keys se 80% features kaam karenge!</p>
+                </div>
+                <a href="https://vercel.com/dashboard" target="_blank"
+                  className="flex items-center justify-center gap-2 py-2 bg-blue-600/15 border border-blue-500/25 text-blue-400 rounded-xl hover:bg-blue-600/25 transition-all">
+                  ▲ Vercel Dashboard kholo
+                </a>
               </div>
             </div>
           </div>
