@@ -90,7 +90,7 @@ function ImageStudio({ puterReady }) {
   return (
     <div className="space-y-4">
       <textarea value={prompt} onChange={e => setPrompt(e.target.value)}
-        placeholder="Kya dikhana chahte ho? E.g. 'Rewa ki sunset, Indian village, traditional style'"
+        placeholder="Kya dikhana chahte ho? E.g. 'sunset over mountains, Indian village, traditional style'"
         rows={3} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm resize-none placeholder-slate-600"/>
 
       {/* Style selector */}
@@ -385,7 +385,7 @@ function TTSStudio() {
   const presets = [
     'Namaste yaar! Aaj ka din bahut productive raha.',
     'Tumhara goal track ho raha hai. Aaj 80% complete ho gaya.',
-    'Subah ki briefing: Aaj Rewa mein mausam sunny rahega.',
+    'Subah ki briefing: Aaj mausam sunny rahega.',
     'JARVIS ready hai. Kya chahiye aapko?',
   ];
 
