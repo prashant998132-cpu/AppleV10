@@ -426,7 +426,7 @@ export default function PhonePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950/20 to-slate-950 pb-28">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950/20 to-slate-950 pb-28 overflow-y-auto">
       <Toast toasts={toasts} />
 
       {/* HEADER */}
@@ -470,7 +470,7 @@ export default function PhonePage() {
         </div>
       </div>
 
-      <div className="px-4 pt-3 max-w-lg mx-auto">
+      <div className="px-4 pt-3 max-w-lg mx-auto pb-10">
 
         {/* ═══ CONTROL ══════════════════════════════════════ */}
         {tab === 'control' && (

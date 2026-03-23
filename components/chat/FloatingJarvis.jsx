@@ -42,6 +42,7 @@ export default function FloatingJarvis() {
     const msg = text.trim();
     if (!msg || loading) return;
     setInput('');
+    setMsgs(p => p.filter(m => m.content !== 'Error aa gaya 🥺' && !m.content?.startsWith('Error') && !m.content?.startsWith('Server') && !m.content?.startsWith('Network') && !m.content?.startsWith('API')));
     const userMsg = { role: 'user', content: msg };
     const newMsgs = [...msgs, userMsg];
     setMsgs(newMsgs);
