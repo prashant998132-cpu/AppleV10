@@ -35,6 +35,10 @@ const API_ENDPOINTS = [
   { name:'Mubert Music',    key:'MUBERT_API_KEY',    required:false, desc:'AI music — mubert.com',                       link:'https://mubert.com',                      free:false },
   // 📰 NEWS
   { name:'NVIDIA NIM',       key:'NVIDIA_API_KEY',    required:false, desc:'DeepSeek R1, Kimi K2 — build.nvidia.com (~40 RPM free)', link:'https://build.nvidia.com', free:true },
+  // 🎬 MEDIA (movies, music, books)
+  { name:'TMDB (Movies)',    key:'TMDB_API_KEY',      required:false, desc:'Movie/TV info, posters, ratings — tmdb.org (free)', link:'https://www.themoviedb.org/settings/api', free:true },
+  { name:'OMDb',             key:'OMDB_API_KEY',      required:false, desc:'IMDb ratings + movie data — 1000/day free',          link:'http://www.omdbapi.com/apikey.aspx',   free:true },
+  { name:'Last.fm',          key:'LASTFM_API_KEY',    required:false, desc:'Music data, artist info — last.fm/api (free)',       link:'https://www.last.fm/api/account/create', free:true },
   { name:'GNews',           key:'GNEWS_API_KEY',     required:false, desc:'Live India news — gnews.io (100/day free)',   link:'https://gnews.io/register',               free:true },
   { name:'NewsData',        key:'NEWSDATA_KEY',      required:false, desc:'Hindi news — newsdata.io (200/day free)',     link:'https://newsdata.io/register',            free:true },
 ];

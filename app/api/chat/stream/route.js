@@ -323,6 +323,39 @@ export async function POST(req) {
         .then(d=>{ if(d?.items?.[0]) { const g=Math.round(d.items[0].xauPrice/31.1035*10); const s=Math.round(d.items[0].xagPrice/31.1035*10); toolCtx += `\n[METALS: Gold ₹${g.toLocaleString('en-IN')}/10g, Silver ₹${s.toLocaleString('en-IN')}/10g]`; toolSources.push('🥇 GoldPrice'); }})
         .catch(()=>{})
     );
+    // ── MOVIE INFO (TMDB free + OMDB fallback) ─────────────────
+    if (/film|movie|kya dekhe|recommend.*movie|movie.*rate|series|web series|kab aaya|release|imdb|bollywood|hollywood/i.test(message)) {
+      const mq = message.replace(/film|movie|kya dekhe|dekhe|series|web series|imdb|bollywood|hollywood/gi,'').replace(/recommend.*|suggest.*/gi,'').trim().slice(0,60);
+      if (mq.length > 2) {
+        if (keys.TMDB_API_KEY) toolTasks.push(
+          fetch(`https://api.themoviedb.org/3/search/movie?api_key=${keys.TMDB_API_KEY}&query=${encodeURIComponent(mq)}&language=en-US`)
+            .then(r=>r.ok?r.json():null)
+            .then(d=>{ const m=d?.results?.[0]; if(m){ toolCtx+=`
+[MOVIE: "${m.title}" (${m.release_date?.slice(0,4)}) — ⭐${m.vote_average?.toFixed(1)}/10 — ${m.overview?.slice(0,150)}]`; toolSources.push('🎬 TMDB'); }})
+            .catch(()=>{})
+        );
+        else if (keys.OMDB_API_KEY) toolTasks.push(
+          fetch(`https://www.omdbapi.com/?apikey=${keys.OMDB_API_KEY}&t=${encodeURIComponent(mq)}`)
+            .then(r=>r.ok?r.json():null)
+            .then(d=>{ if(d?.Title){ toolCtx+=`
+[MOVIE: "${d.Title}" (${d.Year}) — IMDb ${d.imdbRating} — ${d.Plot?.slice(0,150)}]`; toolSources.push('🎬 OMDb'); }})
+            .catch(()=>{})
+        );
+      }
+    }
+
+    // ── MUSIC SEARCH (Deezer — free, no key) ──────────────────
+    if (/song|gaana|music|playlist|kaunsa.*gaana|singer|artist.*song|latest.*song/i.test(message)) {
+      const sq = message.replace(/song|gaana|music|playlist|singer|latest/gi,'').trim().slice(0,50);
+      if (sq.length > 2) toolTasks.push(
+        fetch(`https://api.deezer.com/search?q=${encodeURIComponent(sq)}&limit=3&output=json`)
+          .then(r=>r.ok?r.json():null)
+          .then(d=>{ const tracks=d?.data?.slice(0,3); if(tracks?.length){ toolCtx+=`
+[MUSIC: ${tracks.map(t=>`"${t.title}" by ${t.artist?.name} (preview: ${t.preview})`).join(' | ')}]`; toolSources.push('🎵 Deezer'); }})
+          .catch(()=>{})
+      );
+    }
+
     if (imageBase64 && keys.GEMINI_API_KEY) toolTasks.push(
       analyzeImage(imageBase64, message, keys.GEMINI_API_KEY)
         .then(v => { toolCtx += `\n[VISION: ${v}]`; toolSources.push('👁️ gemini-vision'); })
