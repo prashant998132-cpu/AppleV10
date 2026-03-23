@@ -1574,6 +1574,45 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             {/* Divider */}
             <div className="border-t border-white/[0.06] mx-4"/>
 
+            {/* PERSONALITY section */}
+            <div className="px-4 pt-3 pb-3">
+              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Personality</p>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  {id:'normal',       emoji:'🤝', label:'Normal'},
+                  {id:'girlfriend',   emoji:'💕', label:'ARIA'},
+                  {id:'motivational', emoji:'🔥', label:'Hype'},
+                  {id:'fun',          emoji:'😄', label:'Fun'},
+                  {id:'sarcastic',    emoji:'😏', label:'Roast'},
+                  {id:'study',        emoji:'📚', label:'Study'},
+                  {id:'coach',        emoji:'🎯', label:'Coach'},
+                  {id:'executive',    emoji:'💼', label:'Pro'},
+                ].map(p=>(
+                  <button key={p.id} onClick={()=>{
+                    setProfilePersonality(p.id);
+                    try {
+                      const prof = JSON.parse(localStorage.getItem('jarvis_profile')||'{}');
+                      localStorage.setItem('jarvis_profile', JSON.stringify({...prof, personality: p.id}));
+                    } catch {}
+                    setPlusOpen(false);
+                  }}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[11px] font-medium transition-all active:scale-95 ${
+                      profilePersonality===p.id
+                        ? p.id==='girlfriend'
+                          ? 'bg-pink-500/20 border-pink-500/40 text-pink-300'
+                          : 'bg-blue-500/20 border-blue-500/40 text-blue-300'
+                        : 'bg-white/[0.04] border-white/[0.07] text-slate-400 hover:text-white'
+                    }`}>
+                    <span>{p.emoji}</span><span>{p.label}</span>
+                    {profilePersonality===p.id && <span className="text-[8px] ml-0.5">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-white/[0.06] mx-4"/>
+
             {/* ATTACH section */}
             <div className="px-4 pt-3 pb-4">
               <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Attach</p>
