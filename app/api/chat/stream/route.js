@@ -122,8 +122,8 @@ export async function POST(req) {
     return { emotion: 'neutral', urgency: 'low' };
   })();
 
-  // Load feedback patterns (self-learning)
-  const feedbackMems = [];
+  // Load feedback patterns (self-learning) — loads from localStorage memories
+  const feedbackMems = await searchKnowledge(user.id, 'feedback').catch(() => []);
   const learningCtx = buildLearningContext(feedbackMems);
   const system  = buildSystemPrompt(profile, memCtx + (learningCtx ? '\n' + learningCtx : ''), profile.personality, quickEmotion);
 
@@ -194,6 +194,41 @@ export async function POST(req) {
   const m = msgLow;
   try {
     const toolTasks = [];
+
+    // ── LOCAL TOOLS — instant, no API ─────────────────────────
+    if (/bmi|body mass|height.*weight|weight.*height/.test(m)) {
+      const wM = message.match(/(\d+(?:\.\d+)?)\s*kg/i);
+      const hM = message.match(/(\d+(?:\.\d+)?)\s*(?:cm|meter|metre)/i) || message.match(/(\d+(?:\.\d+)?)\s*feet/i);
+      if (wM && hM) {
+        const w = parseFloat(wM[1]);
+        const h = parseFloat(hM[1]) / (hM[0].includes('feet') ? 3.281 : 100);
+        const bmi = (w / (h * h)).toFixed(1);
+        const cat = bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal ✅' : bmi < 30 ? 'Overweight' : 'Obese';
+        toolCtx += `
+[BMI: ${bmi} — ${cat} (Weight: ${w}kg, Height: ${(h*100).toFixed(0)}cm)]`;
+        toolSources.push('🏃 BMI Calculator');
+      }
+    }
+    if (/kitne din|days between|days.*from|age.*calculate|meri umar|born.*year/.test(m)) {
+      const yrM = message.match(/(\d{4})/);
+      if (yrM) {
+        const yr = parseInt(yrM[1]);
+        const age = new Date().getFullYear() - yr;
+        if (age > 0 && age < 150) {
+          toolCtx += `
+[AGE: ${age} years old (born ${yr})]`;
+          toolSources.push('🎂 Age Calculator');
+        }
+      }
+    }
+    if (/password.*gen|strong.*password|generate.*password/.test(m)) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
+      const pwd = Array.from({length: 16}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      toolCtx += `
+[PASSWORD: \`${pwd}\` — strong 16-char password generated]`;
+      toolSources.push('🔐 Password Generator');
+    }
+
     if (m.match(/mausam|weather|temp|barish/)) toolTasks.push(
       AGENTS.weather(profile.city?.split(',')[0]?.trim() || 'Delhi')
         .then(w => { toolCtx += `\n[WEATHER: ${w.temp}°C ${w.condition} in ${w.city}]`; toolSources.push('🌤️ open-meteo.com'); })

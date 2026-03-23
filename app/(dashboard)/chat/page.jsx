@@ -675,6 +675,17 @@ export default function ChatPage() {
       if (p.name) setProfileName(p.name);
       if (p.personality) setProfilePersonality(p.personality);
     } catch {}
+    // Handle Web Share Target — koi content share kiya toh auto-send
+    try {
+      const url = new URL(window.location.href);
+      const shared = url.searchParams.get('shared');
+      if (shared) {
+        const decoded = decodeURIComponent(shared);
+        setInput(decoded);
+        // Clear URL without reload
+        window.history.replaceState({}, '', '/chat');
+      }
+    } catch {}
 
     function onKey(e) {
       // Ctrl/Cmd+K → focus input
