@@ -81,7 +81,7 @@ export default function DashboardPage() {
     'Memory load ho rahi hai...',
     'Sab kuch calculate kar raha hoon...',
     'Almost ready yaar...',
-    hour < 6 ? 'Raat ko kaam karana? theek hai...' : hour < 12 ? 'Good morning! Loading...' : 'Chal deta hoon...',
+    new Date().getHours() < 6 ? 'Raat ko kaam karana? theek hai...' : new Date().getHours() < 12 ? 'Good morning! Loading...' : 'Chal deta hoon...',
   ];
   const [quipIdx] = useState(() => Math.floor(Math.random() * loadingQuips.length));
 
