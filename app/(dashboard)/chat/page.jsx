@@ -1677,86 +1677,41 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       {/* ── Slide-in Nav Menu — Image 3 Style ───────────────────── */}
       {navOpen && (
         <div className="fixed inset-0 z-[9990]" onClick={()=>setNavOpen(false)}>
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"/>
-          <div className="absolute right-0 top-0 bottom-0 w-72 bg-[#080c14] border-l border-white/[0.06] flex flex-col"
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"/>
+          <div className="absolute right-0 top-0 bottom-0 w-64 bg-[#080c14] border-l border-white/[0.06] flex flex-col"
             onClick={e=>e.stopPropagation()}>
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 pt-5 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-lg ${profilePersonality==='girlfriend' ? 'bg-gradient-to-br from-pink-500 to-rose-400' : 'bg-gradient-to-br from-blue-600 to-cyan-500'}`}>
-                  <span className="text-white font-black text-sm">{profilePersonality==='girlfriend'?'A':'J'}</span>
-                </div>
-                <div>
-                  <p className="text-white font-bold text-sm">JARVIS</p>
-                  <p className="text-slate-600 text-[10px]">{profileName || ''} · {PERSONALITY_LABELS[profilePersonality] || 'Normal'}</p>
-                </div>
+            <div className="flex items-center justify-between px-4 pt-5 pb-4 border-b border-white/[0.06]">
+              <div>
+                <p className={`font-black text-base ${profilePersonality==='girlfriend'?'text-pink-400':'text-blue-400'}`}>
+                  {profilePersonality==='girlfriend'?'ARIA':'JARVIS'}
+                </p>
+                <p className="text-slate-600 text-[10px]">{PERSONALITY_LABELS[profilePersonality]||'Normal'}</p>
               </div>
-              <button onClick={()=>setNavOpen(false)} className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-slate-500 hover:text-white">✕</button>
+              <button onClick={()=>setNavOpen(false)} className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white">
+                <X size={14}/>
+              </button>
             </div>
-
-            <div className="flex-1 overflow-y-auto no-scrollbar px-3 pb-4">
-
-              {/* EXPLORE */}
-              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mt-3 mb-2">Explore</p>
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {[
-                  { href:'/voice',      icon:'🎙️', label:'Voice',     sub:'Hold to speak'  },
-                  { href:'/studio',     icon:'🎨', label:'Studio',    sub:'AI art & media' },
-                  { href:'/goals',      icon:'🎯', label:'Goals',     sub:'Track progress' },
-                  { href:'/analytics',  icon:'📊', label:'Analytics', sub:'Your stats'     },
-                  { href:'/memory',     icon:'🧠', label:'Memory',    sub:'Saved facts'    },
-                ].map((item,i) => (
-                  <button key={i} onClick={()=>{ setNavOpen(false); window.location.href=item.href; }}
-                    className="flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-3 py-2.5 hover:bg-white/[0.07] active:scale-95 transition-all text-left">
-                    <span className="text-xl">{item.icon}</span>
-                    <div>
-                      <p className="text-white text-[12px] font-semibold">{item.label}</p>
-                      <p className="text-slate-600 text-[10px]">{item.sub}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* TOOLS */}
-              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mb-2">Tools</p>
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {[
-                  { href:'/automation', icon:'🔗', label:'Apps',       sub:'150+ shortcuts'  },
-                  { href:'/knowledge',  icon:'📚', label:'Knowledge',  sub:'Notes & docs'    },
-                  { href:'/phone',      icon:'📱', label:'Phone',      sub:'MacroDroid'      },
-                  { href:'/widget',     icon:'🗂️', label:'Widget',    sub:'Home screen'     },
-                ].map((item,i) => (
-                  <button key={i} onClick={()=>{ setNavOpen(false); window.location.href=item.href; }}
-                    className="flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-3 py-2.5 hover:bg-white/[0.07] active:scale-95 transition-all text-left">
-                    <span className="text-xl">{item.icon}</span>
-                    <div>
-                      <p className="text-white text-[12px] font-semibold">{item.label}</p>
-                      <p className="text-slate-600 text-[10px]">{item.sub}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* ACCOUNT */}
-              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mb-2">Account</p>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { href:'/profile',  icon:'👤', label:'Profile',   sub:'XP & badges'  },
-                  { href:'/settings', icon:'⚙️', label:'Settings',  sub:'Preferences'  },
-                ].map((item,i) => (
-                  <button key={i} onClick={()=>{ setNavOpen(false); window.location.href=item.href; }}
-                    className="flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-3 py-2.5 hover:bg-white/[0.07] active:scale-95 transition-all text-left">
-                    <span className="text-xl">{item.icon}</span>
-                    <div>
-                      <p className="text-white text-[12px] font-semibold">{item.label}</p>
-                      <p className="text-slate-600 text-[10px]">{item.sub}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-            </div>
+            <nav className="flex-1 overflow-y-auto no-scrollbar p-3 space-y-0.5">
+              {[
+                { href:'/',           icon:'⚡', label:'Dashboard'  },
+                { href:'/voice',      icon:'🎙️', label:'Voice Mode' },
+                { href:'/goals',      icon:'🎯', label:'Goals'      },
+                { href:'/analytics',  icon:'📊', label:'Analytics'  },
+                { href:'/memory',     icon:'🧠', label:'Memory'     },
+                { href:'/studio',     icon:'🎨', label:'Studio'     },
+                { href:'/knowledge',  icon:'📚', label:'Knowledge'  },
+                { href:'/automation', icon:'🔗', label:'Apps'       },
+                { href:'/phone',      icon:'📱', label:'Phone'      },
+                { href:'/profile',    icon:'👤', label:'Profile'    },
+                { href:'/settings',   icon:'⚙️', label:'Settings'   },
+              ].map(({href,icon,label})=>(
+                <button key={href} onClick={()=>{ setNavOpen(false); window.location.href=href; }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/[0.06] transition-all active:scale-95 text-left text-sm">
+                  <span className="text-base w-5 text-center">{icon}</span>
+                  {label}
+                </button>
+              ))}
+            </nav>
           </div>
         </div>
       )}
