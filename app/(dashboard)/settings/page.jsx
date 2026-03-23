@@ -335,7 +335,10 @@ export default function SettingsPage() {
         {activeTab === 'ai' && (
           <div className="space-y-3">
             <div className="glass-card p-4">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Personality Mode</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Personality Mode</p>
+                <span className="text-[10px] text-blue-400/70 bg-blue-500/10 px-2 py-0.5 rounded-full">💡 Chat mein + se quick switch</span>
+              </div>
               <div className="space-y-2">
                 {PERSONALITY_OPTIONS.map(opt => (
                   <button key={opt.id} onClick={() => setProfile(p => ({ ...p, personality: opt.id }))}
@@ -757,7 +760,24 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <p className="text-sm font-semibold text-white mb-1">Storage Layer</p>
-              <p className="text-xs text-slate-500 mb-3">Apna data kahan store karna chahte ho? Best se worst order mein hain.</p>
+              <p className="text-xs text-slate-500 mb-1">Apna data kahan store karna chahte ho? Best se worst order mein hain.</p>
+              <div className="bg-orange-500/8 border border-orange-500/20 rounded-xl p-3 mb-3">
+                <p className="text-[11px] text-orange-300 font-semibold mb-2">⚡ Supabase Free Setup (Cross-device sync ke liye)</p>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] text-slate-500">1. <a href="https://supabase.com" target="_blank" className="text-blue-400 underline">supabase.com</a> → New Project banao (free)</p>
+                  <p className="text-[10px] text-slate-500">2. Settings → API → copy <span className="text-yellow-400">Project URL</span> + <span className="text-yellow-400">anon key</span></p>
+                  <p className="text-[10px] text-slate-500">3. Vercel → Settings → Environment Variables mein add karo:</p>
+                  <div className="bg-black/40 rounded-lg px-2 py-1.5 mt-1 font-mono text-[9px] text-green-400 space-y-0.5">
+                    <p>NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co</p>
+                    <p>NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...</p>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">4. Vercel redeploy → Supabase select karo → Migrate!</p>
+                </div>
+                <a href="https://supabase.com/dashboard" target="_blank"
+                  className="mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 bg-green-500/15 border border-green-500/25 text-green-400 text-[11px] font-semibold rounded-lg hover:bg-green-500/25 transition-all">
+                  🚀 Supabase Dashboard kholo →
+                </a>
+              </div>
               <div className="space-y-2">
                 {STORAGE_MODES.map(m => (
                   <button key={m.id} onClick={async () => {
