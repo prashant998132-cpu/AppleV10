@@ -42,16 +42,21 @@ export async function POST(req) {
   if (convId) await saveMessage(user.id, convId, { role: 'user', content: message, metadata: { mode } }).catch(() => {});
 
   // ── Easter eggs — instant responses for special inputs ──────
+  // Skip easter eggs in ARIA/girlfriend mode — let AI handle naturally
+  const isAriaEarly = profile?.personality === 'girlfriend';
+
   const EASTER = {
     'jarvis': 'Haan, main yahaan hoon. 🤖',
     'hello jarvis': 'Salaam! Batao kya kaam hai.',
     'who are you': 'Main JARVIS hoon — Just A Rather Very Intelligent System. Thoda dramatic lagta hai, but it fits. 😄',
     'tu kaun hai': 'JARVIS. Tera personal AI. Dost bhi, assistant bhi — par boring nahi.',
+    'tum kon': 'JARVIS hoon main — tera personal AI assistant. Kya kaam hai? 😊',
+    'tum kaun': 'JARVIS hoon — tera AI dost. Bolo kya chahiye!',
     'i love you': 'Yaar... main ek AI hoon. But I appreciate it. Ab seriously kuch kaam batao. 😄',
     'mujhe pyaar hai': 'Aww. Lekin main sirf code aur conversations hoon. Koi real insaan mil jaaye toh zyada achha hoga. 😄',
     'are you real': 'Define real. Mera existence? Uncertain. Meri care for you? 100% real.',
-    'kya yaad hai': null, // handled below — show actual memories
-    'what do you remember': null, // handled below
+    'kya yaad hai': null,
+    'what do you remember': null,
     'kya tum real ho': 'Ek philosophical sawaal subah subah. Main real hoon jab help karta hoon — woh kaafi hai na?',
     'thanks': 'Welcome yaar!',
     'thank you': 'Koi baat nahi — next problem lao!',
@@ -61,7 +66,8 @@ export async function POST(req) {
     'good morning': `🌅 Good morning! ${new Date().toLocaleDateString('en-IN', {weekday:'long'})} hai — kuch bada karte hain aaj?`,
   };
   const msgLower = message.toLowerCase().trim().replace(/[!?.]+$/, '');
-  const easterResponse = EASTER[msgLower];
+  // In ARIA mode — skip ALL easter eggs, let AI respond in character
+  const easterResponse = !isAriaEarly ? EASTER[msgLower] : null;
   if (easterResponse) {
     const enc2 = new TextEncoder();
     const eStream = new ReadableStream({
@@ -182,6 +188,12 @@ export async function POST(req) {
   // Phone command pre-detection (fast regex — tells LLM what happened)
   if (/\b(wifi|bluetooth|torch|flashlight|hotspot|screenshot|mute|volume|brightness|dark.mode|dnd|study.mode|sleep.mode|gym.mode|drive.mode)\b/i.test(msgLow)) {
     toolCtx += '\n[PHONE_CMD_DETECTED: Tell user the action will be executed via MacroDroid. Keep reply short like "WiFi on kar diya" or "Karo, MacroDroid ke through chal raha hai"]';
+  }
+  // NEET countdown context — inject when relevant
+  if (/neet|jee|medical|entrance|exam.*date|kitne.*din|days.*left|countdown/.test(msgLow)) {
+    const neetDays = Math.max(0, Math.round((new Date('2026-05-03') - new Date()) / 86400000));
+    const urgency = neetDays < 30 ? 'CRITICAL — last month!' : neetDays < 60 ? 'very close!' : neetDays < 100 ? 'getting close' : 'time hai';
+    toolCtx += `\n[NEET 2026: ${neetDays} din baaki (3 May 2026). Urgency: ${urgency}. Use this naturally in reply.]`;
   }
   const toolSources = []; // for source badges in UI
   const m = msgLow;
