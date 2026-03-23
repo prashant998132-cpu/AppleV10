@@ -607,7 +607,9 @@ export default function ChatPage() {
   const [msgs, setMsgs]         = useState([]);
   const [input, setInput]       = useState('');
   const [loading, setLoading]   = useState(false);
-  const [mode, setMode]         = useState('auto');
+  const [mode, setMode]         = useState(() => {
+    try { return localStorage.getItem('jarvis_mode') || 'auto'; } catch { return 'auto'; }
+  });
   const [detected, setDetected] = useState(null);
   // Profile — name + personality for header display
   const [profileName, setProfileName]           = useState('');
@@ -673,6 +675,9 @@ export default function ChatPage() {
       const p = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
       if (p.name) setProfileName(p.name);
       if (p.personality) setProfilePersonality(p.personality);
+      // Also check standalone personality key
+      const standaloneP = localStorage.getItem('jarvis_personality');
+      if (standaloneP && !p.personality) setProfilePersonality(standaloneP);
     } catch {}
     // Handle Web Share Target — koi content share kiya toh auto-send
     try {
@@ -1615,6 +1620,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                   <button key={p.id} onClick={()=>{
                     setProfilePersonality(p.id);
                     try {
+                      localStorage.setItem('jarvis_personality', p.id);
                       const prof = JSON.parse(localStorage.getItem('jarvis_profile')||'{}');
                       localStorage.setItem('jarvis_profile', JSON.stringify({...prof, personality: p.id}));
                     } catch {}

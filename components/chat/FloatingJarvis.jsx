@@ -19,7 +19,9 @@ export default function FloatingJarvis() {
   useEffect(() => {
     try {
       const p = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
-      if (p.personality) setPersonality(p.personality);
+      const standalone = localStorage.getItem('jarvis_personality');
+      const pers = p.personality || standalone || 'normal';
+      setPersonality(pers);
     } catch {}
   }, [open]);
 
@@ -90,7 +92,7 @@ export default function FloatingJarvis() {
         }
       }
     } catch {
-      setMsgs(p => [...p, { role: 'assistant', content: 'Kuch error aa gaya. Try again karo!' }]);
+      setMsgs(p => [...p, { role: 'assistant', content: 'Network error 🥺 Net check karo ya thodi der baad try karo.' }]);
     }
     setLoading(false);
   }

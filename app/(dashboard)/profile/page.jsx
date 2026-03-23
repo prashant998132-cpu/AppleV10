@@ -96,9 +96,24 @@ export default function ProfilePage() {
       ]);
       const g = await gRes.json();
       const e = await eRes.json();
-      setData(g);
+      // Merge client-side data (localStorage) that server can't read
+      const streak_days = parseInt(localStorage.getItem('jarvis_streak_days')||'0');
+      const convs = JSON.parse(localStorage.getItem('jarvis_conversations')||'[]');
+      const total_msgs = convs.reduce((s,c) => s+(c.message_count||0), 0);
+      const xp = parseInt(localStorage.getItem('jarvis_xp')||'0');
+      setData({ ...g, streak_days, total_msgs, xp: xp || g.xp || 0 });
       setInsights(e.insights || []);
-    } catch {}
+    } catch (err) {
+      // Fallback: read everything from localStorage
+      try {
+        const xp = parseInt(localStorage.getItem('jarvis_xp')||'0');
+        const streak = parseInt(localStorage.getItem('jarvis_streak_days')||'0');
+        const convs = JSON.parse(localStorage.getItem('jarvis_conversations')||'[]');
+        const total_msgs = convs.reduce((s,c) => s+(c.message_count||0), 0);
+        const badges = JSON.parse(localStorage.getItem('jarvis_badges')||'[]');
+        setData({ xp, streak_days: streak, total_msgs, badges: badges.map(b=>({...b,earned:true})), levelInfo:{level:1,name:'Stranger'}, nextXp:100, progress:0 });
+      } catch {}
+    }
     setLoading(false);
   }
 
@@ -126,7 +141,7 @@ export default function ProfilePage() {
   );
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto pb-24">
       <div className="max-w-2xl mx-auto p-4 space-y-5 pb-24">
 
         {/* ── HEADER CARD ── */}
