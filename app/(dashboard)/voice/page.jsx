@@ -83,7 +83,7 @@ export default function VoicePage() {
 
   // ── Start mic ───────────────────────────────────────────────
   async function startListening() {
-    setPhase(STATES.LISTENING);
+    setPhaseSync(STATES.LISTENING);
     setTrans('');
     setReply('');
     chunksRef.current = [];
@@ -103,8 +103,8 @@ export default function VoicePage() {
           sendToJarvis(text);
         }
       };
-      sr.onerror = () => startMediaRecorder();
-      sr.onend   = () => { if (phase === STATES.LISTENING) setPhase(STATES.IDLE); };
+      sr.onerror = (e) => { if (e.error !== 'no-speech') startMediaRecorder(); else setPhaseSync(STATES.IDLE); };
+      sr.onend   = () => { if (phaseRef.current === STATES.LISTENING) setPhaseSync(STATES.IDLE); };
       mediaRef.current = sr;
       sr.start();
       return;
@@ -134,7 +134,7 @@ export default function VoicePage() {
       mediaRef.current = mr;
     } catch {
       setError('Mic access nahi mili');
-      setPhase(STATES.IDLE);
+      setPhaseSync(STATES.IDLE);
     }
   }
 
@@ -151,7 +151,7 @@ export default function VoicePage() {
   const sendToJarvis = useCallback(async (text) => {
     if (!text.trim()) { setPhase(STATES.IDLE); return; }
     setTrans(text);
-    setPhase(STATES.THINKING);
+    setPhaseSync(STATES.THINKING);
 
     const newHistory = [...history, { role: 'user', content: text }];
     setHistory(newHistory);
@@ -174,7 +174,7 @@ export default function VoicePage() {
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let fullReply = '';
-      setPhase(STATES.SPEAKING);
+      setPhaseSync(STATES.SPEAKING);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -197,14 +197,14 @@ export default function VoicePage() {
 
       // Speak reply
       const clean = fullReply.replace(/\*\*/g,'').replace(/#{1,6}\s/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/[_~`]/g,'').slice(0, 400);
-      setPhase(STATES.SPEAKING);
+      setPhaseSync(STATES.SPEAKING);
       await speakWithEmotion(clean, {
-        onEnd: () => setPhase(STATES.IDLE),
+        onEnd: () => setPhaseSync(STATES.IDLE),
       });
 
     } catch (e) {
       setError('Error: ' + e.message);
-      setPhase(STATES.IDLE);
+      setPhaseSync(STATES.IDLE);
     }
   }, [history, personality, ariaMemory]);
 
@@ -212,7 +212,7 @@ export default function VoicePage() {
   function handleOrbTap() {
     if (phase === STATES.SPEAKING) {
       stopCurrentAudio();
-      setPhase(STATES.IDLE);
+      setPhaseSync(STATES.IDLE);
     }
   }
 

@@ -1095,6 +1095,18 @@ export default function ChatPage() {
   // ── Wake Word "Hey JARVIS" ────────────────────────────────────
   const [wakeWordOn, setWakeWordOn] = useState(false);
   const [headerBattery, setHeaderBattery] = useState(null);
+
+  // ── Battery API ──────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.getBattery) return;
+    navigator.getBattery().then(b => {
+      const update = () => setHeaderBattery({ level: Math.round(b.level * 100), charging: b.charging });
+      update();
+      b.addEventListener('levelchange', update);
+      b.addEventListener('chargingchange', update);
+      return () => { b.removeEventListener('levelchange', update); b.removeEventListener('chargingchange', update); };
+    }).catch(() => {});
+  }, []);
   const [moreOpen, setMoreOpen] = useState(false);
   const { listening: wakeListening, wakeDetected } = useWakeWord({
     enabled: wakeWordOn,

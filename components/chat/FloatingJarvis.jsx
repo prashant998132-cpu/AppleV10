@@ -91,8 +91,11 @@ export default function FloatingJarvis() {
           } catch {}
         }
       }
-    } catch {
-      setMsgs(p => [...p, { role: 'assistant', content: 'Network error 🥺 Net check karo ya thodi der baad try karo.' }]);
+    } catch (e) {
+      const msg = e?.message?.includes('500') ? 'Server error — Groq/API key check karo Settings mein.' 
+        : e?.message?.includes('401') ? 'API key missing — Settings > APIs mein Groq key add karo.'
+        : 'Error aa gaya 🥺 Thodi der baad try karo.';
+      setMsgs(p => [...p, { role: 'assistant', content: msg }]);
     }
     setLoading(false);
   }
