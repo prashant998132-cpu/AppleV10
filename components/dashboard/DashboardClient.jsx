@@ -49,6 +49,7 @@ import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, L
 const NAV = [
   { href: '/',           icon: Zap,           label: 'Dashboard' },
   { href: '/chat',       icon: MessageSquare, label: 'Chat'      },
+  { href: '/voice',      icon: Mic,           label: 'Voice'     },
   { href: '/studio',     icon: Sparkles,      label: 'Studio'    },
   { href: '/analytics',  icon: BarChart2,     label: 'Analytics' },
   { href: '/goals',      icon: Target,        label: 'Goals'     },
@@ -64,7 +65,7 @@ const NAV = [
 const MOBILE_NAV = [
   { href: '/',        icon: Zap,           label: 'Home'     },
   { href: '/chat',    icon: MessageSquare, label: 'Chat'     },
-  { href: '/phone',   icon: Phone,         label: 'Phone'    },
+  { href: '/voice',   icon: Mic,           label: 'Voice'    },
   { href: '/studio',  icon: Sparkles,      label: 'Studio'   },
   { href: '/settings',icon: Settings,      label: 'Settings' },
 ];
@@ -242,6 +243,7 @@ export default function DashboardClient({ children, user, profile }) {
         </div>
       )}
     </div>
+      <FloatingJarvis/>
     </ErrorBoundary>
   );
 }

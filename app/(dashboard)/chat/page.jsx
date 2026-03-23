@@ -1646,7 +1646,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                   { icon:'📷', label:'Camera',  action: ()=>{ setPlusOpen(false); startCamera(); } },
                   { icon:'🖼️', label:'Image',  action: ()=>{ setPlusOpen(false); document.getElementById('img-upload')?.click(); } },
                   { icon:'📄', label:'PDF',     action: ()=>{ setPlusOpen(false); document.getElementById('pdf-upload')?.click(); } },
-                  { icon:'🎙️', label:'Voice',  action: ()=>{ setPlusOpen(false); startVoice(); } },
+                  { icon:'🎙️', label:'Voice Mode',  action: ()=>{ setPlusOpen(false); window.location.href='/voice'; } },
                 ].map(item=>(
                   <button key={item.label} onClick={item.action}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.05] active:bg-white/[0.08] transition-all text-left">
