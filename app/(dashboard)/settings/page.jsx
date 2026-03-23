@@ -34,6 +34,7 @@ const API_ENDPOINTS = [
   { name:'ElevenLabs TTS',  key:'ELEVENLABS_API_KEY',required:false, desc:'Best Hindi voice — elevenlabs.io',            link:'https://elevenlabs.io/app/settings/api',  free:true },
   { name:'Mubert Music',    key:'MUBERT_API_KEY',    required:false, desc:'AI music — mubert.com',                       link:'https://mubert.com',                      free:false },
   // 📰 NEWS
+  { name:'Moonshot Kimi',  key:'MOONSHOT_API_KEY',  required:false, desc:'Kimi K2.5 thinking model — 256K context, free trial at platform.moonshot.ai', link:'https://platform.moonshot.ai', free:true },
   { name:'NVIDIA NIM',       key:'NVIDIA_API_KEY',    required:false, desc:'DeepSeek R1, Kimi K2 — build.nvidia.com (~40 RPM free)', link:'https://build.nvidia.com', free:true },
   // 🎬 MEDIA (movies, music, books)
   { name:'TMDB (Movies)',    key:'TMDB_API_KEY',      required:false, desc:'Movie/TV info, posters, ratings — tmdb.org (free)', link:'https://www.themoviedb.org/settings/api', free:true },
