@@ -3,14 +3,14 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { Trophy, Star, Zap, Flame, Target, Brain, TrendingUp, Award, Lock, RefreshCw } from 'lucide-react';
 
-const LEVEL_NAMES = ['','Stranger','Acquaintance','Friend','Best Friend','JARVIS MODE'];
-const LEVEL_EMOJIS = ['','👋','🤝','😊','💙','🤖'];
+const LEVEL_NAMES = ['','Stranger','Acquaintance','Friend','Buddy','Homie','JARVIS Mode','Power User','Legend','Master','JARVIS Prime'];
+const LEVEL_EMOJIS = ['','👤','👋','🤝','😊','💙','🤖','⚡','🔥','💎','👑'];
 const LEVEL_COLORS = {
-  1: 'from-slate-500 to-slate-400',
-  2: 'from-blue-600 to-blue-400',
-  3: 'from-cyan-600 to-cyan-400',
-  4: 'from-purple-600 to-purple-400',
-  5: 'from-yellow-500 to-orange-400',
+  1:'from-slate-500 to-slate-400',  2:'from-blue-600 to-blue-400',
+  3:'from-cyan-600 to-cyan-400',    4:'from-purple-600 to-purple-400',
+  5:'from-yellow-500 to-orange-400',6:'from-blue-500 to-cyan-400',
+  7:'from-violet-600 to-purple-500',8:'from-orange-500 to-red-500',
+  9:'from-pink-600 to-rose-500',   10:'from-yellow-400 to-orange-500',
 };
 
 // XP Bar Component

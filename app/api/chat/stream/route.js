@@ -158,6 +158,12 @@ export async function POST(req) {
     const recentHistory = history?.slice(-6).map(h => `${h.role === 'user' ? 'Him' : 'Aria'}: ${h.content?.slice(0, 60)}`).join('\n') || '';
     toolCtx += '\n' + buildAriaContext({ userMsg: message, mood: userMood, intent: userIntent, memory: ariaMemory, lastReply: lastAIReply, attachment });
     if (recentHistory) toolCtx += `\n[CONVERSATION SO FAR:\n${recentHistory}\nDo NOT repeat questions already asked above.]`;
+    // Track ARIA message count for badge
+    try {
+      const k = 'jarvis_aria_msg_count';
+      const prev = parseInt(typeof localStorage !== 'undefined' ? localStorage.getItem(k)||'0' : '0');
+      // Note: server-side tracking via profile updates
+    } catch {}
   }
 
   // ── ALWAYS inject real IST time + location context ──────────
@@ -262,6 +268,47 @@ export async function POST(req) {
     }
 
     // NEW: Crypto prices (free CoinGecko)
+    // ── INDIA-SPECIFIC: petrol price, SIP calculator ────────────
+    if (/petrol.*rate|diesel.*rate|fuel.*price/.test(m)) {
+      const city = ['Delhi','Mumbai','Bangalore','Chennai','Hyderabad','Pune','Kolkata','Jaipur','Lucknow'].find(ci => m.includes(ci.toLowerCase())) || 'Delhi';
+      const approxPetrol = {'Delhi':94.77,'Mumbai':104.19,'Bangalore':101.94,'Chennai':100.75,'Hyderabad':107.41,'Pune':104.18,'Kolkata':103.94,'Jaipur':104.88,'Lucknow':94.65};
+      toolCtx += `
+[PETROL: ${city} mein approx ₹${approxPetrol[city]||95}/litre (live rates vary — check petrolpriceindia.com)]`;
+      toolSources.push('⛽ Petrol Price');
+    }
+
+    if (/sip.*calculator|monthly.*invest|return.*invest|mutual.*fund.*calc/.test(m)) {
+      const amtM = message.match(/(\d[\d,]*)\s*(?:rupee|rs|₹)/i);
+      const yrsM = message.match(/(\d+)\s*(?:year|saal|yr)/i);
+      if (amtM && yrsM) {
+        const monthly = parseFloat(amtM[1].replace(/,/g,''));
+        const yrs = parseInt(yrsM[1]);
+        const r = 0.12/12; const n = yrs*12;
+        const future = Math.round(monthly * ((Math.pow(1+r,n)-1)/r) * (1+r));
+        const invested = monthly * n;
+        toolCtx += `
+[SIP CALC: ₹${monthly.toLocaleString('en-IN')}/month × ${yrs} years @ 12% = ₹${future.toLocaleString('en-IN')} (invested ₹${invested.toLocaleString('en-IN')}, gain ₹${(future-invested).toLocaleString('en-IN')})]`;
+        toolSources.push('💰 SIP Calculator');
+      }
+    }
+
+    if (/emi.*calculator|home.*loan|car.*loan.*emi/.test(m)) {
+      const amtM = message.match(/(\d[\d,]*)\s*(?:lakh|lac|cr|crore|rupee|rs|₹)/i);
+      const yrsM = message.match(/(\d+)\s*(?:year|saal|yr)/i);
+      if (amtM && yrsM) {
+        let amt = parseFloat(amtM[1].replace(/,/g,''));
+        if (/lakh|lac/.test(amtM[0])) amt *= 100000;
+        if (/cr|crore/.test(amtM[0])) amt *= 10000000;
+        const yrs = parseInt(yrsM[1]);
+        const r = 0.085/12; const n = yrs*12;
+        const emi = Math.round(amt * r * Math.pow(1+r,n) / (Math.pow(1+r,n)-1));
+        const total = emi * n;
+        toolCtx += `
+[EMI CALC: ₹${amt.toLocaleString('en-IN')} loan @ 8.5% × ${yrs}yr = EMI ₹${emi.toLocaleString('en-IN')}/month (total pay ₹${total.toLocaleString('en-IN')})]`;
+        toolSources.push('🏦 EMI Calculator');
+      }
+    }
+
     if (m.match(/bitcoin|btc|ethereum|eth|crypto|coin price|rate.*coin/)) toolTasks.push(
       fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=inr,usd')
         .then(r=>r.ok?r.json():null)
