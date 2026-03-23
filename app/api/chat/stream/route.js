@@ -20,7 +20,7 @@ export async function POST(req) {
   const reqStart = Date.now(); // LLM latency tracking
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
 
-  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto', userLocation } = await req.json();
+  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto', userLocation, personality: clientPersonality } = await req.json();
   if (!message?.trim() && !imageBase64) return new Response('Empty', { status: 400 });
 
   const keys = getKeys();
@@ -31,7 +31,7 @@ export async function POST(req) {
     userId:              user.id,
     name:                dbProfile?.name                || user.email?.split('@')[0] || APP.defaultName,
     city:                dbProfile?.city                || APP.defaultCity,
-    personality:         dbProfile?.personality         || 'normal',
+    personality:         clientPersonality || dbProfile?.personality || 'normal', // client wins — server localStorage unreliable
     language:            dbProfile?.language            || 'auto',
     custom_instructions: dbProfile?.custom_instructions || null,
   };

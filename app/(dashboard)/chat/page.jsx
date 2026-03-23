@@ -1393,7 +1393,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       }
       const res = await fetch('/api/chat/stream',{
         method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({message:msg,history,conversationId:convId,imageBase64:b64,mode:finalMode,userLocation:userLoc}),
+        body:JSON.stringify({message:msg,history,conversationId:convId,imageBase64:b64,mode:finalMode,userLocation:userLoc,personality:profilePersonality||'normal'}),
       });
 
       if(!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -2018,7 +2018,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
           <div className="px-4 pt-3 pb-1">
             <textarea ref={taRef} value={input} onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}
-              placeholder="Kuch poocho ya batao..."
+              placeholder={profilePersonality === "girlfriend" ? "Aira se kuch bolo..." : profilePersonality === "study" ? "Kuch poochho — NEET/JEE..." : profilePersonality === "roast" ? "Roast ke liye ready ho? 😈" : "Kuch poocho ya batao..."}
               rows={1} style={{resize:'none',minHeight:'24px',maxHeight:'96px',overflowY:'auto'}}
               className="w-full bg-transparent text-white text-[15px] placeholder-slate-600 outline-none leading-relaxed"/>
           </div>
@@ -2034,12 +2034,15 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             </button>
 
             {/* Mode pill - center */}
-            <div className="flex-1 flex items-center">
-              <button onClick={()=>setPlusOpen(v=>!v)}
-                className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 transition-all">
-                <span className="text-[12px]">{MODES.find(m=>m.id===mode)?.label || '🤖 Auto'}</span>
-                {mode==='auto' && detected && <span className="text-[10px] text-slate-700">{detected}</span>}
-              </button>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="flex items-center gap-1 bg-white/[0.04] rounded-full px-1 py-0.5">
+                {MODES.map(m => (
+                  <button key={m.id} onClick={() => setMode(m.id)}
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-all ${mode===m.id ? m.bg+' '+m.text+' border' : 'text-slate-600 hover:text-slate-400'}`}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Voice */}
@@ -2050,7 +2053,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
 
             {/* Send */}
             <button onClick={()=>send()} disabled={(!input.trim()&&!preview)||loading}
-              className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center disabled:opacity-25 transition-all shadow-[0_0_15px_rgba(59,130,246,0.35)] active:scale-95 shrink-0">
+              className={`w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-25 transition-all active:scale-95 shrink-0 ${profilePersonality==="girlfriend" ? "bg-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.4)]" : "bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.35)]"}`}>
               <Send size={13} className="text-white ml-0.5"/>
             </button>
           </div>
