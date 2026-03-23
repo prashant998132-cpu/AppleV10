@@ -240,11 +240,11 @@ export default function SettingsPage() {
           <p className="text-xs text-slate-500">Configure your JARVIS system</p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        {/* Tabs — 2-row wrap grid, sab visible */}
+        <div className="flex flex-wrap gap-1.5">
           {TABS.map(t => (
             <button key={t.id} onClick={() => setActiveTab(t.id)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${activeTab===t.id ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-500 bg-white/4 hover:text-slate-300'}`}>
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${activeTab===t.id ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-500 bg-white/[0.04] hover:text-slate-300 border border-transparent'}`}>
               {t.icon}{t.label}
             </button>
           ))}
