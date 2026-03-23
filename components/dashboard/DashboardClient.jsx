@@ -45,6 +45,7 @@ import { startBackgroundAI, scheduleStudyNotifications, registerPeriodicSync } f
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, LogOut, Zap, Bell, Sparkles, User, Smartphone, Phone, Mic } from 'lucide-react';
+import FloatingJarvis from '@/components/chat/FloatingJarvis';
 
 const NAV = [
   { href: '/',           icon: Zap,           label: 'Dashboard' },
