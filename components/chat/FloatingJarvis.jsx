@@ -33,8 +33,6 @@ export default function FloatingJarvis() {
 
   // Don't show on chat page — AFTER all hooks
   if (path === '/chat') return null;
-    } catch {}
-  }, [open]);
 
   const isAria = personality === 'girlfriend';
 
