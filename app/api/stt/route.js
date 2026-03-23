@@ -26,7 +26,7 @@ export async function POST(req) {
       try {
         const groqForm = new FormData();
         groqForm.append('file', audioFile, 'audio.webm');
-        groqForm.append('model', 'whisper-large-v3-turbo'  // distil-whisper-large deprecated Dec 2025);
+        groqForm.append('model', 'whisper-large-v3-turbo'); // distil-whisper-large deprecated Dec 2025
         groqForm.append('response_format', 'json');
         groqForm.append('language', language);
         groqForm.append('temperature', '0');
