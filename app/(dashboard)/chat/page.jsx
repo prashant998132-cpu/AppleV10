@@ -1665,12 +1665,12 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-5 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-[0_0_15px_rgba(26,86,219,0.4)]">
-                  <span className="text-white font-black text-sm">J</span>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-lg ${profilePersonality==='girlfriend' ? 'bg-gradient-to-br from-pink-500 to-rose-400' : 'bg-gradient-to-br from-blue-600 to-cyan-500'}`}>
+                  <span className="text-white font-black text-sm">{profilePersonality==='girlfriend'?'A':'J'}</span>
                 </div>
                 <div>
                   <p className="text-white font-bold text-sm">JARVIS</p>
-                  <p className="text-slate-600 text-[10px]">{profileName || 'JARVIS'} · {PERSONALITY_LABELS[profilePersonality] || 'Normal'}</p>
+                  <p className="text-slate-600 text-[10px]">{profileName || ''} · {PERSONALITY_LABELS[profilePersonality] || 'Normal'}</p>
                 </div>
               </div>
               <button onClick={()=>setNavOpen(false)} className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-slate-500 hover:text-white">✕</button>
@@ -1682,12 +1682,12 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
               <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mt-3 mb-2">Explore</p>
               <div className="grid grid-cols-2 gap-2 mb-4">
                 {[
-                  { href:'/studio',     icon:'🌸', label:'Anime',     sub:'Watchlist'   },
-                  { href:'/studio',     icon:'🎨', label:'Studio',    sub:'AI art'      },
-                  { href:'/knowledge',  icon:'🖼️', label:'Canva',    sub:'Designs', url:'https://canva.com' },
-                  { href:'/knowledge',  icon:'🇮🇳', label:'India Hub', sub:'Bharat'     },
+                  { href:'/studio',     icon:'🎨', label:'Studio',    sub:'AI art & media' },
+                  { href:'/goals',      icon:'🎯', label:'Goals',     sub:'Track progress' },
+                  { href:'/analytics',  icon:'📊', label:'Analytics', sub:'Your stats'     },
+                  { href:'/memory',     icon:'🧠', label:'Memory',    sub:'Saved facts'    },
                 ].map((item,i) => (
-                  <button key={i} onClick={()=>{ setNavOpen(false); if(item.url) window.open(item.url,'_blank'); else window.location.href=item.href; }}
+                  <button key={i} onClick={()=>{ setNavOpen(false); window.location.href=item.href; }}
                     className="flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-3 py-2.5 hover:bg-white/[0.07] active:scale-95 transition-all text-left">
                     <span className="text-xl">{item.icon}</span>
                     <div>
@@ -1702,12 +1702,10 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
               <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mb-2">Tools</p>
               <div className="grid grid-cols-2 gap-2 mb-4">
                 {[
-                  { href:'/automation', icon:'🔗', label:'Apps',       sub:'150+ apps'           },
-                  { href:'/analytics',  icon:'🧮', label:'Calculator', sub:'SIP/EMI/GST'         },
-                  { href:'/knowledge',  icon:'📁', label:'Media',      sub:'Files'               },
-                  { href:'/chat',       icon:'🎙️', label:'Voice',     sub:'Speech'              },
-                  { href:'/',           icon:'📊', label:'Dashboard',  sub:'Tasks + Goals'       },
-                  { href:'/phone',      icon:'⚡', label:'System',     sub:'Phone control'       },
+                  { href:'/automation', icon:'🔗', label:'Apps',       sub:'150+ shortcuts'  },
+                  { href:'/knowledge',  icon:'📚', label:'Knowledge',  sub:'Notes & docs'    },
+                  { href:'/phone',      icon:'📱', label:'Phone',      sub:'MacroDroid'      },
+                  { href:'/widget',     icon:'🗂️', label:'Widget',    sub:'Home screen'     },
                 ].map((item,i) => (
                   <button key={i} onClick={()=>{ setNavOpen(false); window.location.href=item.href; }}
                     className="flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-3 py-2.5 hover:bg-white/[0.07] active:scale-95 transition-all text-left">
@@ -1720,13 +1718,12 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                 ))}
               </div>
 
-              {/* SYSTEM */}
-              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mb-2">System</p>
+              {/* ACCOUNT */}
+              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase px-1 mb-2">Account</p>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { href:'/phone',    icon:'📱', label:'Phone',    sub:'Control'       },
-                  { href:'/settings', icon:'🔌', label:'APIs',     sub:'Integrations'  },
-                  { href:'/settings', icon:'⚙️', label:'Settings', sub:'Preferences'   },
+                  { href:'/profile',  icon:'👤', label:'Profile',   sub:'XP & badges'  },
+                  { href:'/settings', icon:'⚙️', label:'Settings',  sub:'Preferences'  },
                 ].map((item,i) => (
                   <button key={i} onClick={()=>{ setNavOpen(false); window.location.href=item.href; }}
                     className="flex items-center gap-2.5 bg-white/[0.04] border border-white/[0.07] rounded-2xl px-3 py-2.5 hover:bg-white/[0.07] active:scale-95 transition-all text-left">
@@ -1927,7 +1924,20 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             <div className="flex flex-col items-center pt-6 pb-3 select-none">
               <LiveClock/>
               <p className="text-slate-400 text-base mt-2 font-medium">
-                {(()=>{const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();return h<5?'Raat ko jaaga? 🌙':h<12?(`Kya scene hai${profileName ? ', ' + profileName : ''}? 👋`):h<17?(`Good afternoon${profileName ? ', ' + profileName : ''} ☀️`):h<21?(`Good evening${profileName ? ', ' + profileName : ''} 🌇`):'Raat ka mood kya hai? 🌙';})()}
+                {(()=>{
+                  const h=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'})).getHours();
+                  if(profilePersonality==='girlfriend'){
+                    const ariaGreets=[
+                      h<5?'Itni raat ko jaag rahe ho? 🌙 sab theek hai?':
+                      h<12?`Good morning${profileName?', '+profileName:''}! ☀️ Uthna hua?`:
+                      h<17?`Hey${profileName?', '+profileName:''}! Kya chal raha hai? 😊`:
+                      h<21?`Shaam ho gayi${profileName?', '+profileName:''}... din kaisa raha? 🌆`:
+                      `Raat ko${profileName?', '+profileName:''} — neend nahi aa rahi? 🌙`
+                    ];
+                    return ariaGreets[0];
+                  }
+                  return h<5?'Raat ko jaaga? 🌙':h<12?(`Kya scene hai${profileName ? ', ' + profileName : ''}? 👋`):h<17?(`Good afternoon${profileName ? ', ' + profileName : ''} ☀️`):h<21?(`Good evening${profileName ? ', ' + profileName : ''} 🌇`):'Raat ka mood kya hai? 🌙';
+                })()}
               </p>
               {/* NEET countdown + progress */}
               {(()=>{
@@ -1950,7 +1960,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
                     <p className="text-[10px] text-slate-600 mt-1">3 May 2026 · {pct}% journey complete</p>
                   </div>
                 ):(<div className="mt-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-2xl"><p className="text-[11px] text-green-400 font-bold">🎉 NEET 2026 aa gaya! Best of luck!</p></div>);
-              })()}
+              })()}}
             </div>
 
             {/* ── Quick Action Cards ────────────────────────── */}

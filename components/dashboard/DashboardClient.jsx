@@ -215,78 +215,29 @@ export default function DashboardClient({ children, user, profile }) {
 
 
 
-      {/* Mobile sidebar overlay — Card Grid Style */}
+      {/* Mobile sidebar overlay */}
       {sidebar && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSidebar(false)}/>
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-[#080c14] border-r border-white/[0.06] flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center">
-                  <span className="text-white font-black text-sm">J</span>
-                </div>
-                <div>
-                  <span className="font-black text-sm bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">JARVIS</span>
-                  <p className="text-[10px] text-slate-600">v11.0</p>
-                </div>
-              </div>
-              <button onClick={() => setSidebar(false)} className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center">
-                <X size={15} className="text-slate-400"/>
-              </button>
+          <div className="absolute inset-0 bg-black/70" onClick={() => setSidebar(false)}/>
+          <div className="absolute left-0 top-0 bottom-0 w-64 glass border-r border-white/5 flex flex-col p-4">
+            <div className="flex justify-between items-center mb-6">
+              <span className="font-black text-lg bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">JARVIS</span>
+              <button onClick={() => setSidebar(false)}><X size={18} className="text-slate-400"/></button>
             </div>
-            {/* Card Grid */}
-            <div className="flex-1 overflow-y-auto p-3 no-scrollbar">
-              {[
-                { group: 'Main', items: [
-                  { href:'/',           icon:'⚡', label:'Dashboard', sub:'Overview'     },
-                  { href:'/chat',       icon:'💬', label:'Chat',      sub:'AI assistant' },
-                  { href:'/goals',      icon:'🎯', label:'Goals',     sub:'Track goals'  },
-                  { href:'/analytics',  icon:'📊', label:'Analytics', sub:'Your stats'   },
-                ]},
-                { group: 'Create', items: [
-                  { href:'/studio',     icon:'🎨', label:'Studio',    sub:'AI art & media' },
-                  { href:'/knowledge',  icon:'📚', label:'Knowledge', sub:'Notes & docs'   },
-                  { href:'/memory',     icon:'🧠', label:'Memory',    sub:'Saved facts'    },
-                ]},
-                { group: 'Control', items: [
-                  { href:'/phone',      icon:'📱', label:'Phone',     sub:'MacroDroid'    },
-                  { href:'/automation', icon:'⚙️', label:'Auto',      sub:'Shortcuts'     },
-                  { href:'/widget',     icon:'🗂️', label:'Widget',   sub:'Home screen'   },
-                ]},
-                { group: 'Account', items: [
-                  { href:'/profile',    icon:'👤', label:'Profile',   sub:'XP & badges'  },
-                  { href:'/settings',   icon:'⚙️', label:'Settings',  sub:'Configure'    },
-                ]},
-              ].map(({ group, items }) => (
-                <div key={group} className="mb-4">
-                  <p className="text-[9px] text-slate-700 font-bold tracking-widest uppercase px-1 mb-1.5">{group}</p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {items.map(({ href, icon, label, sub }) => {
-                      const active = href === '/' ? path === '/' : path.startsWith(href);
-                      return (
-                        <Link key={href} href={href} onClick={() => setSidebar(false)}
-                          className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all active:scale-95 ${
-                            active ? 'bg-blue-600/15 border-blue-500/30' : 'bg-white/[0.03] border-white/[0.05] hover:bg-white/[0.07]'
-                          }`}>
-                          <span className="text-lg">{icon}</span>
-                          <div className="min-w-0">
-                            <p className={`text-[12px] font-semibold truncate ${active ? 'text-blue-300' : 'text-white'}`}>{label}</p>
-                            <p className="text-[10px] text-slate-600 truncate">{sub}</p>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-            {/* Footer */}
-            <div className="px-3 py-3 border-t border-white/[0.06]">
-              <button onClick={logout} className="w-full flex items-center justify-center gap-2 text-red-400/60 hover:text-red-400 text-sm py-2 rounded-xl hover:bg-red-500/10 transition-all">
-                <LogOut size={14}/>Logout
-              </button>
-            </div>
+            <nav className="space-y-1 flex-1">
+              {NAV.map(({ href, icon: Icon, label }) => {
+                const active = href === '/' ? path === '/' : path.startsWith(href);
+                return (
+                  <Link key={href} href={href} onClick={() => setSidebar(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm ${active ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-500 hover:text-slate-200 hover:bg-white/4'}`}>
+                    <Icon size={17}/>{label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <button onClick={logout} className="flex items-center gap-2 text-red-400/70 hover:text-red-400 text-sm px-3 py-2.5 mt-2">
+              <LogOut size={16}/>Logout
+            </button>
           </div>
         </div>
       )}
