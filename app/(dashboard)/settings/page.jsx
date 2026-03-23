@@ -34,6 +34,7 @@ const API_ENDPOINTS = [
   { name:'ElevenLabs TTS',  key:'ELEVENLABS_API_KEY',required:false, desc:'Best Hindi voice — elevenlabs.io',            link:'https://elevenlabs.io/app/settings/api',  free:true },
   { name:'Mubert Music',    key:'MUBERT_API_KEY',    required:false, desc:'AI music — mubert.com',                       link:'https://mubert.com',                      free:false },
   // 📰 NEWS
+  { name:'NVIDIA NIM',       key:'NVIDIA_API_KEY',    required:false, desc:'DeepSeek R1, Kimi K2 — build.nvidia.com (~40 RPM free)', link:'https://build.nvidia.com', free:true },
   { name:'GNews',           key:'GNEWS_API_KEY',     required:false, desc:'Live India news — gnews.io (100/day free)',   link:'https://gnews.io/register',               free:true },
   { name:'NewsData',        key:'NEWSDATA_KEY',      required:false, desc:'Hindi news — newsdata.io (200/day free)',     link:'https://newsdata.io/register',            free:true },
 ];
