@@ -2,7 +2,8 @@
 export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
-import { RefreshCw, TrendingUp, TrendingDown, Minus, Calendar, Flame, Target, Brain } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, Minus, Calendar, Flame, Target, Brain, Smile } from 'lucide-react';
+import { saveDailyLog } from '@/lib/db/queries';
 
 const TT_STYLE = { background:'#0a0f1e', border:'1px solid rgba(26,86,219,0.3)', borderRadius:8, fontSize:11, color:'#e2e8f0' };
 
@@ -11,6 +12,24 @@ export default function AnalyticsPage() {
   const [loading, setLoad]  = useState(true);
   const [tab, setTab]       = useState('overview');
   const [moodAI, setMoodAI] = useState(null);
+  const [todayMood, setTodayMood] = useState(0);
+  const [todayEnergy, setTodayEnergy] = useState(0);
+  const [logSaved, setLogSaved] = useState(false);
+
+  async function saveToday() {
+    if (!todayMood) return;
+    try {
+      await saveDailyLog('local-user', {
+        mood_score: todayMood,
+        productivity: todayEnergy,
+        focus_hours: 0,
+        notes: '',
+      });
+      setLogSaved(true);
+      setTimeout(() => setLogSaved(false), 2500);
+      load();
+    } catch {}
+  }
   const [llmStats, setLlmStats] = useState(null);
 
   useEffect(() => { load(); }, []);
@@ -22,7 +41,7 @@ export default function AnalyticsPage() {
       const d = await r.json();
       setData(d);
       setMoodAI(d.moodAnalysis);
-      setLlmStats(d.llmStats || null);
+      setLlmStats(d.llmStats || null); // llmStats now from localStorage
     } finally { setLoad(false); }
   }
 
@@ -61,6 +80,35 @@ export default function AnalyticsPage() {
           </div>
           <button onClick={load} className="p-2 glass-card text-slate-500 hover:text-white rounded-xl">
             <RefreshCw size={15} className={loading ? 'animate-spin' : ''}/>
+          </button>
+        </div>
+
+        {/* Mood Logger */}
+        <div className="glass-card p-4 border border-white/[0.06]">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Aaj kaisa tha? Log karo</p>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <p className="text-[11px] text-slate-500 mb-1.5">Mood 😊</p>
+              <div className="flex gap-1">
+                {[1,2,3,4,5,6,7,8,9,10].map(v => (
+                  <button key={v} onClick={()=>setTodayMood(v)}
+                    className={`flex-1 h-7 rounded text-[10px] font-bold transition-all ${todayMood===v ? 'bg-blue-500 text-white' : 'bg-white/5 text-slate-600 hover:text-white'}`}>{v}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-[11px] text-slate-500 mb-1.5">Energy ⚡</p>
+              <div className="flex gap-1">
+                {[1,2,3,4,5,6,7,8,9,10].map(v => (
+                  <button key={v} onClick={()=>setTodayEnergy(v)}
+                    className={`flex-1 h-7 rounded text-[10px] font-bold transition-all ${todayEnergy===v ? 'bg-orange-500 text-white' : 'bg-white/5 text-slate-600 hover:text-white'}`}>{v}</button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <button onClick={saveToday} disabled={!todayMood}
+            className={`w-full py-2 rounded-xl text-sm font-semibold transition-all ${logSaved ? 'bg-green-600 text-white' : 'bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30'} disabled:opacity-40`}>
+            {logSaved ? '✅ Log ho gaya!' : '💾 Aaj ka log save karo'}
           </button>
         </div>
 

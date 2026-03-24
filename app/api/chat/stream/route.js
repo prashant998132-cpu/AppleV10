@@ -526,15 +526,12 @@ export async function POST(req) {
           return { key, value: val, category: cat };
         });
 
-        // XP + badges
+        // XP + badges — send to CLIENT to save (server-side localStorage is stateless)
         try {
           const xpAmount = mode === 'think' ? 15 : mode === 'deep' ? 25 : mode === 'flash' ? 8 : 10;
-          const xpResult = await addXP(user.id, xpAmount, 'message');
-          const newBadges = await checkAndAwardBadges(user.id);
           const convMode = autoDetectConvMode(message);
-          if (xpResult.levelUp || newBadges.length > 0) {
-            send({ type: 'gamification', xp: xpResult.xp, levelUp: xpResult.levelUp, newLevel: xpResult.newLevel, newBadges });
-          }
+          // Send XP info to client — client will save to localStorage
+          send({ type: 'gamification', xpAmount, mode, isAria: !!isAria });
           send({ type: 'conv_mode', mode: convMode });
         } catch {}
 
@@ -565,13 +562,9 @@ export async function POST(req) {
           // Note: server-side can't access localStorage, but client will track
         } catch {}
 
+        // LLM log — send to client to save in localStorage
         try {
-          await saveLLMLog(user.id, {
-            model: usedProvider,
-            latency_ms: Date.now() - reqStart,
-            mode,
-            tokens: Math.round(cleanReply.length / 4),
-          });
+          send({ type: 'llm_log', model: usedProvider, latency_ms: Date.now() - reqStart, mode, tokens: Math.round(cleanReply.length / 4) });
         } catch {}
         await Promise.allSettled(memories.map(m => saveMemory(user.id, { value: m.value, category: m.category || 'general', key: m.key, importance: m.category === 'profile' ? 9 : 6 }, keys.GEMINI_API_KEY, keys.HUGGINGFACE_TOKEN)));
 
