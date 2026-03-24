@@ -66,7 +66,10 @@ export default function FloatingJarvis() {
         }),
       });
 
-      if (!res.ok) throw new Error('Network error');
+      if (!res.ok) {
+        const errBody = await res.text().catch(()=>'');
+        throw new Error(`HTTP ${res.status}${errBody.includes('key') || errBody.includes('auth') ? ':auth' : ''}`);
+      }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let reply = '';
@@ -93,9 +96,14 @@ export default function FloatingJarvis() {
         }
       }
     } catch (e) {
-      const msg = e?.message?.includes('500') ? 'Server error — Groq/API key check karo Settings mein.' 
-        : e?.message?.includes('401') ? 'API key missing — Settings > APIs mein Groq key add karo.'
-        : 'Error aa gaya 🥺 Thodi der baad try karo.';
+      const em = e?.message || '';
+      const msg = em.includes('auth') || em.includes('401') || em.includes('403')
+        ? '🔑 API key missing — Settings → APIs mein Groq key add karo (free hai)'
+        : em.includes('500') || em.includes('502')
+        ? '⚠️ Server error — thodi der mein try karo'
+        : em.includes('Failed to fetch') || em.includes('NetworkError')
+        ? '📶 Network check karo — ya Aira se full chat mein baat karo'
+        : 'Kuch hua 🥺 Full chat mein try karo → ';
       setMsgs(p => [...p, { role: 'assistant', content: msg }]);
     }
     setLoading(false);
