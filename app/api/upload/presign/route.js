@@ -34,7 +34,7 @@ export async function GET(req) {
   }
 
   try {
-    const db = getSupabaseAdmin();
+    return Response.json({ error: 'Storage not configured', signedUrl: null }, { status: 503 }); const db = null; // unreachable
     const ext = filename.split('.').pop()?.toLowerCase() || type;
     const path = `uploads/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 

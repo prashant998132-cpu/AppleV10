@@ -213,9 +213,9 @@ export default function FloatingJarvis() {
                 <div className="flex justify-start">
                   <div className="bg-white/[0.06] border border-white/[0.08] px-3 py-2 rounded-2xl rounded-bl-sm">
                     <div className="flex gap-1">
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:'0ms'}}/>
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:'150ms'}}/>
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{animationDelay:'300ms'}}/>
+                      <span className={`w-1.5 h-1.5 rounded-full animate-bounce ${isAria?'bg-pink-400':'bg-slate-400'}`} style={{animationDelay:'0ms'}}/>
+                      <span className={`w-1.5 h-1.5 rounded-full animate-bounce ${isAria?'bg-pink-400':'bg-slate-400'}`} style={{animationDelay:'150ms'}}/>
+                      <span className={`w-1.5 h-1.5 rounded-full animate-bounce ${isAria?'bg-pink-400':'bg-slate-400'}`} style={{animationDelay:'300ms'}}/>
                     </div>
                   </div>
                 </div>

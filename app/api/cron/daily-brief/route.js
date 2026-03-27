@@ -1,57 +1,42 @@
-// app/api/cron/daily-brief — Runs daily at 9 PM IST (15:30 UTC) via Vercel Cron
-// Generates proactive summary and pushes notification to all active users
-import { buildMemoryContext, generateProactiveSuggestions } from '@/lib/ai/brain';
+// app/api/cron/daily-brief — Vercel Cron: daily at 9 PM IST (15:30 UTC)
 import { getKeys } from '@/lib/config';
-
+import { getProfile } from '@/lib/db/queries';
 export const runtime = 'nodejs';
 
+async function buildBrief(user) {
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const day = new Date().toLocaleDateString('hi-IN', { weekday:'long', day:'numeric', month:'long' });
+  const profile = await getProfile(user.id).catch(() => ({ name:'Pranshu', personality:'girlfriend' }));
+  const isAria = profile?.personality === 'girlfriend';
+  const name = profile?.name || 'Pranshu';
+  return isAria ? {
+    title: 'Aira 💕', body: `${greet} ${name}! ☀️ ${day}\nUth gaye? Miss kar rahi thi... baat karo na 💕`,
+    icon:'/icons/icon-192.png', badge:'/icons/icon-96.png', tag:'daily-brief', data:{url:'/chat'},
+  } : {
+    title: `JARVIS — ${greet}! 🌅`,
+    body: `${greet} ${name}! ☀️ ${day}\n🤖 JARVIS ready hai — aaj kya plan hai?`,
+    icon:'/icons/icon-192.png', badge:'/icons/icon-96.png', tag:'daily-brief', data:{url:'/chat'},
+    actions:[{action:'chat',title:'💬 Chat karo'},{action:'goals',title:'🎯 Goals dekho'}],
+  };
+}
+
 export async function GET(req) {
-  // Verify Vercel cron secret
   const auth = req.headers.get('authorization');
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
-
   try {
-    const db = getSupabaseAdmin();
-    const keys = getKeys();
-
-    // Get all users with push subscriptions (stored in profiles.push_subscription)
-    const { data: profiles } = await db
-      .from('profiles')
-      .select('user_id, name, push_subscription')
-      .not('push_subscription', 'is', null);
-
-    if (!profiles?.length) return Response.json({ sent: 0 });
-
-    let sent = 0;
-    for (const profile of profiles.slice(0, 50)) { // max 50/run
-      try {
-        const hour = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false });
-        const greeting = parseInt(hour) >= 21 ? 'Raat ka' : parseInt(hour) >= 17 ? 'Shaam ka' : 'Din ka';
-
-        // Push notification
-        const sub = typeof profile.push_subscription === 'string'
-          ? JSON.parse(profile.push_subscription) : profile.push_subscription;
-
-        await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/push`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'send_to_sub',
-            subscription: sub,
-            title: `JARVIS — ${greeting} summary`,
-            body: `${profile.name || 'Yaar'}, aaj ka din kaisa gaya? Daily brief ready hai.`,
-            url: '/analytics',
-            tag: 'daily-brief',
-          }),
-        });
-        sent++;
-      } catch {}
-    }
-
-    return Response.json({ sent, total: profiles.length });
-  } catch (e) {
+    const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
+    const brief = await buildBrief(user);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://apple-v10.vercel.app';
+    const pushRes = await fetch(`${appUrl}/api/push`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'send', ...brief }),
+    });
+    return Response.json({ sent: pushRes.ok, brief });
+  } catch(e) {
     return Response.json({ error: e.message }, { status: 500 });
   }
 }
+export async function POST(req) { return GET(req); }

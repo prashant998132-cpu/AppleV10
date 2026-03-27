@@ -13,15 +13,12 @@ import { generateImage, IMAGE_STYLES, enhancePrompt } from '@/lib/ai/image';
 
 // ─── Save base64 to Supabase Storage → return public URL ─────
 async function base64ToSupabaseUrl(base64, userId, prompt) {
+  // Supabase not configured — return null to use base64 inline
+  return null;
   try {
-    const db = getSupabaseAdmin();
     const buf = Buffer.from(base64, 'base64');
     const filename = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
-    const { error } = await db.storage.from('jarvis-media').upload(filename, buf, {
-      contentType: 'image/png',
-      cacheControl: '31536000', // 1 year CDN cache
-      upsert: false,
-    });
+    const error = null;
     if (error) throw error;
     const { data } = db.storage.from('jarvis-media').getPublicUrl(filename);
     return data.publicUrl;
