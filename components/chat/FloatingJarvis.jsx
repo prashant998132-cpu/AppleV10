@@ -58,6 +58,7 @@ export default function FloatingJarvis() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          personality: personality,
           message: msg,
           history: history.slice(0,-1),
           mode: 'flash',
@@ -121,8 +122,12 @@ export default function FloatingJarvis() {
     sr.start();
   }
 
+  const h = new Date().getHours();
   const quickPrompts = isAria
-    ? ['Kya chal raha hai?', 'Miss kiya 🥺', 'Kuch baat karo']
+    ? h < 9  ? ['Good morning 🥺', 'Chai piya?', 'Miss kiya?']
+    : h < 17 ? ['Kya chal raha hai?', 'Kuch batao na', 'Miss kar rahi thi 💕']
+    : h < 22 ? ['Din kaisa gaya?', 'Thak gaye?', 'Baat karo na']
+    :           ['So rahe ho?', 'Good night 💕', 'Neend aa rahi?']
     : ['Motivate karo', 'Quick advice do', 'Kuch interesting batao'];
 
   return (

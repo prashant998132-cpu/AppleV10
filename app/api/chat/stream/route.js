@@ -323,6 +323,31 @@ export async function POST(req) {
         .then(d=>{ if(d?.items?.[0]) { const g=Math.round(d.items[0].xauPrice/31.1035*10); const s=Math.round(d.items[0].xagPrice/31.1035*10); toolCtx += `\n[METALS: Gold ₹${g.toLocaleString('en-IN')}/10g, Silver ₹${s.toLocaleString('en-IN')}/10g]`; toolSources.push('🥇 GoldPrice'); }})
         .catch(()=>{})
     );
+    // ── STOCKS (Yahoo Finance — free, no key) ─────────────────
+    if (/share.*price|stock.*price|nse|bse|sensex|nifty|reliance|tata|infosys|hdfc|icici|wipro|bajaj|adani|hindalco|ongc|coal.*india|sbi|axis.*bank/i.test(message)) {
+      const stockQ = message.replace(/share.*price|stock.*price|ka.*price|price.*kya|kitna.*chal/gi,'').trim().slice(0,30);
+      if (stockQ.length > 2) toolTasks.push(
+        fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(stockQ.toUpperCase())}.NS?interval=1d&range=1d`)
+          .then(r=>r.ok?r.json():null)
+          .then(d=>{ const q=d?.chart?.result?.[0]?.meta; if(q?.regularMarketPrice){ toolCtx+=`
+[STOCK: ${q.symbol} — ₹${q.regularMarketPrice?.toFixed(2)} (${q.regularMarketChangePercent?.toFixed(2)}%) on ${q.exchangeName}]`; toolSources.push('📈 NSE'); }})
+          .catch(()=>{})
+      );
+    }
+    // Sensex/Nifty index
+    if (/sensex|nifty|nifty50|nifty.*50|bse.*index|market.*today/i.test(message)) {
+      toolTasks.push(
+        Promise.all([
+          fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EBSESN?interval=1d&range=1d').then(r=>r.ok?r.json():null),
+          fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1d&range=1d').then(r=>r.ok?r.json():null),
+        ]).then(([bse,nse])=>{
+          const bm=bse?.chart?.result?.[0]?.meta, nm=nse?.chart?.result?.[0]?.meta;
+          if(bm||nm) { toolCtx+=`
+[MARKETS: Sensex ${bm?.regularMarketPrice?.toFixed(0)} (${bm?.regularMarketChangePercent?.toFixed(2)}%) | Nifty ${nm?.regularMarketPrice?.toFixed(0)} (${nm?.regularMarketChangePercent?.toFixed(2)}%)]`; toolSources.push('📊 BSE/NSE'); }
+        }).catch(()=>{})
+      );
+    }
+
     // ── MOVIE INFO (TMDB free + OMDB fallback) ─────────────────
     if (/film|movie|kya dekhe|recommend.*movie|movie.*rate|series|web series|kab aaya|release|imdb|bollywood|hollywood/i.test(message)) {
       const mq = message.replace(/film|movie|kya dekhe|dekhe|series|web series|imdb|bollywood|hollywood/gi,'').replace(/recommend.*|suggest.*/gi,'').trim().slice(0,60);
