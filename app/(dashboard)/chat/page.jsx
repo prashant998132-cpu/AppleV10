@@ -1,6 +1,8 @@
 'use client';
 export const dynamic = 'force-dynamic';
 import { startAriaAutoMessages, updateLastActivity } from '@/lib/aria-auto-msg';
+import { getAriaMemory, addAriaXP, updateStreak, getRelationshipLevel, getGapMessage, saveAriaMemory } from '@/lib/aria-memory';
+import { getConversationMemorySummary, getPendingFollowUps } from '@/lib/ai/proactive-memory';
 import { WeatherWidget, TimerWidget, CalculatorWidget, DashboardWidget, PriceWidget, ReminderWidget, detectWidget, parseTimerSeconds } from '@/components/chat/InlineWidgets';
 import Sounds from '@/lib/sound/sounds';
 import Link from 'next/link';
@@ -1382,7 +1384,10 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       flash: ['⚡ Already pata hai...', '⚡ Instant reply aa raha hai...', '⚡ Chal deta hoon...'][Math.floor(Math.random()*3)],
       think: ['🧠 Seriously soch raha hoon...', '🧠 Ek second, achi tarah sochu...', '🧠 DeepSeek activate...'][Math.floor(Math.random()*3)],
       deep: ['🔬 Research mode on...', '🔬 Sab dhundh raha hoon...', '🔬 Full analysis chal raha hai...'][Math.floor(Math.random()*3)],
-      auto: ['🤖 Samajh raha hoon...', '🤖 Soch raha hoon...', '🤖 Aa raha hoon...'][Math.floor(Math.random()*3)],
+      auto: (()=>{
+        if (/https?:\/\//i.test(msg||'')) return '🌐 Webpage padh raha hoon...';
+        return ['🤖 Samajh raha hoon...', '🤖 Soch raha hoon...', '🤖 Aa raha hoon...'][Math.floor(Math.random()*3)];
+      })(),
     };
     setPhase(phaseMessages[finalMode]);
 

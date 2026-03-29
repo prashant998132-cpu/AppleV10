@@ -10,6 +10,8 @@ import { getProviderOrder, streamProvider, incrementUsage, getUsageStats, detect
 import { detectToolCall, executeTool } from '@/lib/tools';
 import { detectMood, detectIntent, getMoodInjection, updateAttachment } from '@/lib/mood';
 import { buildMemoryContext as buildAriaMemCtx, extractMemoryFromMsg, saveAriaMemory } from '@/lib/aria-memory';
+import { readUrl, webSearch, extractUrl, needsWebFetch, extractRelevant } from '@/lib/ai/web-agent';
+import { extractConversationFacts, saveConversationFact, getPendingFollowUps, buildProactiveContext } from '@/lib/ai/proactive-memory';
 import { buildAriaContext } from '@/lib/responseBuilder';
 
 const CEREBRAS_URL = 'https://api.cerebras.ai/v1/chat/completions';
@@ -198,6 +200,37 @@ export async function POST(req) {
   }
   const toolSources = []; // for source badges in UI
   const m = msgLow;
+
+  // ── WEB BROWSING — detect URLs and fetch them ──────────────
+  const urlInMsg = extractUrl(message);
+  const webFetchType = needsWebFetch(message);
+  
+  if (urlInMsg) {
+    try {
+      const pageData = await readUrl(urlInMsg, 4000);
+      if (pageData.content) {
+        const relevant = extractRelevant(pageData.content, message, 2500);
+        toolCtx += `\n[WEB PAGE CONTENT from ${urlInMsg}:\n${relevant}\n(Use this content to answer the user's question)]`;
+        toolSources.push('🌐 ' + urlInMsg.replace('https://', '').split('/')[0]);
+      }
+    } catch {}
+  } else if (webFetchType === 'search' && !m.match(/mausam|weather|crypto|stock|movie|music/)) {
+    // Only search if not already covered by other agents
+    try {
+      const searchResult = await webSearch(message.slice(0, 100), 3);
+      if (searchResult.results) {
+        toolCtx += `\n[WEB SEARCH for "${message.slice(0,50)}...":\n${searchResult.results.slice(0,2000)}]`;
+        toolSources.push('🔍 Web');
+      }
+    } catch {}
+  }
+
+  // ── PROACTIVE MEMORY — pending follow-ups ─────────────────
+  const pendingFollowUps = getPendingFollowUps();
+  if (pendingFollowUps.length > 0 && Math.random() < 0.3) { // 30% chance to reference
+    toolCtx += buildProactiveContext(pendingFollowUps);
+  }
+
   try {
     const toolTasks = [];
 
@@ -585,6 +618,14 @@ export async function POST(req) {
           const dayKey = 'jarvis_day_' + today;
           const day = JSON.parse(localStorage?.getItem?.(dayKey) || '{}');
           // Note: server-side can't access localStorage, but client will track
+        } catch {}
+
+        // Auto-extract conversation facts for proactive follow-up
+        try {
+          const facts = extractConversationFacts(message);
+          for (const f of facts) {
+            await saveConversationFact(message, f.topic, f.type).catch(() => {});
+          }
         } catch {}
 
         // LLM log — send to client to save in localStorage

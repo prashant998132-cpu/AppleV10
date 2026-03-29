@@ -233,9 +233,18 @@ export default function FloatingJarvis() {
               <input
                 ref={inputRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
+                onChange={e => {
+                  setInput(e.target.value);
+                  // Auto-detect URL paste
+                }}
+                onPaste={e => {
+                  const pasted = e.clipboardData.getData('text');
+                  if (/^https?:\/\//i.test(pasted.trim())) {
+                    setTimeout(() => setInput(prev => prev || `Is link ko padh ke batao: ${pasted.trim()}`), 50);
+                  }
+                }}
                 onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
-                placeholder={isAria ? 'Aira se bolo...' : 'Kuch poocho...'}
+                placeholder={isAria ? 'Aira se bolo...' : 'Kuch poocho ya link paste karo...'}
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm placeholder-slate-600 outline-none focus:border-blue-500/40 transition-colors"
               />
               <button onClick={startVoice}

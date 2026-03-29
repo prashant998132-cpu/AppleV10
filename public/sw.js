@@ -7,7 +7,7 @@
 // 5. Smart schedule notifications
 // ═══════════════════════════════════════════════════════════════
 
-const VERSION = 'jarvis-v11.0';
+const VERSION = 'jarvis-v12.0';
 const CACHE_SHELL  = `${VERSION}-shell`;
 const CACHE_API    = `${VERSION}-api`;
 const CACHE_MEDIA  = `${VERSION}-media`;
