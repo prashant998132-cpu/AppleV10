@@ -29,13 +29,14 @@ async function base64ToSupabaseUrl(base64, userId, prompt) {
 }
 
 // ─── Pollinations — always works, instant, zero cost ─────────
+
+export const runtime = 'nodejs';
 function pollinationsUrl(prompt, w = 512, h = 512) {
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&seed=${Date.now()}&enhance=true&model=flux`;
 }
 
 export async function POST(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { prompt, style = 'realistic', width = 512, height = 512, highQuality = false } = await req.json();
   if (!prompt?.trim()) return Response.json({ error: 'Prompt required' }, { status: 400 });

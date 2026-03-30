@@ -9,8 +9,7 @@ export const runtime = 'nodejs';
 export async function POST(req) {
   try {
     const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-    if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
+  
     const { conversationId, firstMessage, firstReply } = await req.json();
     if (!conversationId || !firstMessage) {
       return Response.json({ error: 'Missing params' }, { status: 400 });

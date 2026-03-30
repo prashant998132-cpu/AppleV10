@@ -51,6 +51,8 @@ export async function GET(req) {
 }
 
 // Upgrade short-lived Meta token to long-lived
+
+export const runtime = 'nodejs';
 async function upgradeFbToken(userId, shortToken) {
   try {
     const r = await fetch(

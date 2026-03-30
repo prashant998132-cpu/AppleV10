@@ -3,16 +3,16 @@ import { getKeys } from '@/lib/config';
 import { getAnalyticsData, getEvolutionInsights, saveEvolutionInsight } from '@/lib/db/queries';
 import { generateEvolutionInsight } from '@/lib/ai/brain';
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const insights = await getEvolutionInsights(user.id, 5);
   return Response.json({ insights });
 }
 
 export async function POST() {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const keys = getKeys();
   try {
     const analytics = await getAnalyticsData(user.id);

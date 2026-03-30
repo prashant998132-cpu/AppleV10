@@ -4,6 +4,8 @@ import { jarvisThink, buildSystemPrompt } from '@/lib/ai/brain';
 import { getKeys, APP } from '@/lib/config';
 import { getProviderOrder, callProvider, PROVIDERS } from '@/lib/ai/smart-router';
 
+export const runtime = 'nodejs';
+
 export async function POST(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
 

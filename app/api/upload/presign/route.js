@@ -13,6 +13,8 @@
 //   POST /api/upload/analyze { path, type, ... }
 // ═══════════════════════════════════════════════════════════════
 
+export const runtime = 'nodejs';
+
 
 const ALLOWED_TYPES = { image: 'image/', pdf: 'application/pdf', audio: 'audio/', document: 'text/' };
 const MAX_SIZES = { image: 10_000_000, pdf: 20_000_000, audio: 50_000_000, document: 5_000_000 };
@@ -20,7 +22,6 @@ const BUCKET = 'jarvis-media';
 
 export async function GET(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const type     = searchParams.get('type') || 'document';

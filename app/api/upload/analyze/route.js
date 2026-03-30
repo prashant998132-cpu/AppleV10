@@ -12,9 +12,10 @@ import { getKeys } from '@/lib/config';
 import { saveKnowledge } from '@/lib/db/queries';
 import { analyzeDocument, analyzeImage } from '@/lib/ai/brain';
 
+export const runtime = 'nodejs';
+
 export async function POST(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { path, publicUrl, type, filename, size, question = 'Analyze and explain this content' } = await req.json();
   if (!path || !publicUrl) return Response.json({ error: 'path and publicUrl required' }, { status: 400 });

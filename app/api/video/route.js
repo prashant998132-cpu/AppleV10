@@ -2,10 +2,11 @@
 import { getKeys } from '@/lib/config';
 import { generateVideo, pollVideoJob } from '@/lib/ai/video';
 
+export const runtime = 'nodejs';
+
 
 export async function POST(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { prompt, duration = 5, action, jobId, provider } = await req.json();
 

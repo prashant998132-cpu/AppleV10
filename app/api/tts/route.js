@@ -3,6 +3,8 @@
 export const dynamic = 'force-dynamic';
 import { getKeys } from '@/lib/config';
 
+export const runtime = 'nodejs';
+
 export async function POST(req) {
   try {
     const { text, voice = 'meera' } = await req.json();

@@ -3,9 +3,10 @@ import { getKeys } from '@/lib/config';
 import { getGoals, createGoal, updateGoal } from '@/lib/db/queries';
 import { decomposeGoal, buildMemoryContext } from '@/lib/ai/brain';
 
+export const runtime = 'nodejs';
+
 export async function GET(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { searchParams } = new URL(req.url);
   const goals = await getGoals(user.id, searchParams.get('status'));
   return Response.json({ goals });
@@ -13,7 +14,6 @@ export async function GET(req) {
 
 export async function POST(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
 
@@ -37,7 +37,6 @@ export async function POST(req) {
 
 export async function PATCH(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { id, ...updates } = await req.json();
   const goal = await updateGoal(user.id, id, updates);
   return Response.json({ goal });

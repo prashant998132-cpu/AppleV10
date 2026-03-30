@@ -1,9 +1,10 @@
 // app/api/social/route.js
 import { postToInstagram, postToLinkedIn, createGmailDraft, addCalendarEvent, getCalendarEvents, getConnectedPlatforms, deleteToken } from '@/lib/oauth/social';
 
+export const runtime = 'nodejs';
+
 export async function POST(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
   const { action } = body;
@@ -45,7 +46,6 @@ export async function POST(req) {
 
 export async function GET(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const platforms = await getConnectedPlatforms(user.id);
   return Response.json({ connected: platforms });
 }

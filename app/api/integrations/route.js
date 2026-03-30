@@ -16,7 +16,6 @@ export const runtime = 'nodejs';
 // GET — Health check all integrations
 export async function GET() {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const keys = getKeys();
   const health = await checkAllIntegrations(keys);
@@ -26,7 +25,6 @@ export async function GET() {
 // POST — Execute any integration
 export async function POST(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { app, action, params = {} } = await req.json();
   if (!app || !action) return Response.json({ error: 'app and action required' }, { status: 400 });

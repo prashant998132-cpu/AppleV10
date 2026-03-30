@@ -9,7 +9,6 @@ export const runtime = 'nodejs';
 
 export async function GET() {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   // Return tool catalog
   const catalog = Object.entries(TOOLS).map(([id, t]) => ({ id, ...t }));
   return Response.json({ total: catalog.length, tools: catalog });
@@ -17,7 +16,6 @@ export async function GET() {
 
 export async function POST(req) {
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
-  if (!user) { user = { id: 'local-user-jarvis', email: 'local@jarvis.app' }; } if (false) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { tool, params = {} } = await req.json();
   if (!tool) return Response.json({ error: 'tool name required' }, { status: 400 });

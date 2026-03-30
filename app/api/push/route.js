@@ -12,6 +12,8 @@ if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
 }
 
 // Module-level map — persists within same serverless instance
+
+export const runtime = 'nodejs';
 const _subs = new Map();
 
 export async function POST(req) {
