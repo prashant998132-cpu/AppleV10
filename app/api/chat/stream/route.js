@@ -14,7 +14,6 @@ import { readUrl, webSearch, extractUrl, needsWebFetch, extractRelevant } from '
 import { extractConversationFacts, saveConversationFact, getPendingFollowUps, buildProactiveContext } from '@/lib/ai/proactive-memory';
 import { buildAriaContext } from '@/lib/responseBuilder';
 
-const CEREBRAS_URL = 'https://api.cerebras.ai/v1/chat/completions';
 
 export const runtime = 'nodejs';
 
@@ -145,9 +144,9 @@ export async function POST(req) {
   const isAria = profile?.personality === 'girlfriend';
   const userMood   = detectMood(message);
   const userIntent = detectIntent(message);
+  // Hoist ariaMemory to outer scope so stream callback can access it
+  const ariaMemory = (() => { try { return JSON.parse(clientAriaMemory || profile?.aria_memory || '{}'); } catch { return {}; } })();
   if (isAria) {
-    // Use client-sent ariaMemory (localStorage) — server can't read browser storage
-    const ariaMemory = (() => { try { return JSON.parse(clientAriaMemory || profile?.aria_memory || '{}'); } catch { return {}; } })();
     const attachment = (() => {
       let lvl = parseFloat(ariaMemory?.attachment || 3);
       if (userMood === 'sad') lvl += 0.3;
@@ -586,10 +585,7 @@ export async function POST(req) {
 
         // XP + badges — send to CLIENT to save (server-side localStorage is stateless)
         try {
-          const xpAmount = mode === 'think' ? 15 : mode === 'deep' ? 25 : mode === 'flash' ? 8 : 10;
           const convMode = autoDetectConvMode(message);
-          // Send XP info to client — client will save to localStorage
-          send({ type: 'gamification', xpAmount, mode, isAria: !!isAria });
           send({ type: 'conv_mode', mode: convMode });
         } catch {}
 
