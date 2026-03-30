@@ -1,5 +1,5 @@
 // app/api/chat/stream/route.js — Streaming Chat v9
-import { getProfile, buildMemoryContext, saveMemory, createConversation, saveMessage, updateConversation, addXP, checkAndAwardBadges, saveLLMLog, getGoals, searchKnowledge } from '@/lib/db/queries';
+import { getProfile, buildMemoryContext, saveMemory, createConversation, saveMessage, updateConversation, saveLLMLog, getGoals, searchKnowledge } from '@/lib/db/queries';
 import { buildSystemPrompt, analyzeImage, AGENTS, autoDetectConvMode } from '@/lib/ai/brain';
 import { saveLearningPattern, buildLearningContext } from '@/lib/ai/self-learning';
 import { reactAgent } from '@/lib/ai/react-agent';
