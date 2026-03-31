@@ -44,22 +44,18 @@ import { isAppLocked, touchActivity, isBiometricLockEnabled } from '@/lib/securi
 import { startBackgroundAI, scheduleStudyNotifications, registerPeriodicSync } from '@/lib/ai/background-service';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, LogOut, Zap, Bell, Sparkles, User, Smartphone, Phone, Mic } from 'lucide-react';
+import { MessageSquare, BarChart2, Brain, Target, BookOpen, Settings, Menu, X, LogOut, Zap, Bell, Sparkles, User, Mic } from 'lucide-react';
 import FloatingJarvis from '@/components/chat/FloatingJarvis';
 
 const NAV = [
-  { href: '/',           icon: Zap,           label: 'Dashboard' },
+  { href: '/',           icon: Zap,           label: 'Home'      },
   { href: '/chat',       icon: MessageSquare, label: 'Chat'      },
   { href: '/voice',      icon: Mic,           label: 'Voice'     },
   { href: '/studio',     icon: Sparkles,      label: 'Studio'    },
-  { href: '/analytics',  icon: BarChart2,     label: 'Analytics' },
   { href: '/goals',      icon: Target,        label: 'Goals'     },
   { href: '/memory',     icon: Brain,         label: 'Memory'    },
+  { href: '/analytics',  icon: BarChart2,     label: 'Analytics' },
   { href: '/knowledge',  icon: BookOpen,      label: 'Knowledge' },
-  { href: '/profile',    icon: User,          label: 'Profile'   },
-  { href: '/automation', icon: Zap,           label: 'Automation'},
-  { href: '/phone',      icon: Phone,         label: 'Phone'     },
-  { href: '/widget',     icon: Smartphone,    label: 'Widget'    },
   { href: '/settings',   icon: Settings,      label: 'Settings'  },
 ];
 // Mobile bottom bar — only 5 most used (space limited)
@@ -67,7 +63,7 @@ const MOBILE_NAV = [
   { href: '/',        icon: Zap,           label: 'Home'     },
   { href: '/chat',    icon: MessageSquare, label: 'Chat'     },
   { href: '/voice',   icon: Mic,           label: 'Voice'    },
-  { href: '/studio',  icon: Sparkles,      label: 'Studio'   },
+  { href: '/goals',   icon: Target,        label: 'Goals'    },
   { href: '/settings',icon: Settings,      label: 'Settings' },
 ];
 

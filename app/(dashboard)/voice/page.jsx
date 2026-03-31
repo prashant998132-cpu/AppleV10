@@ -2,403 +2,420 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import { speakWithEmotion, stopCurrentAudio } from '@/lib/ai/media-client';
 
-// ── States ────────────────────────────────────────────────────
-// idle → listening → thinking → speaking → idle
-const STATES = { IDLE:'idle', LISTENING:'listening', THINKING:'thinking', SPEAKING:'speaking' };
+const PHASE = { IDLE: 'idle', LISTENING: 'listening', THINKING: 'thinking', SPEAKING: 'speaking' };
+
+// ── Orb color per phase ───────────────────────────────────────
+const ORB_CONFIG = {
+  idle:      { c1: '#1a56db', c2: '#06b6d4', glow: 'rgba(26,86,219,0.35)', label: 'Tap to speak' },
+  listening: { c1: '#7c3aed', c2: '#a855f7', glow: 'rgba(168,85,247,0.5)', label: 'Listening...' },
+  thinking:  { c1: '#0ea5e9', c2: '#38bdf8', glow: 'rgba(14,165,233,0.5)', label: 'Thinking...' },
+  speaking:  { c1: '#10b981', c2: '#34d399', glow: 'rgba(16,185,129,0.45)', label: 'Speaking...' },
+};
 
 export default function VoicePage() {
-  const [phase, setPhase]       = useState(STATES.IDLE);
+  const [phase, setPhase]       = useState(PHASE.IDLE);
   const [transcript, setTrans]  = useState('');
   const [reply, setReply]       = useState('');
   const [history, setHistory]   = useState([]);
   const [personality, setPers]  = useState('normal');
   const [userName, setUserName] = useState('');
-  const [error, setError]       = useState('');
   const [ariaMemory, setAriaMem]= useState('{}');
-  const [holdProgress, setHoldP]= useState(0);
+  const [waveData, setWaveData] = useState(Array(32).fill(0));
+  const [error, setError]       = useState('');
+  const [pulsing, setPulsing]   = useState(false);
 
-  const mediaRef    = useRef(null);
-  const chunksRef   = useRef([]);
-  const streamRef   = useRef(null);
-  const holdTimer   = useRef(null);
-  const holdStart   = useRef(null);
-  const router      = useRouter();
+  const mediaRef   = useRef(null);
+  const chunksRef  = useRef([]);
+  const streamRef  = useRef(null);
+  const analyserRef= useRef(null);
+  const animRef    = useRef(null);
+  const audioCtxRef= useRef(null);
 
-  const isAria = personality === 'girlfriend';
-
-  // ── Load profile ────────────────────────────────────────────
+  // ── Load profile ─────────────────────────────────────────────
   useEffect(() => {
     try {
       const p = JSON.parse(localStorage.getItem('jarvis_profile') || '{}');
       if (p.personality) setPers(p.personality);
       if (p.name) setUserName(p.name);
-    } catch {}
-    try {
       setAriaMem(localStorage.getItem('aria_ultra') || '{}');
     } catch {}
-  }, []);
-
-  // ── Cleanup on unmount ──────────────────────────────────────
-  useEffect(() => {
     return () => {
       stopCurrentAudio();
+      cancelAnimationFrame(animRef.current);
+      audioCtxRef.current?.close().catch(() => {});
       mediaRef.current?.stream?.getTracks().forEach(t => t.stop());
-      if (streamRef.current) { try { streamRef.current.cancel(); } catch {} }
     };
   }, []);
 
-  // ── HOLD TO SPEAK logic ─────────────────────────────────────
-  function onPressStart(e) {
-    e.preventDefault();
-    if (phase !== STATES.IDLE && phase !== STATES.SPEAKING) return;
-    stopCurrentAudio();
-    setError('');
-    holdStart.current = Date.now();
-    setHoldP(0);
-
-    // Animate hold ring
-    const interval = setInterval(() => {
-      const pct = Math.min(100, ((Date.now() - holdStart.current) / 400) * 100);
-      setHoldP(pct);
-      if (pct >= 100) {
-        clearInterval(interval);
-        startListening();
-      }
-    }, 16);
-    holdTimer.current = interval;
-  }
-
-  function onPressEnd(e) {
-    e.preventDefault();
-    clearInterval(holdTimer.current);
-    if (phase === STATES.LISTENING) {
-      stopListening();
-    } else {
-      setHoldP(0);
-    }
-  }
-
-  // ── Start mic ───────────────────────────────────────────────
-  async function startListening() {
-    setPhaseSync(STATES.LISTENING);
-    setTrans('');
-    setReply('');
-    chunksRef.current = [];
-
-    // Try Web Speech API first (zero latency)
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SR) {
-      const sr = new SR();
-      sr.continuous = false;
-      sr.interimResults = true;
-      sr.lang = 'hi-IN';
-      sr.onresult = e => {
-        const text = Array.from(e.results).map(r => r[0].transcript).join('');
-        setTrans(text);
-        if (e.results[e.results.length - 1].isFinal) {
-          sr.stop();
-          sendToJarvis(text);
-        }
+  // ── Waveform animation ────────────────────────────────────────
+  const startWaveform = useCallback((stream) => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtxRef.current = ctx;
+      const src = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 64;
+      src.connect(analyser);
+      analyserRef.current = analyser;
+      const buf = new Uint8Array(analyser.frequencyBinCount);
+      const draw = () => {
+        analyser.getByteFrequencyData(buf);
+        setWaveData([...buf].slice(0, 32).map(v => v / 255));
+        animRef.current = requestAnimationFrame(draw);
       };
-      sr.onerror = (e) => { if (e.error !== 'no-speech') startMediaRecorder(); else setPhaseSync(STATES.IDLE); };
-      sr.onend   = () => { if (phaseRef.current === STATES.LISTENING) setPhaseSync(STATES.IDLE); };
-      mediaRef.current = sr;
-      sr.start();
-      return;
-    }
-    startMediaRecorder();
-  }
+      draw();
+    } catch {}
+  }, []);
 
-  async function startMediaRecorder() {
+  const stopWaveform = useCallback(() => {
+    cancelAnimationFrame(animRef.current);
+    setWaveData(Array(32).fill(0));
+    try { audioCtxRef.current?.close(); } catch {}
+    audioCtxRef.current = null;
+    analyserRef.current = null;
+  }, []);
+
+  // ── Start recording ───────────────────────────────────────────
+  const startListening = useCallback(async () => {
+    if (phase !== PHASE.IDLE) return;
+    setError(''); setTrans(''); setPulsing(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      mr.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        const fd = new FormData();
-        fd.append('audio', blob, 'audio.webm');
-        fd.append('language', 'hi');
-        try {
-          const r = await fetch('/api/stt', { method: 'POST', body: fd });
-          const d = await r.json();
-          if (d.text) sendToJarvis(d.text);
-          else setPhase(STATES.IDLE);
-        } catch { setPhase(STATES.IDLE); }
-      };
-      mr.start();
-      mediaRef.current = mr;
-    } catch {
-      setError('Mic access nahi mili');
-      setPhaseSync(STATES.IDLE);
+      mediaRef.current = { stream };
+      const recorder = new MediaRecorder(stream);
+      chunksRef.current = [];
+      recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.onstop = () => processAudio();
+      recorder.start();
+      mediaRef.current.recorder = recorder;
+      setPhase(PHASE.LISTENING);
+      startWaveform(stream);
+    } catch (e) {
+      setError('Mic access denied — Settings mein allow karo');
     }
-  }
+  }, [phase, startWaveform]);
 
-  function stopListening() {
-    setHoldP(0);
-    if (!mediaRef.current) { setPhase(STATES.IDLE); return; }
-    if (mediaRef.current.stop) mediaRef.current.stop();
-    else if (mediaRef.current instanceof window.SpeechRecognition || mediaRef.current?.constructor?.name?.includes('Recognition')) {
-      mediaRef.current.stop();
+  // ── Stop recording ────────────────────────────────────────────
+  const stopListening = useCallback(() => {
+    if (phase !== PHASE.LISTENING) return;
+    stopWaveform();
+    mediaRef.current?.recorder?.stop();
+    mediaRef.current?.stream?.getTracks().forEach(t => t.stop());
+    setPhase(PHASE.THINKING);
+  }, [phase, stopWaveform]);
+
+  // ── Handle tap ───────────────────────────────────────────────
+  const handleTap = useCallback(() => {
+    if (phase === PHASE.IDLE) startListening();
+    else if (phase === PHASE.LISTENING) stopListening();
+    else if (phase === PHASE.SPEAKING) {
+      stopCurrentAudio();
+      setPhase(PHASE.IDLE);
     }
-  }
+  }, [phase, startListening, stopListening]);
 
-  // ── Send to JARVIS ──────────────────────────────────────────
-  const sendToJarvis = useCallback(async (text) => {
-    if (!text.trim()) { setPhase(STATES.IDLE); return; }
-    setTrans(text);
-    setPhaseSync(STATES.THINKING);
-
-    const newHistory = [...history, { role: 'user', content: text }];
-    setHistory(newHistory);
-
+  // ── Process audio → STT → LLM → TTS ─────────────────────────
+  const processAudio = useCallback(async () => {
     try {
-      const res = await fetch('/api/chat/stream', {
+      const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+      if (blob.size < 1000) { setPhase(PHASE.IDLE); return; }
+
+      // STT
+      const fd = new FormData();
+      fd.append('audio', blob, 'voice.webm');
+      const sttRes = await fetch('/api/stt', { method: 'POST', body: fd });
+      const sttData = await sttRes.json();
+      const userText = sttData.text?.trim();
+      if (!userText) { setPhase(PHASE.IDLE); return; }
+      setTrans(userText);
+
+      // LLM via streaming chat
+      const newHistory = [...history, { role: 'user', content: userText }];
+      const chatRes = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: text,
-          history: newHistory.slice(-8, -1),
-          mode: 'flash',
-          personality,
-          ariaMemory,
+          message: userText, history: history.slice(-6),
+          mode: 'flash', personality,
+          ariaMemory: personality === 'girlfriend' ? ariaMemory : undefined,
         }),
       });
 
-      if (!res.ok) throw new Error('Stream failed');
+      if (!chatRes.ok) throw new Error(`Chat ${chatRes.status}`);
 
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
       let fullReply = '';
-      setPhaseSync(STATES.SPEAKING);
-
+      const reader = chatRes.body.getReader();
+      const dec = new TextDecoder();
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const lines = dec.decode(value, { stream: true }).split('\n');
-        for (const line of lines) {
+        for (const line of dec.decode(value).split('\n')) {
           if (!line.startsWith('data: ')) continue;
           try {
             const d = JSON.parse(line.slice(6));
-            if (d.type === 'token') {
-              fullReply += d.token;
-              setReply(fullReply);
-            }
+            if (d.type === 'token') fullReply += d.token;
           } catch {}
         }
       }
 
-      // Save to history
-      setHistory(h => [...h, { role: 'assistant', content: fullReply }]);
+      fullReply = fullReply.trim();
+      if (!fullReply) { setPhase(PHASE.IDLE); return; }
+      setReply(fullReply);
+      setHistory([...newHistory, { role: 'assistant', content: fullReply }]);
+      setPhase(PHASE.SPEAKING);
 
-      // Speak reply
-      const clean = fullReply.replace(/\*\*/g,'').replace(/#{1,6}\s/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1').replace(/[_~`]/g,'').slice(0, 400);
-      setPhaseSync(STATES.SPEAKING);
-      await speakWithEmotion(clean, {
-        onEnd: () => setPhaseSync(STATES.IDLE),
-      });
+      // TTS
+      await speakWithEmotion(fullReply, personality === 'girlfriend' ? 'female' : 'male');
+      setPhase(PHASE.IDLE);
+      setPulsing(true);
+      setTimeout(() => setPulsing(false), 2000);
 
     } catch (e) {
-      setError('Error: ' + e.message);
-      setPhaseSync(STATES.IDLE);
+      setError(e.message || 'Something went wrong');
+      setPhase(PHASE.IDLE);
     }
   }, [history, personality, ariaMemory]);
 
-  // ── Tap to stop speaking ────────────────────────────────────
-  function handleOrbTap() {
-    if (phase === STATES.SPEAKING) {
-      stopCurrentAudio();
-      setPhaseSync(STATES.IDLE);
-    }
-  }
+  const cfg = ORB_CONFIG[phase];
+  const isActive = phase !== PHASE.IDLE;
 
-  // ── Orb style per phase/personality ────────────────────────
-  const orbBase = isAria
-    ? { idle:'from-pink-600 to-rose-400', glow:'rgba(236,72,153,0.5)', ring:'border-pink-500/40' }
-    : { idle:'from-blue-600 to-cyan-400', glow:'rgba(26,86,219,0.5)',  ring:'border-blue-500/40' };
+  // ── Idle breathing bars ───────────────────────────────────────
+  const idleBars = Array(32).fill(0).map((_, i) => {
+    const base = Math.sin(Date.now() / 800 + i * 0.4) * 0.15 + 0.08;
+    return base;
+  });
 
-  const phaseLabel = {
-    [STATES.IDLE]:      isAria ? 'Bol Aira se...' : 'Bolo JARVIS se...',
-    [STATES.LISTENING]: 'Sun raha hoon...',
-    [STATES.THINKING]:  isAria ? 'Soch rahi hoon...' : 'Soch raha hoon...',
-    [STATES.SPEAKING]:  isAria ? 'Aira bol rahi hai' : 'JARVIS bol raha hai',
-  };
-
-  const pulseAnim = phase === STATES.SPEAKING ? 'animate-pulse' : phase === STATES.THINKING ? 'animate-spin' : '';
-
-  // Recent conversation for display
-  const recentPairs = history.slice(-4);
+  const bars = phase === PHASE.LISTENING ? waveData : idleBars;
 
   return (
-    <div className={`min-h-screen flex flex-col items-center select-none overflow-hidden ${
-      isAria ? 'bg-[#0a0008]' : 'bg-[#020810]'
-    }`}>
+    <div className="flex flex-col items-center justify-between h-full w-full select-none overflow-hidden"
+      style={{ background: 'radial-gradient(ellipse at 50% 60%, #080f20 0%, #050810 70%)', minHeight: '100dvh' }}>
 
-      {/* Back button */}
-      <div className="w-full flex items-center justify-between px-5 pt-5 pb-2">
-        <button onClick={() => { stopCurrentAudio(); router.push('/chat'); }}
-          className="text-slate-500 hover:text-slate-300 text-sm flex items-center gap-1.5 transition-colors">
-          ← Back
-        </button>
-        <p className="text-xs text-slate-600 font-medium uppercase tracking-wider">
-          {isAria ? '💕 ARIA Voice' : '🤖 JARVIS Voice'}
-        </p>
-        <div className="w-12"/>
-      </div>
-
-      {/* Name + status */}
-      <div className="text-center mt-6 mb-8">
-        <h1 className="text-2xl font-black text-white">{isAria ? 'Aira' : 'JARVIS'}</h1>
-        <p className={`text-sm mt-1 transition-all duration-300 ${
-          phase === STATES.IDLE      ? 'text-slate-500' :
-          phase === STATES.LISTENING ? 'text-green-400' :
-          phase === STATES.THINKING  ? 'text-yellow-400 animate-pulse' :
-          isAria ? 'text-pink-400' : 'text-blue-400'
-        }`}>
-          {phaseLabel[phase]}
-        </p>
-      </div>
-
-      {/* ── THE ORB ─────────────────────────────────────── */}
-      <div className="relative flex items-center justify-center mb-10"
-        style={{ width: 220, height: 220 }}
-        onMouseDown={onPressStart} onMouseUp={onPressEnd} onMouseLeave={onPressEnd}
-        onTouchStart={onPressStart} onTouchEnd={onPressEnd}
-        onClick={handleOrbTap}
-      >
-        {/* Outer glow rings */}
-        {[3.2, 2.5, 1.9].map((scale, i) => (
-          <span key={i} className={`absolute inset-0 rounded-full ${
-            phase !== STATES.IDLE ? 'animate-ping' : ''
-          }`} style={{
-            background: `radial-gradient(circle, transparent 45%, ${isAria ? 'rgba(236,72,153,' : 'rgba(26,86,219,'}${0.06 - i*0.015}), transparent 75%)`,
-            transform: `scale(${scale})`,
-            animationDuration: `${1.2 + i*0.4}s`,
-            animationDelay: `${i*0.2}s`,
-          }}/>
+      {/* Top — conversation history */}
+      <div className="w-full max-w-sm px-4 pt-safe-top pt-6 pb-2 overflow-y-auto flex-1 flex flex-col justify-end gap-2" style={{ maxHeight: '35vh' }}>
+        {history.slice(-4).map((m, i) => (
+          <div key={i} className={`text-xs px-3 py-2 rounded-2xl max-w-[85%] leading-relaxed ${
+            m.role === 'user'
+              ? 'self-end bg-blue-600/25 text-blue-100 border border-blue-500/20'
+              : 'self-start bg-white/5 text-slate-300 border border-white/10'
+          }`}>
+            {m.content.slice(0, 120)}{m.content.length > 120 ? '...' : ''}
+          </div>
         ))}
+      </div>
 
-        {/* Hold progress ring */}
-        {holdProgress > 0 && holdProgress < 100 && (
-          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 220 220">
-            <circle cx="110" cy="110" r="100" fill="none" stroke={isAria ? '#ec4899' : '#2563eb'} strokeWidth="3"
-              strokeDasharray={`${holdProgress * 6.28} 628`} strokeLinecap="round" opacity="0.7"/>
-          </svg>
+      {/* Center — the orb */}
+      <div className="flex flex-col items-center justify-center gap-6 py-8">
+
+        {/* Waveform bars */}
+        <div className="flex items-center gap-[2px] h-12">
+          {bars.map((v, i) => {
+            const height = isActive
+              ? Math.max(4, v * 48)
+              : 4 + Math.sin(i * 0.5) * 3;
+            return (
+              <div key={i}
+                style={{
+                  width: 3,
+                  height,
+                  borderRadius: 2,
+                  background: cfg.c1,
+                  opacity: isActive ? 0.7 + v * 0.3 : 0.25,
+                  transition: 'height 0.08s ease, opacity 0.2s',
+                  boxShadow: isActive && v > 0.5 ? `0 0 6px ${cfg.c1}` : 'none',
+                }}
+              />
+            );
+          })}
+        </div>
+
+        {/* Main orb button */}
+        <button
+          onClick={handleTap}
+          className="relative outline-none focus:outline-none"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        >
+          {/* Outer glow ring */}
+          <div style={{
+            position: 'absolute', inset: -20,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, ${cfg.glow} 0%, transparent 70%)`,
+            animation: isActive ? 'orbPulse 1.4s ease-in-out infinite' : 'orbBreath 3s ease-in-out infinite',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Ring 1 */}
+          <div style={{
+            position: 'absolute', inset: -8,
+            borderRadius: '50%',
+            border: `1px solid ${cfg.c1}40`,
+            animation: isActive ? 'spin 4s linear infinite' : 'none',
+          }} />
+
+          {/* Ring 2 */}
+          <div style={{
+            position: 'absolute', inset: -16,
+            borderRadius: '50%',
+            border: `1px solid ${cfg.c2}20`,
+            animation: isActive ? 'spinReverse 6s linear infinite' : 'none',
+          }} />
+
+          {/* Core orb */}
+          <div style={{
+            width: 140, height: 140,
+            borderRadius: '50%',
+            background: `radial-gradient(circle at 40% 35%, ${cfg.c2}, ${cfg.c1} 60%, #030712)`,
+            boxShadow: `0 0 40px ${cfg.glow}, 0 0 80px ${cfg.glow}60, inset 0 1px 0 rgba(255,255,255,0.15)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'box-shadow 0.4s ease, background 0.4s ease',
+            transform: pulsing ? 'scale(1.04)' : 'scale(1)',
+          }}>
+            {/* Inner icon / animation */}
+            {phase === PHASE.IDLE && (
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                <path d="M20 8C16.7 8 14 10.7 14 14V20C14 23.3 16.7 26 20 26C23.3 26 26 23.3 26 20V14C26 10.7 23.3 8 20 8Z" fill="white" fillOpacity="0.9"/>
+                <path d="M10 20C10 25.5 14.5 30 20 30C25.5 30 30 25.5 30 20" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.7"/>
+                <line x1="20" y1="30" x2="20" y2="34" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.7"/>
+                <line x1="16" y1="34" x2="24" y2="34" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.7"/>
+              </svg>
+            )}
+            {phase === PHASE.LISTENING && (
+              <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                {[0,1,2].map(i => (
+                  <div key={i} style={{
+                    width: 6, background: 'white', borderRadius: 3,
+                    animation: `listeningBar 0.8s ease-in-out infinite`,
+                    animationDelay: `${i * 0.15}s`,
+                    height: 20,
+                  }} />
+                ))}
+              </div>
+            )}
+            {phase === PHASE.THINKING && (
+              <div style={{ display: 'flex', gap: 6 }}>
+                {[0,1,2].map(i => (
+                  <div key={i} style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: 'white', opacity: 0.9,
+                    animation: `thinkDot 1.2s ease-in-out infinite`,
+                    animationDelay: `${i * 0.2}s`,
+                  }} />
+                ))}
+              </div>
+            )}
+            {phase === PHASE.SPEAKING && (
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                {[0,1,2,3,4].map(i => (
+                  <div key={i} style={{
+                    width: 4, background: 'white', borderRadius: 2,
+                    animation: `speakBar 0.6s ease-in-out infinite alternate`,
+                    animationDelay: `${i * 0.1}s`,
+                    height: 8 + i * 5,
+                  }} />
+                ))}
+              </div>
+            )}
+          </div>
+        </button>
+
+        {/* Phase label */}
+        <div style={{ textAlign: 'center', minHeight: 40 }}>
+          <p style={{
+            color: cfg.c2, fontSize: 14, fontWeight: 500, letterSpacing: '0.05em',
+            transition: 'color 0.4s ease',
+          }}>{cfg.label}</p>
+          {transcript && (
+            <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 4, maxWidth: 260, textAlign: 'center' }}>
+              "{transcript.slice(0, 80)}{transcript.length > 80 ? '...' : ''}"
+            </p>
+          )}
+        </div>
+
+        {/* Hold to talk hint */}
+        {phase === PHASE.IDLE && !reply && (
+          <p style={{ color: '#334155', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Tap to speak • Tap again to stop
+          </p>
         )}
 
-        {/* Listening wave rings */}
-        {phase === STATES.LISTENING && [1,2,3].map(i => (
-          <span key={i} className="absolute rounded-full border animate-ping" style={{
-            width: 110 + i*30, height: 110 + i*30,
-            borderColor: isAria ? 'rgba(236,72,153,0.3)' : 'rgba(34,211,238,0.3)',
-            animationDuration: `${0.9 + i*0.3}s`,
-            animationDelay: `${i*0.15}s`,
-          }}/>
-        ))}
+        {/* Error */}
+        {error && (
+          <div style={{
+            background: '#1a0000', border: '1px solid #ef444440',
+            borderRadius: 12, padding: '8px 16px',
+            color: '#fca5a5', fontSize: 12, maxWidth: 280, textAlign: 'center',
+          }}>
+            {error}
+          </div>
+        )}
+      </div>
 
-        {/* Main orb */}
-        <div className={`relative w-40 h-40 rounded-full bg-gradient-to-br ${orbBase.idle} flex items-center justify-center cursor-pointer active:scale-95 transition-all duration-200`}
-          style={{ boxShadow: phase !== STATES.IDLE ? `0 0 60px 15px ${orbBase.glow}, 0 0 100px 30px ${isAria ? 'rgba(236,72,153,0.2)' : 'rgba(26,86,219,0.2)'}` : `0 0 30px 5px ${orbBase.glow}` }}>
+      {/* Bottom — last reply */}
+      <div className="w-full max-w-sm px-4 pb-safe-bottom pb-8">
+        {reply && (
+          <div style={{
+            background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+            borderRadius: 20, padding: '14px 18px',
+            color: '#cbd5e1', fontSize: 13, lineHeight: 1.6,
+            backdropFilter: 'blur(12px)',
+          }}>
+            {reply.slice(0, 200)}{reply.length > 200 ? '...' : ''}
+          </div>
+        )}
 
-          {/* Inner ripple when speaking */}
-          {phase === STATES.SPEAKING && (
-            <span className="absolute inset-0 rounded-full bg-white/10 animate-ping" style={{animationDuration:'0.8s'}}/>
-          )}
-
-          {/* Icon / letter */}
-          <span className="text-white font-black text-5xl relative z-10" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
-            {phase === STATES.THINKING ? '...' : isAria ? 'A' : 'J'}
-          </span>
+        {/* Personality chips */}
+        <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar justify-center">
+          {[
+            { id:'normal', label:'JARVIS' },
+            { id:'girlfriend', label:'ARIA 💕' },
+            { id:'coach', label:'Coach' },
+            { id:'fun', label:'Fun' },
+          ].map(p => (
+            <button key={p.id} onClick={() => {
+              setPers(p.id);
+              try { const prof = JSON.parse(localStorage.getItem('jarvis_profile')||'{}'); prof.personality=p.id; localStorage.setItem('jarvis_profile',JSON.stringify(prof)); } catch {}
+            }} style={{
+              padding: '5px 14px', borderRadius: 20, fontSize: 12, whiteSpace: 'nowrap',
+              background: personality === p.id ? 'rgba(26,86,219,0.3)' : 'rgba(255,255,255,0.04)',
+              border: personality === p.id ? '1px solid rgba(26,86,219,0.6)' : '1px solid rgba(255,255,255,0.08)',
+              color: personality === p.id ? '#60a5fa' : '#64748b',
+              transition: 'all 0.2s',
+            }}>
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Hold hint */}
-      {phase === STATES.IDLE && (
-        <p className="text-slate-600 text-xs mb-6 tracking-wider">
-          HOLD to speak • TAP to stop
-        </p>
-      )}
-
-      {/* Transcript */}
-      {transcript && (
-        <div className="mx-4 mb-3 w-full max-w-sm">
-          <div className="bg-white/[0.04] border border-white/[0.07] rounded-2xl px-4 py-3 text-right">
-            <p className="text-xs text-slate-500 mb-1">Tumne kaha</p>
-            <p className="text-slate-200 text-sm leading-relaxed">{transcript}</p>
-          </div>
-        </div>
-      )}
-
-      {/* JARVIS reply streaming */}
-      {reply && (
-        <div className="mx-4 mb-3 w-full max-w-sm">
-          <div className={`border rounded-2xl px-4 py-3 ${
-            isAria ? 'bg-pink-950/30 border-pink-500/15' : 'bg-blue-950/30 border-blue-500/15'
-          }`}>
-            <p className={`text-xs mb-1 ${isAria ? 'text-pink-400' : 'text-blue-400'}`}>
-              {isAria ? 'Aira' : 'JARVIS'}
-            </p>
-            <p className="text-slate-100 text-sm leading-relaxed">
-              {reply}
-              {phase === STATES.SPEAKING && <span className="ml-1 inline-block w-1.5 h-4 bg-current opacity-60 animate-pulse rounded-full align-middle"/>}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="mx-4 w-full max-w-sm">
-          <p className="text-red-400 text-xs text-center bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">{error}</p>
-        </div>
-      )}
-
-      {/* Recent conversation pills */}
-      {recentPairs.length > 2 && !reply && phase === STATES.IDLE && (
-        <div className="w-full max-w-sm mx-4 mt-4 space-y-1.5 px-4">
-          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-2">Recent</p>
-          {recentPairs.slice(-2).map((m, i) => (
-            <div key={i} className={`text-xs px-3 py-1.5 rounded-xl truncate ${
-              m.role === 'user'
-                ? 'text-slate-500 text-right'
-                : isAria ? 'text-pink-400/60' : 'text-blue-400/60'
-            }`}>
-              {m.content.slice(0, 60)}{m.content.length > 60 ? '...' : ''}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Quick phrases */}
-      {phase === STATES.IDLE && history.length === 0 && (
-        <div className="w-full max-w-sm px-4 mt-6">
-          <p className="text-[10px] text-slate-700 uppercase tracking-wider mb-3 text-center">Ya tap karke bolne ke baad kaho</p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {(isAria
-              ? ['Kya chal raha hai?', 'Miss kiya 🥺', 'Mood kaisa hai?', 'Kuch sunao']
-              : ['Mujhe motivate karo', 'Aaj ka plan batao', 'Koi interesting fact', 'Jokes sunao']
-            ).map(q => (
-              <button key={q} onClick={() => sendToJarvis(q)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-all active:scale-95 ${
-                  isAria
-                    ? 'bg-pink-500/10 border-pink-500/20 text-pink-300/70 hover:text-pink-300'
-                    : 'bg-blue-500/10 border-blue-500/20 text-blue-300/70 hover:text-blue-300'
-                }`}>
-                {q}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Volume hint */}
-      <p className="text-[10px] text-slate-700 mt-8 mb-4">
-        Phone ka volume up rakho 🔊
-      </p>
+      {/* CSS animations */}
+      <style>{`
+        @keyframes orbPulse {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.15); opacity: 1; }
+        }
+        @keyframes orbBreath {
+          0%, 100% { transform: scale(0.95); opacity: 0.5; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spinReverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+        @keyframes listeningBar {
+          0%, 100% { height: 8px; opacity: 0.6; }
+          50% { height: 28px; opacity: 1; }
+        }
+        @keyframes thinkDot {
+          0%, 100% { transform: translateY(0); opacity: 0.4; }
+          50% { transform: translateY(-8px); opacity: 1; }
+        }
+        @keyframes speakBar {
+          from { transform: scaleY(0.4); }
+          to { transform: scaleY(1.2); }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }

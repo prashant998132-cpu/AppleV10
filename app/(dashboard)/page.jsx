@@ -1,363 +1,263 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { BarChart2, Target, Brain, Zap, TrendingUp, MessageSquare, BookOpen, Calendar, ChevronRight, RefreshCw, Flame, Cpu, Wifi } from 'lucide-react';
-import { isPuterAvailable } from '@/lib/ai/puter-client';
-import { LineChart, Line, ResponsiveContainer, Tooltip, AreaChart, Area } from 'recharts';
+import { MessageSquare, Target, Brain, Mic, TrendingUp, Flame, Sun, Moon, Star, ChevronRight, RefreshCw, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
-  const [data, setData]         = useState(null);
-  const [proactive, setProactive] = useState([]);
-  const [report, setReport]     = useState('');
-  const [loading, setLoading]   = useState(true);
-  const [logOpen, setLogOpen]   = useState(false);
-  const [logData, setLogData]   = useState({ mood: 7, energy: 7, productivity: 7, focusHours: 2, notes: '' });
-  const [saving, setSaving]     = useState(false);
-  const [genReport, setGenReport] = useState(false);
-  const [puterOn, setPuterOn]   = useState(false);
-
-  const [time, setTime] = useState('');
-  const [greeting, setGreeting] = useState('');
-  const [date, setDate] = useState('');
+  const [time, setTime]       = useState('');
+  const [greeting, setGreet]  = useState('');
+  const [profile, setProfile] = useState({});
+  const [goals, setGoals]     = useState([]);
+  const [memories, setMems]   = useState([]);
+  const [convCount, setConvs] = useState(0);
+  const [quote, setQuote]     = useState('');
+  const [weekMood, setMood]   = useState([]);
+  const [loading, setLoad]    = useState(true);
 
   useEffect(() => {
-    function tick() {
+    // Clock
+    const tick = () => {
       const now = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
-      const h = now.getHours();
-      const m = now.getMinutes();
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      const hr = h % 12 || 12;
-      setTime(`${String(hr).padStart(2,'0')}:${String(m).padStart(2,'0')} ${ampm}`);
-      setGreeting(h<5?'Raat ho gayi 🌙':h<12?'Good Morning! 🌅':h<17?'Kya chal raha hai? ☀️':h<21?'Shaam ho gayi 🌆':'Raat ho gayi 🌙');
-      setDate(now.toLocaleDateString('hi-IN',{weekday:'long',day:'numeric',month:'long'}));
-    }
-    tick();
-    const iv = setInterval(tick, 1000);
-    // Load dashboard data
-    load();
-    // Puter check
-    isPuterAvailable().then(setPuterOn).catch(()=>{});
+      const h = now.getHours(), m = now.getMinutes();
+      setTime(`${String(h%12||12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`);
+      setGreet(h<5?'🌙 Raat ho gayi':h<12?'☀️ Good Morning':h<17?'⛅ Kya chal raha hai':h<21?'🌆 Shaam ho gayi':'🌙 Raat ho gayi');
+    };
+    tick(); const iv = setInterval(tick, 30000);
+
+    // Load all data from localStorage
+    try {
+      const p = JSON.parse(localStorage.getItem('jarvis_profile')||'{}');
+      setProfile(p);
+      const g = JSON.parse(localStorage.getItem('jarvis_goals')||'[]');
+      setGoals(g.filter(g=>g.status==='active').slice(0,3));
+      const m = JSON.parse(localStorage.getItem('jarvis_memories')||'[]');
+      setMems(m.slice(-5));
+      const c = JSON.parse(localStorage.getItem('jarvis_conversations')||'[]');
+      setConvs(c.length);
+      const logs = JSON.parse(localStorage.getItem('jarvis_daily_logs')||'[]');
+      setMood(logs.slice(-7).map(l=>l.mood_score||5));
+    } catch {}
+
+    // Motivational quote (random)
+    const quotes = [
+      'Jo kal possible nahi laga, aaj possible hai.',
+      'Teri consistency hi teri superpower hai.',
+      'Chota step bhi aage ka step hai.',
+      'Progress > Perfection.',
+      'Ek din ka kaam ek din mein. Bas.',
+    ];
+    setQuote(quotes[Math.floor(Math.random()*quotes.length)]);
+    setLoad(false);
     return () => clearInterval(iv);
   }, []);
 
-  async function load() {
-    setLoading(true);
+  const name = profile.name || 'Yaar';
+  const streak = (() => {
     try {
-      const r = await fetch('/api/analytics?type=full');
-      if (r.status === 401) { router.push('/login'); return; }
-      const d = await r.json();
-      setData(d);
-      setProactive(d.proactive || []);
-    } catch {} finally { setLoading(false); }
-  }
-
-  async function saveLog() {
-    setSaving(true);
-    try {
-      await fetch('/api/analytics', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'log_day', ...logData }) });
-      setLogOpen(false); load();
-    } finally { setSaving(false); }
-  }
-
-  async function getWeeklyReport() {
-    setGenReport(true);
-    try {
-      const r = await fetch('/api/analytics', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'weekly_report' }) });
-      const d = await r.json();
-      setReport(d.report);
-    } finally { setGenReport(false); }
-  }
-
-  const STAT_COLORS = { mood:'#6D28D9', productivity:'#1A56DB', energy:'#0891B2', focus:'#15803D' };
-
-
-  // First visit detection
-  const isNew = !data?.logs?.length && !data?.goals?.length;
-
-  const loadingQuips = [
-    'Teri files dhundh raha hoon...',
-    'Memory load ho rahi hai...',
-    'Sab kuch calculate kar raha hoon...',
-    'Almost ready yaar...',
-    new Date().getHours() < 6 ? 'Raat ko kaam karana? theek hai...' : new Date().getHours() < 12 ? 'Good morning! Loading...' : 'Chal deta hoon...',
-  ];
-  const [quipIdx] = useState(() => Math.floor(Math.random() * loadingQuips.length));
+      const logs = JSON.parse(localStorage.getItem('jarvis_daily_logs')||'[]');
+      if (!logs.length) return 0;
+      let s = 0, d = new Date();
+      for (let i=0;i<7;i++) {
+        const key = new Date(d.getTime()-i*86400000).toISOString().slice(0,10);
+        if (logs.find(l=>l.date===key)) s++; else break;
+      }
+      return s;
+    } catch { return 0; }
+  })();
 
   if (loading) return (
     <div className="h-full flex items-center justify-center">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative">
-          <div className="absolute inset-0 rounded-full bg-blue-500/20 animate-ping"/>
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center orb-pulse shadow-[0_0_40px_rgba(26,86,219,0.5)]">
-            <span className="text-white font-black text-2xl">J</span>
-          </div>
-        </div>
-        <p className="text-slate-500 text-sm animate-pulse">{loadingQuips[quipIdx]}</p>
+      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center animate-pulse">
+        <span className="text-white font-black text-xl">J</span>
       </div>
     </div>
   );
 
-  const chartData = data?.logs?.map(l => ({ date: l.log_date?.slice(5), mood: l.mood_score, prod: l.productivity, energy: l.energy })) || [];
+  return (
+    <div className="h-full overflow-y-auto" style={{background:'transparent'}}>
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-5 pb-24">
+
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-slate-500 text-sm">{greeting}</p>
+            <h1 className="text-2xl font-bold text-white mt-0.5">{name} 👋</h1>
+            <p className="text-slate-600 text-xs mt-1">{time}</p>
+          </div>
+          {streak > 0 && (
+            <div className="flex flex-col items-center bg-orange-500/10 border border-orange-500/20 rounded-2xl px-4 py-2">
+              <Flame size={20} className="text-orange-400"/>
+              <span className="text-orange-400 font-bold text-lg leading-none">{streak}</span>
+              <span className="text-orange-400/60 text-[10px]">streak</span>
+            </div>
+          )}
+        </div>
+
+        {/* Quick actions */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/chat" className="glass border border-white/5 rounded-2xl p-4 flex items-center gap-3 hover:border-blue-500/30 transition-all active:scale-95">
+            <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center">
+              <MessageSquare size={18} className="text-blue-400"/>
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">Chat</p>
+              <p className="text-slate-500 text-xs">{convCount} conversations</p>
+            </div>
+          </Link>
+          <Link href="/voice" className="glass border border-white/5 rounded-2xl p-4 flex items-center gap-3 hover:border-purple-500/30 transition-all active:scale-95">
+            <div className="w-10 h-10 rounded-xl bg-purple-600/20 flex items-center justify-center">
+              <Mic size={18} className="text-purple-400"/>
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">Voice</p>
+              <p className="text-slate-500 text-xs">Tap to talk</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Today's focus — JARVIS quote */}
+        <div className="glass border border-blue-500/15 rounded-2xl p-4"
+          style={{background:'linear-gradient(135deg,rgba(26,86,219,0.08),rgba(6,182,212,0.05))'}}>
+          <div className="flex items-center gap-2 mb-2">
+            <Zap size={14} className="text-blue-400"/>
+            <span className="text-blue-400 text-xs font-medium tracking-wide uppercase">JARVIS says</span>
+          </div>
+          <p className="text-slate-300 text-sm leading-relaxed italic">"{quote}"</p>
+        </div>
+
+        {/* Mood mini chart */}
+        {weekMood.length > 1 && (
+          <div className="glass border border-white/5 rounded-2xl p-4">
+            <p className="text-slate-400 text-xs font-medium mb-3 uppercase tracking-wide">7-Day Mood</p>
+            <div className="flex items-end gap-1.5 h-10">
+              {weekMood.map((v,i) => (
+                <div key={i} style={{
+                  flex:1, borderRadius:4,
+                  height: `${(v/10)*100}%`,
+                  background: v>=7?'#10b981':v>=5?'#3b82f6':'#6366f1',
+                  opacity: 0.7 + (i/weekMood.length)*0.3,
+                  minHeight: 4,
+                }}/>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Active Goals */}
+        {goals.length > 0 && (
+          <div className="glass border border-white/5 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Target size={14} className="text-green-400"/>
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Active Goals</span>
+              </div>
+              <Link href="/goals" className="text-blue-400 text-xs flex items-center gap-1 hover:text-blue-300">
+                All <ChevronRight size={12}/>
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {goals.map((g,i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-green-400 shrink-0"/>
+                  <p className="text-slate-300 text-sm truncate">{g.title}</p>
+                  {g.progress > 0 && (
+                    <span className="text-green-400 text-xs ml-auto shrink-0">{g.progress}%</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Memory snippets — what JARVIS remembers */}
+        {memories.length > 0 && (
+          <div className="glass border border-white/5 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Brain size={14} className="text-purple-400"/>
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">What I Remember</span>
+              </div>
+              <Link href="/memory" className="text-blue-400 text-xs flex items-center gap-1">
+                All <ChevronRight size={12}/>
+              </Link>
+            </div>
+            <div className="space-y-1.5">
+              {memories.slice(-3).map((m,i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="text-slate-600 text-xs mt-0.5 shrink-0">•</span>
+                  <p className="text-slate-400 text-xs leading-relaxed">
+                    <span className="text-slate-500">{m.key}:</span> {m.value?.slice(0,60)}{m.value?.length>60?'...':''}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state — new user */}
+        {goals.length === 0 && memories.length === 0 && (
+          <div className="glass border border-white/5 rounded-2xl p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 mx-auto mb-3 flex items-center justify-center">
+              <span className="text-white font-black">J</span>
+            </div>
+            <p className="text-white font-medium mb-1">JARVIS ready hai!</p>
+            <p className="text-slate-500 text-sm mb-4">Chat shuru karo — main seekhunga, yaad rakhunga, aur actually help karunga.</p>
+            <Link href="/chat" className="inline-flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 text-blue-400 text-sm px-4 py-2 rounded-xl hover:bg-blue-600/30 transition-all">
+              <MessageSquare size={14}/> Start chatting
+            </Link>
+          </div>
+        )}
+
+        {/* Log mood */}
+        <div className="glass border border-white/5 rounded-2xl p-4">
+          <p className="text-slate-400 text-xs font-medium uppercase tracking-wide mb-3">Log Today</p>
+          <DayLogQuick />
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+// ── Quick day log ─────────────────────────────────────────────
+function DayLogQuick() {
+  const [mood, setMood] = useState(7);
+  const [saved, setSaved] = useState(false);
+
+  const save = async () => {
+    try {
+      await fetch('/api/analytics', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'log_day', mood_score: mood, energy: mood, productivity: mood }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {}
+  };
+
+  const moods = [
+    {v:2,e:'😞'},{v:4,e:'😐'},{v:6,e:'🙂'},{v:8,e:'😊'},{v:10,e:'🤩'}
+  ];
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 pb-20 lg:pb-6 space-y-4 max-w-4xl mx-auto">
-
-        {/* Live Clock Header */}
-        <div className="glass-card p-5 border border-white/[0.06] text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-cyan-500/5"/>
-          <p className="text-5xl font-black text-white tracking-tight relative">{time}</p>
-          <p className="text-slate-500 text-sm mt-1 relative">{date}</p>
-          <p className="text-blue-300/80 text-sm mt-2 font-medium relative">{greeting}</p>
-          <div className="flex gap-2 mt-4 justify-center relative">
-            <button onClick={() => setLogOpen(true)}
-              className="px-4 py-2 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-xl text-xs font-semibold hover:bg-blue-600/30 transition-colors">
-              + Aaj ka Log
-            </button>
-            <button onClick={getWeeklyReport} disabled={genReport}
-              className="px-4 py-2 bg-purple-600/20 border border-purple-500/30 text-purple-400 rounded-xl text-xs font-semibold hover:bg-purple-600/30 transition-colors disabled:opacity-50">
-              {genReport ? '...' : '📊 Weekly Report'}
-            </button>
-            <button onClick={load} className="p-2 bg-white/5 border border-white/10 text-slate-500 hover:text-white transition-colors rounded-xl">
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''}/>
-            </button>
-          </div>
-        </div>
-
-        {/* Prediction Banner */}
-        {data?.prediction && (
-          <div className="glass-card p-4 border border-purple-500/20 bg-purple-500/5">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                <Zap size={16} className="text-purple-400"/>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-purple-300">Tomorrow's Prediction</p>
-                <p className="text-xs text-slate-400 mt-1">{data.prediction.recommendation}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-xs text-slate-500">Predicted score: <span className="text-purple-400 font-bold">{data.prediction.predicted_score}/10</span></span>
-                  <span className="text-xs text-slate-500">Best time: <span className="text-cyan-400">{data.prediction.best_time}</span></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            { label:'Avg Mood',     value: data?.avgMood || '—',       unit:'/10', icon:'😊', color:'text-purple-400', bg:'bg-purple-500/10' },
-            { label:'Productivity', value: data?.avgProductivity || '—',unit:'/10', icon:'⚡', color:'text-blue-400',   bg:'bg-blue-500/10' },
-            { label:'Focus Hours',  value: data?.totalFocusHours || '—',unit:'h',   icon:'🎯', color:'text-cyan-400',   bg:'bg-cyan-500/10' },
-            { label:'Consistency',  value: data?.consistencyScore || 0, unit:'%',   icon:'🔥', color:'text-orange-400', bg:'bg-orange-500/10' },
-          ].map(s => (
-            <div key={s.label} className="glass-card p-4">
-              <div className={`w-8 h-8 ${s.bg} rounded-lg flex items-center justify-center text-base mb-2`}>{s.icon}</div>
-              <div className={`text-2xl font-black ${s.color}`}>{s.value}<span className="text-sm font-normal text-slate-500">{s.unit}</span></div>
-              <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Charts Row */}
-        {chartData.length > 1 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <div className="glass-card p-4">
-              <p className="text-xs font-semibold text-slate-400 mb-3">Mood Trend (14 days)</p>
-              <ResponsiveContainer width="100%" height={80}>
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#6D28D9" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#6D28D9" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <Area type="monotone" dataKey="mood" stroke="#6D28D9" fill="url(#moodGrad)" strokeWidth={2} dot={false}/>
-                  <Tooltip contentStyle={{ background:'#0a0f1e', border:'1px solid rgba(109,40,217,0.3)', borderRadius:8, fontSize:11 }}/>
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="glass-card p-4">
-              <p className="text-xs font-semibold text-slate-400 mb-3">Productivity Trend</p>
-              <ResponsiveContainer width="100%" height={80}>
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="prodGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#1A56DB" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#1A56DB" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <Area type="monotone" dataKey="prod" stroke="#1A56DB" fill="url(#prodGrad)" strokeWidth={2} dot={false}/>
-                  <Tooltip contentStyle={{ background:'#0a0f1e', border:'1px solid rgba(26,86,219,0.3)', borderRadius:8, fontSize:11 }}/>
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-
-        {/* AI System Status */}
-        <div className="grid grid-cols-3 gap-2">
-          <div className={`rounded-2xl border p-3 text-center ${puterOn ? 'bg-green-500/5 border-green-500/20' : 'bg-white/[0.03] border-white/[0.06]'}`}>
-            <div className="text-lg mb-0.5">{puterOn ? '🟢' : '🔴'}</div>
-            <p className="text-[10px] text-slate-500">Puter AI</p>
-            <p className={`text-[11px] font-bold ${puterOn ? 'text-green-400' : 'text-slate-600'}`}>{puterOn ? 'FREE' : 'Off'}</p>
-          </div>
-          <Link href="/chat" className="rounded-2xl border bg-blue-500/5 border-blue-500/20 p-3 text-center hover:bg-blue-500/10 transition-all">
-            <div className="text-lg mb-0.5">💬</div>
-            <p className="text-[10px] text-slate-500">Chat</p>
-            <p className="text-[11px] font-bold text-blue-400">Open</p>
-          </Link>
-          <Link href="/studio" className="rounded-2xl border bg-purple-500/5 border-purple-500/20 p-3 text-center hover:bg-purple-500/10 transition-all">
-            <div className="text-lg mb-0.5">🎨</div>
-            <p className="text-[10px] text-slate-500">Studio</p>
-            <p className="text-[11px] font-bold text-purple-400">Free</p>
-          </Link>
-        </div>
-
-        {/* Proactive Suggestions */}
-        {proactive.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shrink-0">
-                <span className="text-white font-black text-[8px]">J</span>
-              </div>
-              <p className="text-xs font-semibold text-slate-400">JARVIS bolta hai —</p>
-            </div>
-            {proactive.map((s, i) => (
-              <div key={i} className={`glass-card p-4 border ${
-                s.type==='warning'      ? 'border-red-500/20 bg-red-500/5' :
-                s.type==='opportunity'  ? 'border-green-500/20 bg-green-500/5' :
-                s.type==='encouragement'? 'border-yellow-500/20 bg-yellow-500/5' :
-                'border-blue-500/20 bg-blue-500/5'
-              }`}>
-                <div className="flex items-start gap-3">
-                  <span className="text-lg shrink-0">{s.type==='warning'?'⚠️':s.type==='opportunity'?'💡':s.type==='encouragement'?'🎉':'📊'}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-white">{s.title}</p>
-                    <p className="text-xs text-slate-400 mt-1">{s.message}</p>
-                    {s.action && <p className="text-xs text-blue-400 mt-2 font-medium">→ {s.action}</p>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Goals + Habits Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* Active Goals */}
-          <div className="glass-card p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Goals</p>
-              <Link href="/goals" className="text-xs text-blue-400 hover:text-blue-300">See all →</Link>
-            </div>
-            {data?.goals?.filter(g => g.status === 'active').slice(0, 3).map(g => (
-              <div key={g.id} className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
-                <div className={`w-2 h-2 rounded-full shrink-0 ${g.priority==='high'||g.priority==='critical'?'bg-red-400':g.priority==='medium'?'bg-yellow-400':'bg-green-400'}`}/>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-200 truncate">{g.title}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 h-1 bg-white/10 rounded-full">
-                      <div className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full" style={{ width:`${g.progress}%` }}/>
-                    </div>
-                    <span className="text-[10px] text-slate-500 shrink-0">{g.progress}%</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {(!data?.goals?.length) && <p className="text-xs text-slate-600 py-4 text-center">Chat mein goal batao → JARVIS plan karega</p>}
-          </div>
-
-          {/* Habits */}
-          <div className="glass-card p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Habits</p>
-              <Link href="/analytics" className="text-xs text-blue-400 hover:text-blue-300">Details →</Link>
-            </div>
-            {data?.habits?.slice(0, 4).map(h => (
-              <div key={h.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                <span className="text-sm text-slate-300 truncate flex-1">{h.name}</span>
-                <div className="flex items-center gap-1.5 ml-2">
-                  <Flame size={12} className="text-orange-400"/>
-                  <span className="text-xs text-orange-400 font-bold">{h.streak}</span>
-                </div>
-              </div>
-            ))}
-            {(!data?.habits?.length) && <p className="text-xs text-slate-600 py-4 text-center">Koi habit nahi hai abhi</p>}
-          </div>
-        </div>
-
-        {/* Quick Nav */}
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { href:'/chat',      icon:'💬', label:'Chat with JARVIS',    sub:'AI conversation' },
-            { href:'/analytics', icon:'📊', label:'Full Analytics',      sub:'Charts + insights' },
-            { href:'/memory',    icon:'🧠', label:'Memory Bank',         sub:'All stored data' },
-            { href:'/knowledge', icon:'📚', label:'Knowledge Base',      sub:'PDF, images, notes' },
-          ].map(item => (
-            <Link key={item.href} href={item.href}
-              className="glass-card p-4 hover:border-blue-500/30 transition-all group">
-              <div className="text-2xl mb-2">{item.icon}</div>
-              <p className="text-sm font-semibold text-white group-hover:text-blue-300 transition-colors">{item.label}</p>
-              <p className="text-xs text-slate-500">{item.sub}</p>
-            </Link>
-          ))}
-        </div>
-
-        {/* Weekly Report Result */}
-        {report && (
-          <div className="glass-card p-4 border border-purple-500/20">
-            <p className="text-xs font-semibold text-purple-400 mb-2 uppercase tracking-wider">📊 Weekly AI Report</p>
-            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{report}</p>
-          </div>
-        )}
+    <div className="flex items-center gap-3">
+      <div className="flex gap-2 flex-1">
+        {moods.map(m => (
+          <button key={m.v} onClick={() => setMood(m.v)}
+            className="flex-1 text-xl py-1 rounded-xl transition-all"
+            style={{background: mood===m.v ? 'rgba(26,86,219,0.25)' : 'rgba(255,255,255,0.03)',
+              border: mood===m.v ? '1px solid rgba(26,86,219,0.4)' : '1px solid transparent'}}>
+            {m.e}
+          </button>
+        ))}
       </div>
-
-      {/* Day Log Modal */}
-      {logOpen && (
-        <div className="fixed inset-0 z-50 flex items-end p-4">
-          <div className="fixed inset-0 bg-black/70" onClick={() => setLogOpen(false)}/>
-          <div className="relative w-full max-w-lg mx-auto glass border border-white/10 rounded-2xl p-5 space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-white">Aaj ka Log</h3>
-              <button onClick={() => setLogOpen(false)} className="text-slate-400">✕</button>
-            </div>
-            {[
-              { key:'mood', label:'😊 Mood', emoji:'😊' },
-              { key:'energy', label:'⚡ Energy', emoji:'⚡' },
-              { key:'productivity', label:'🎯 Productivity', emoji:'🎯' },
-            ].map(({ key, label }) => (
-              <div key={key}>
-                <div className="flex justify-between mb-1">
-                  <label className="text-xs text-slate-400">{label}</label>
-                  <span className="text-xs font-bold text-blue-400">{logData[key]}/10</span>
-                </div>
-                <input type="range" min="1" max="10" value={logData[key]}
-                  onChange={e => setLogData(p => ({ ...p, [key]: parseInt(e.target.value) }))}
-                  className="w-full accent-blue-500"/>
-              </div>
-            ))}
-            <div>
-              <label className="text-xs text-slate-400 block mb-1">⏱️ Focus Hours</label>
-              <input type="number" min="0" max="24" step="0.5" value={logData.focusHours}
-                onChange={e => setLogData(p => ({ ...p, focusHours: e.target.value }))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm"/>
-            </div>
-            <div>
-              <label className="text-xs text-slate-400 block mb-1">📝 Notes</label>
-              <textarea value={logData.notes} onChange={e => setLogData(p => ({ ...p, notes: e.target.value }))}
-                placeholder="Aaj kya hua? Kya achieve kiya?" rows={2}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-sm resize-none placeholder-slate-600"/>
-            </div>
-            <button onClick={saveLog} disabled={saving}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-semibold text-sm disabled:opacity-50">
-              {saving ? 'Saving...' : 'Save Log'}
-            </button>
-          </div>
-        </div>
-      )}
+      <button onClick={save}
+        className="text-xs px-3 py-2 rounded-xl transition-all"
+        style={{background: saved ? 'rgba(16,185,129,0.2)' : 'rgba(26,86,219,0.2)',
+          border: saved ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(26,86,219,0.3)',
+          color: saved ? '#34d399' : '#60a5fa'}}>
+        {saved ? '✓' : 'Log'}
+      </button>
     </div>
   );
 }
