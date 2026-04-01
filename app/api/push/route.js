@@ -34,7 +34,7 @@ export async function POST(req) {
         body:  body.body  || 'Kuch update hai!',
         url:   body.url   || '/chat',
         tag:   body.tag   || 'jarvis',
-        icon:  '/icon-192.png',
+        icon:  '/icons/icon-192.png',
       }));
       return Response.json({ ok: true });
     } catch (e) {

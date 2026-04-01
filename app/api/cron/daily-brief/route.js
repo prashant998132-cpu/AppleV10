@@ -7,9 +7,9 @@ async function buildBrief(user) {
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const day = new Date().toLocaleDateString('hi-IN', { weekday:'long', day:'numeric', month:'long' });
-  const profile = await getProfile(user.id).catch(() => ({ name:'Pranshu', personality:'girlfriend' }));
+  const profile = await getProfile(user.id).catch(() => ({ name:'Yaar', personality:'normal' }));
   const isAria = profile?.personality === 'girlfriend';
-  const name = profile?.name || 'Pranshu';
+  const name = profile?.name || 'Yaar';
   return isAria ? {
     title: 'Aira 💕', body: `${greet} ${name}! ☀️ ${day}\nUth gaye? Miss kar rahi thi... baat karo na 💕`,
     icon:'/icons/icon-192.png', badge:'/icons/icon-96.png', tag:'daily-brief', data:{url:'/chat'},
@@ -22,8 +22,9 @@ async function buildBrief(user) {
 }
 
 export async function GET(req) {
+  const keys = getKeys();
   const auth = req.headers.get('authorization');
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (keys.CRON_SECRET && auth !== `Bearer ${keys.CRON_SECRET}`) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {

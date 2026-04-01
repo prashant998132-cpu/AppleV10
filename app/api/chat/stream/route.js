@@ -11,7 +11,7 @@ import { detectToolCall, executeTool } from '@/lib/tools';
 import { detectMood, detectIntent, getMoodInjection, updateAttachment } from '@/lib/mood';
 import { buildMemoryContext as buildAriaMemCtx, extractMemoryFromMsg, saveAriaMemory } from '@/lib/aria-memory';
 import { readUrl, webSearch, extractUrl, needsWebFetch, extractRelevant } from '@/lib/ai/web-agent';
-import { extractConversationFacts, saveConversationFact, getPendingFollowUps, buildProactiveContext } from '@/lib/ai/proactive-memory';
+import { extractConversationFacts, saveConversationFact } from '@/lib/ai/proactive-memory';
 import { buildAriaContext } from '@/lib/responseBuilder';
 
 
@@ -224,11 +224,10 @@ export async function POST(req) {
     } catch {}
   }
 
-  // ── PROACTIVE MEMORY — pending follow-ups ─────────────────
-  const pendingFollowUps = getPendingFollowUps();
-  if (pendingFollowUps.length > 0 && Math.random() < 0.3) { // 30% chance to reference
-    toolCtx += buildProactiveContext(pendingFollowUps);
-  }
+  // ── PROACTIVE MEMORY — only client-side (localStorage)
+  // Server-side: localStorage is undefined, getPendingFollowUps returns []
+  // Client sends pendingFollowUps in request body for server to use
+  const pendingFollowUps = []; // server can't read localStorage
 
   try {
     const toolTasks = [];
