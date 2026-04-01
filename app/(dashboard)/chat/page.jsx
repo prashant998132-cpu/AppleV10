@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 import { startAriaAutoMessages, updateLastActivity } from '@/lib/aria-auto-msg';
-import { getAriaMemory, addAriaXP, updateStreak, getRelationshipLevel, getGapMessage, saveAriaMemory } from '@/lib/aria-memory';
+import { getAriaMemory, saveAriaMemory } from '@/lib/aria-memory';
 import { getConversationMemorySummary, getPendingFollowUps } from '@/lib/ai/proactive-memory';
 import { WeatherWidget, TimerWidget, CalculatorWidget, DashboardWidget, PriceWidget, ReminderWidget, detectWidget, parseTimerSeconds } from '@/components/chat/InlineWidgets';
 import Sounds from '@/lib/sound/sounds';

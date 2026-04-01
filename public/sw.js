@@ -13,7 +13,7 @@ const CACHE_API    = `${VERSION}-api`;
 const CACHE_MEDIA  = `${VERSION}-media`;
 
 const SHELL_URLS = ['/', '/chat', '/voice', '/analytics', '/goals', '/memory',
-  '/knowledge', '/settings', '/offline', '/phone', '/studio', '/profile'];
+  '/knowledge', '/settings', '/offline', '/studio', '/profile'];
 
 // Daily Productivity Schedule (generic — customizable)
 const STUDY_SCHEDULE = [
@@ -26,11 +26,11 @@ const STUDY_SCHEDULE = [
 ];
 
 const MOTIVATIONAL = [
-  'Har practice test teri rank improve karti hai. Chalta reh! 🔥',
-  'Biology mein tera goal 360/360 hai. Ek chapter ek din — kar sakta hai!',
-  'Topper woh nahi jo zyada padhta hai — woh jo smart padhta hai. Tu smart hai!',
-    'Chemistry ke formulas teri dost hain. Unhe baar baar dekho — yaad ho jayenge.',
-  'Aaj jo padh raha hai woh exam mein kaam aayega. Waste nahi ho raha kuch bhi!',
+  'Ek chota step bhi aage ka step hai. Chalta reh! 🔥',
+  'Jo aaj kiya woh kal ke kaam aayega. Waste nahi hota kuch bhi.',
+  'Smart kaam karo — direction matters more than speed.',
+  'Consistency beats intensity. Roz thoda, roz aage.',
+  'Tu already bahut aage hai apne purane self se. That counts.',
 ];
 
 function getDaysLeft() { return 0; } // Legacy — no longer used

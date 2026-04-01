@@ -78,10 +78,10 @@
       ]
     },
     {
-      "name": "Voice Mode",
+      "name": "Voice",
       "short_name": "Voice",
       "url": "/voice",
-      "description": "JARVIS se bolkar baat karo",
+      "description": "Bolkar baat karo",
       "icons": [
         {
           "src": "/icons/icon-96.png",
@@ -90,10 +90,10 @@
       ]
     },
     {
-      "name": "Phone Control",
-      "short_name": "Phone",
-      "url": "/phone",
-      "description": "Phone control karo",
+      "name": "Goals",
+      "short_name": "Goals",
+      "url": "/goals",
+      "description": "Goals track karo",
       "icons": [
         {
           "src": "/icons/icon-96.png",
@@ -106,30 +106,6 @@
       "short_name": "Studio",
       "url": "/studio",
       "description": "Image, Video, Music",
-      "icons": [
-        {
-          "src": "/icons/icon-96.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Automation",
-      "short_name": "Auto",
-      "url": "/automation",
-      "description": "MacroDroid + Tasker",
-      "icons": [
-        {
-          "src": "/icons/icon-96.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Goals",
-      "short_name": "Goals",
-      "url": "/goals",
-      "description": "Apne goals dekho",
       "icons": [
         {
           "src": "/icons/icon-96.png",

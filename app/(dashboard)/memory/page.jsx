@@ -77,7 +77,7 @@ export default function MemoryPage() {
   async function exportData() {
     setExporting(true);
     try {
-      const r = await fetch('/api/memory?export=true');
+      const r = await fetch('/api/backup');
       const blob = await r.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'jarvis-export.json'; a.click();

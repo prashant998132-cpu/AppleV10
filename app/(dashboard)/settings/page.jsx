@@ -182,7 +182,7 @@ export default function SettingsPage() {
       const r = await fetch('/api/memory?export=true');
       const blob = await r.blob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = `jarvis-backup-${Date.now()}.json`; a.click();
+      const a = document.createElement('a'); a.href = url; a.download = `jarvis-full-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
       URL.revokeObjectURL(url);
     } finally { setExporting(false); }
   }

@@ -512,6 +512,14 @@ export async function POST(req) {
         // Notify client which provider is being used
         if (providerOrder.length > 0) {
           send({ type: 'provider', provider: providerOrder[0] });
+        } else {
+          // No providers available (no API keys configured)
+          const fallback = offlineFallback(message);
+          for (const word of fallback.split(' ')) {
+            send({ type: 'token', token: word + ' ' });
+          }
+          send({ type: 'done', conversationId: convId, sources: [], provider: 'offline' });
+          return;
         }
 
         for (const providerId of providerOrder) {

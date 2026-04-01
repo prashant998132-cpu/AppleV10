@@ -2,9 +2,11 @@
 const path = require('path');
 
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // false = no double-render in dev, better for streaming
   typescript: { ignoreBuildErrors: true },
   eslint:     { ignoreDuringBuilds: true },
+  compress: true,
+  poweredByHeader: false,
   webpack: (config) => {
     config.resolve.alias['@'] = path.resolve(__dirname);
     config.resolve.alias['canvas'] = false;
