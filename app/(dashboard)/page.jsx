@@ -3,6 +3,19 @@ import { useState, useEffect } from 'react';
 import { MessageSquare, Target, Brain, Mic, TrendingUp, Flame, Sun, Moon, Star, ChevronRight, RefreshCw, Zap } from 'lucide-react';
 import Link from 'next/link';
 
+// NEET 2026 — May 3, 2026 at 14:00 IST
+const NEET_DATE = new Date('2026-05-03T08:30:00.000Z'); // 2 PM IST = 8:30 UTC
+
+function getNeetCountdown() {
+  const now = new Date();
+  const diff = NEET_DATE - now;
+  if (diff <= 0) return null; // exam ho gayi — hide karo
+  const days  = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins  = Math.floor((diff % 3600000)  / 60000);
+  return { days, hours, mins };
+}
+
 export default function DashboardPage() {
   const [time, setTime]       = useState('');
   const [greeting, setGreet]  = useState('');
@@ -13,14 +26,16 @@ export default function DashboardPage() {
   const [quote, setQuote]     = useState('');
   const [weekMood, setMood]   = useState([]);
   const [loading, setLoad]    = useState(true);
+  const [neet, setNeet]       = useState(null);
 
   useEffect(() => {
-    // Clock
+    // Clock + NEET countdown ticker
     const tick = () => {
       const now = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
       const h = now.getHours(), m = now.getMinutes();
       setTime(`${String(h%12||12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`);
       setGreet(h<5?'🌙 Raat ho gayi':h<12?'☀️ Good Morning':h<17?'⛅ Kya chal raha hai':h<21?'🌆 Shaam ho gayi':'🌙 Raat ho gayi');
+      setNeet(getNeetCountdown());
     };
     tick(); const iv = setInterval(tick, 30000);
 
@@ -38,15 +53,24 @@ export default function DashboardPage() {
       setMood(logs.slice(-7).map(l=>l.mood_score||5));
     } catch {}
 
-    // Motivational quote (random)
-    const quotes = [
+    // Motivational quote (random) — NEET-aware
+    const allQuotes = [
       'Jo kal possible nahi laga, aaj possible hai.',
       'Teri consistency hi teri superpower hai.',
       'Chota step bhi aage ka step hai.',
       'Progress > Perfection.',
       'Ek din ka kaam ek din mein. Bas.',
     ];
-    setQuote(quotes[Math.floor(Math.random()*quotes.length)]);
+    const neetQuotes = [
+      'NEET sirf ek exam nahi — tera proof of concept hai.',
+      'Biology padh, dream dekh, May 3 crush kar.',
+      'Har chapter ek battle hai. Ek ek jeet.',
+      'Doctor banna tha — toh NCERT khol.',
+      '30 din. Bas itna. Full send kar.',
+    ];
+    const ct = getNeetCountdown();
+    const pool = (ct && ct.days <= 35) ? [...allQuotes, ...neetQuotes] : allQuotes;
+    setQuote(pool[Math.floor(Math.random()*pool.length)]);
     setLoad(false);
     return () => clearInterval(iv);
   }, []);
@@ -114,6 +138,64 @@ export default function DashboardPage() {
             </div>
           </Link>
         </div>
+
+        {/* NEET 2026 Countdown — auto-hides after May 3 */}
+        {neet && (
+          <div className="rounded-2xl p-4 relative overflow-hidden"
+            style={{background:'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(251,146,60,0.08))',border:'1px solid rgba(239,68,68,0.25)'}}>
+            {/* Pulse ring */}
+            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-10"
+              style={{background:'radial-gradient(circle,#ef4444,transparent)'}}/>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-[10px] font-bold tracking-widest text-red-400 uppercase">NEET UG 2026</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"/>
+                </div>
+                {/* Big countdown */}
+                {neet.days > 1 ? (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-black text-white leading-none">{neet.days}</span>
+                    <span className="text-slate-400 text-sm">days</span>
+                    <span className="text-slate-600 text-sm ml-1">{neet.hours}h {neet.mins}m</span>
+                  </div>
+                ) : neet.days === 1 ? (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-black text-orange-400 leading-none animate-pulse">KAL HAI!</span>
+                    <span className="text-slate-400 text-sm">{neet.hours}h {neet.mins}m bacha</span>
+                  </div>
+                ) : (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl font-black text-red-400 leading-none animate-pulse">AAJ HAI!!</span>
+                    <span className="text-slate-400 text-sm">{neet.hours}h {neet.mins}m</span>
+                  </div>
+                )}
+                <p className="text-slate-500 text-[11px] mt-1">May 3 · 2:00 PM · Ladna hai, Jeetna hai 🩺</p>
+              </div>
+              <div className="text-4xl shrink-0 mt-1">
+                {neet.days > 7 ? '⚕️' : neet.days > 1 ? '🔥' : '⚡'}
+              </div>
+            </div>
+            {/* Progress bar — days remaining out of ~30 */}
+            {(() => {
+              const total = Math.ceil((NEET_DATE - new Date('2026-04-04')) / 86400000);
+              const done  = total - neet.days;
+              const pct   = Math.min(100, Math.round((done / total) * 100));
+              return (
+                <div className="mt-3">
+                  <div className="flex justify-between text-[10px] text-slate-600 mb-1">
+                    <span>Apr 4 se chalu</span>
+                    <span>{pct}% time gaya</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all"
+                      style={{width:`${pct}%`,background:'linear-gradient(90deg,#ef4444,#f97316)'}}/>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
         {/* Today's focus — JARVIS quote */}
         <div className="glass border border-blue-500/15 rounded-2xl p-4"

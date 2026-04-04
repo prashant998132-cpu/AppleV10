@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>JARVIS — GitHub Pusher</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg:       #050810;
+    --surface:  #0b1120;
+    --border:   rgba(99,179,237,0.12);
+    --accent:   #63b3ed;
+    --accent2:  #68d391;
+    --danger:   #fc8181;
+    --warn:     #f6ad55;
+    --muted:    #4a5568;
+    --text:     #e2e8f0;
+    --dim:      #718096;
+  }
+
+  * { box-sizing:border-box; margin:0; padding:0; }
+
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+
+  /* Grid bg */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(99,179,237,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,179,237,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none; z-index:0;
+  }
+
+  .wrap { position:relative; z-index:1; width:100%; max-width:640px; }
+
+  /* ── Header ── */
+  .header {
+    text-align:center;
+    margin-bottom:32px;
+    padding-top:16px;
+  }
+  .logo {
+    display:inline-flex; align-items:center; gap:10px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:22px; font-weight:700;
+    letter-spacing:-0.5px; color:var(--text);
+    margin-bottom:6px;
+  }
+  .logo-dot {
+    width:10px; height:10px; border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 12px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.6;transform:scale(.85)} }
+  .header p {
+    font-size:12px; color:var(--muted);
+    font-family:'Space Grotesk',sans-serif;
+  }
+
+  /* ── Card ── */
+  .card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:24px;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:1px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    opacity:.4;
+  }
+
+  .section-label {
+    font-size:10px; font-weight:600;
+    letter-spacing:0.15em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .section-label::after {
+    content:''; flex:1; height:1px;
+    background:linear-gradient(90deg,var(--border),transparent);
+  }
+
+  /* ── Inputs ── */
+  label {
+    display:block;
+    font-size:11px; color:var(--dim); margin-bottom:5px;
+    letter-spacing:.05em;
+  }
+  input, textarea, select {
+    width:100%; background:#080d18;
+    border:1px solid rgba(99,179,237,0.15);
+    border-radius:10px;
+    padding:10px 14px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    outline:none;
+    transition:border-color .2s, box-shadow .2s;
+    margin-bottom:14px;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color:rgba(99,179,237,0.5);
+    box-shadow:0 0 0 3px rgba(99,179,237,0.08);
+  }
+  input[type="password"] { letter-spacing:3px; }
+  textarea { resize:vertical; min-height:70px; }
+  select option { background:#0b1120; }
+
+  /* ── Buttons ── */
+  .btn-row { display:flex; gap:10px; flex-wrap:wrap; }
+  button {
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px; font-weight:600;
+    padding:10px 20px; border-radius:10px;
+    border:none; cursor:pointer;
+    transition:all .18s; outline:none;
+    display:flex; align-items:center; gap:7px;
+  }
+  .btn-primary {
+    background:linear-gradient(135deg,#2b6cb0,#2c7a7b);
+    color:#fff; flex:1; justify-content:center;
+  }
+  .btn-primary:hover:not(:disabled) {
+    transform:translateY(-1px);
+    box-shadow:0 6px 20px rgba(43,108,176,0.4);
+  }
+  .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+  .btn-secondary {
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+    color:var(--dim);
+  }
+  .btn-secondary:hover { background:rgba(255,255,255,0.07); color:var(--text); }
+  .btn-danger {
+    background:rgba(252,129,129,0.1);
+    border:1px solid rgba(252,129,129,0.2);
+    color:var(--danger);
+  }
+  .btn-danger:hover { background:rgba(252,129,129,0.18); }
+
+  /* ── Quick Presets ── */
+  .presets {
+    display:flex; flex-wrap:wrap; gap:7px; margin-bottom:14px;
+  }
+  .preset {
+    font-size:11px; font-family:'JetBrains Mono',monospace;
+    padding:5px 11px; border-radius:20px;
+    background:rgba(99,179,237,0.06);
+    border:1px solid rgba(99,179,237,0.15);
+    color:var(--accent); cursor:pointer;
+    transition:.15s;
+  }
+  .preset:hover { background:rgba(99,179,237,0.14); }
+
+  /* ── Terminal Log ── */
+  #log {
+    background:#030508;
+    border:1px solid rgba(99,179,237,0.08);
+    border-radius:12px;
+    padding:16px;
+    min-height:180px;
+    max-height:340px;
+    overflow-y:auto;
+    font-size:12px;
+    line-height:1.7;
+    font-family:'JetBrains Mono',monospace;
+  }
+  #log::-webkit-scrollbar { width:4px; }
+  #log::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  .log-line { display:block; }
+  .log-info  { color:var(--accent); }
+  .log-ok    { color:var(--accent2); }
+  .log-warn  { color:var(--warn); }
+  .log-error { color:var(--danger); }
+  .log-dim   { color:var(--muted); }
+  .log-bold  { color:#fff; font-weight:600; }
+
+  /* ── Status pill ── */
+  #status-pill {
+    display:none;
+    align-items:center; gap:8px;
+    padding:10px 18px; border-radius:50px;
+    font-size:12px; font-weight:600;
+    margin-top:14px;
+  }
+  #status-pill.show { display:flex; }
+  #status-pill.success {
+    background:rgba(104,211,145,0.1); border:1px solid rgba(104,211,145,0.25);
+    color:var(--accent2);
+  }
+  #status-pill.error {
+    background:rgba(252,129,129,0.1); border:1px solid rgba(252,129,129,0.25);
+    color:var(--danger);
+  }
+  #status-pill.running {
+    background:rgba(99,179,237,0.1); border:1px solid rgba(99,179,237,0.25);
+    color:var(--accent);
+  }
+
+  /* ── Spinner ── */
+  .spin {
+    width:14px; height:14px;
+    border:2px solid currentColor;
+    border-top-color:transparent;
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* ── NEET badge ── */
+  .neet-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11px; font-family:'Space Grotesk',sans-serif;
+    padding:4px 12px; border-radius:20px;
+    background:rgba(252,129,129,0.08);
+    border:1px solid rgba(252,129,129,0.2);
+    color:var(--danger); margin-top:6px;
+  }
+  .neet-badge .blink { animation:pulse 1s infinite; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      JARVIS Pusher
+    </div>
+    <p>GitHub deploy tool · AppleV10</p>
+    <div id="neet-header"></div>
+  </div>
+
+  <!-- Config Card -->
+  <div class="card">
+    <div class="section-label">Config</div>
+
+    <label>GitHub Token (ghp_...)</label>
+    <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off"/>
+
+    <label>Repository (owner/repo)</label>
+    <input type="text" id="repo" value="prashant998132-cpu/AppleV10" placeholder="prashant998132-cpu/AppleV10"/>
+
+    <label>Branch</label>
+    <input type="text" id="branch" value="main" placeholder="main"/>
+  </div>
+
+  <!-- Commit Card -->
+  <div class="card">
+    <div class="section-label">Commit</div>
+
+    <label>Commit Message</label>
+    <input type="text" id="msg" value="feat: JARVIS upgrade" placeholder="feat: what changed"/>
+
+    <label>Quick Presets</label>
+    <div class="presets">
+      <div class="preset" onclick="setMsg('feat: NEET countdown + JARVIS upgrades')">🎯 NEET countdown</div>
+      <div class="preset" onclick="setMsg('fix: bug fixes + performance')">🔧 Bug fix</div>
+      <div class="preset" onclick="setMsg('feat: UI improvements')">✨ UI upgrade</div>
+      <div class="preset" onclick="setMsg('feat: model upgrades + brain.js improvements')">🧠 Brain upgrade</div>
+      <div class="preset" onclick="setMsg('chore: cleanup + refactor')">🧹 Cleanup</div>
+      <div class="preset" onclick="setMsg('feat: voice orb + canvas animations')">🔊 Voice orb</div>
+    </div>
+
+    <label>Files to Push (comma separated, or "all")</label>
+    <input type="text" id="files" value="all" placeholder="all  or  app/page.jsx, lib/brain.js"/>
+
+    <label>Deploy Note (optional)</label>
+    <textarea id="note" placeholder="Kya change kiya aur kyu..."></textarea>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="pushBtn" onclick="startPush()">
+        <span>▲</span> Push to GitHub
+      </button>
+      <button class="btn-secondary" onclick="clearLog()">Clear</button>
+      <button class="btn-danger" onclick="hardReset()">⚠ Reset</button>
+    </div>
+
+    <div id="status-pill"></div>
+  </div>
+
+  <!-- Terminal -->
+  <div class="card">
+    <div class="section-label">Terminal</div>
+    <div id="log"><span class="log-dim">// Ready. Configure token + repo, then push.</span></div>
+  </div>
+
+  <!-- Info Card -->
+  <div class="card">
+    <div class="section-label">Workflow</div>
+    <div style="font-size:12px; color:var(--dim); line-height:2;">
+      <span class="log-dim">1.</span> Token enter karo (ghp_...) — local rehta hai, save nahi hota<br/>
+      <span class="log-dim">2.</span> Commit message dalo ya preset choose karo<br/>
+      <span class="log-dim">3.</span> <span style="color:var(--accent)">▲ Push to GitHub</span> click karo<br/>
+      <span class="log-dim">4.</span> Vercel auto-deploy hoga (~90 sec)<br/>
+      <span class="log-dim">5.</span> Live: <a href="https://apple-v10.vercel.app" target="_blank" style="color:var(--accent);text-decoration:none">apple-v10.vercel.app</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── NEET Countdown in header ─────────────────────────────────
+const NEET = new Date('2026-05-03T08:30:00.000Z');
+function updateNeetBadge() {
+  const el = document.getElementById('neet-header');
+  const diff = NEET - new Date();
+  if (diff <= 0) { el.innerHTML = ''; return; }
+  const days = Math.floor(diff / 86400000);
+  const hrs  = Math.floor((diff % 86400000) / 3600000);
+  el.innerHTML = `<div class="neet-badge"><span class="blink">🩺</span> NEET ${days}d ${hrs}h baki</div>`;
+}
+updateNeetBadge();
+setInterval(updateNeetBadge, 60000);
+
+// ── Helpers ─────────────────────────────────────────────────
+const logEl = document.getElementById('log');
+function log(text, cls='log-dim') {
+  const ts = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  logEl.innerHTML += `\n<span class="${cls}">[${ts}] ${text}</span>`;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog() { logEl.innerHTML = '<span class="log-dim">// Log cleared.</span>'; }
+
+function setMsg(m) { document.getElementById('msg').value = m; }
+
+function pill(txt, type) {
+  const p = document.getElementById('status-pill');
+  p.className = `show ${type}`;
+  p.innerHTML = type==='running'
+    ? `<div class="spin"></div>${txt}`
+    : `<span>${type==='success'?'✓':'✗'}</span>${txt}`;
+}
+
+function hardReset() {
+  if (!confirm('Token clear karein?')) return;
+  document.getElementById('token').value = '';
+  clearLog();
+  document.getElementById('status-pill').className = '';
+  log('// Reset. Token cleared.', 'log-warn');
+}
+
+// ── GitHub API ───────────────────────────────────────────────
+async function ghAPI(token, path, method='GET', body=null) {
+  const opts = {
+    method, headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(`https://api.github.com${path}`, opts);
+  if (!r.ok) {
+    const e = await r.json().catch(()=>({message:r.statusText}));
+    throw new Error(`${r.status}: ${e.message}`);
+  }
+  return r.json();
+}
+
+// ── Main Push ────────────────────────────────────────────────
+let pushing = false;
+async function startPush() {
+  if (pushing) return;
+  const token  = document.getElementById('token').value.trim();
+  const repo   = document.getElementById('repo').value.trim();
+  const branch = document.getElementById('branch').value.trim() || 'main';
+  const msg    = document.getElementById('msg').value.trim() || 'chore: update';
+  const note   = document.getElementById('note').value.trim();
+
+  if (!token) { log('❌ Token required!', 'log-error'); return; }
+  if (!repo)  { log('❌ Repo required!', 'log-error'); return; }
+
+  pushing = true;
+  document.getElementById('pushBtn').disabled = true;
+  pill('Pushing...', 'running');
+  clearLog();
+
+  const fullMsg = note ? `${msg}\n\n${note}` : msg;
+
+  try {
+    // 1. Get user
+    log('👤 Verifying token...', 'log-info');
+    const user = await ghAPI(token, '/user');
+    log(`✓ Logged in as: ${user.login}`, 'log-ok');
+
+    // 2. Get current HEAD
+    log(`📦 Getting branch: ${branch}`, 'log-info');
+    const refData = await ghAPI(token, `/repos/${repo}/git/refs/heads/${branch}`);
+    const currentSHA = refData.object.sha;
+    log(`✓ HEAD: ${currentSHA.slice(0,8)}`, 'log-ok');
+
+    // 3. Get tree
+    log('🌳 Loading file tree...', 'log-info');
+    const commitData = await ghAPI(token, `/repos/${repo}/git/commits/${currentSHA}`);
+    const treeSHA = commitData.tree.sha;
+    log(`✓ Tree: ${treeSHA.slice(0,8)}`, 'log-ok');
+
+    // 4. Create deploy marker (touch .deploy-trigger)
+    log('📝 Creating deploy trigger...', 'log-info');
+    const triggerContent = btoa(`deployed: ${new Date().toISOString()}\ncommit: ${fullMsg}\nauthor: JARVIS Pusher`);
+    const existingTrigger = await ghAPI(token, `/repos/${repo}/contents/.deploy-trigger`).catch(()=>null);
+    const triggerBody = {
+      message: fullMsg,
+      content: triggerContent,
+      branch,
+      ...(existingTrigger ? { sha: existingTrigger.sha } : {})
+    };
+    await ghAPI(token, `/repos/${repo}/contents/.deploy-trigger`, 'PUT', triggerBody);
+    log(`✓ Pushed: .deploy-trigger`, 'log-ok');
+    log(`📌 Commit: "${msg}"`, 'log-bold');
+    log(`🚀 Vercel auto-deploy triggered!`, 'log-ok');
+    log(`⏱️  Live in ~90 seconds at apple-v10.vercel.app`, 'log-dim');
+
+    pill('Pushed! Vercel deploy started ✓', 'success');
+  } catch (err) {
+    log(`❌ Error: ${err.message}`, 'log-error');
+    pill('Push failed — check log', 'error');
+  } finally {
+    pushing = false;
+    document.getElementById('pushBtn').disabled = false;
+  }
+}
+
+// Enter key on commit msg → push
+document.getElementById('msg').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startPush();
+});
+
+// Save token in sessionStorage (tab closes = gone)
+document.getElementById('token').addEventListener('input', e => {
+  sessionStorage.setItem('jarvis_gh_token', e.target.value);
+});
+const saved = sessionStorage.getItem('jarvis_gh_token');
+if (saved) document.getElementById('token').value = saved;
+</script>
+</body>
+</html>
