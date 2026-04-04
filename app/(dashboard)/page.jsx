@@ -95,7 +95,7 @@ export default function DashboardPage() {
             <p className="text-slate-600 text-xs mt-1">{time}</p>
           </div>
           {streak > 0 && (
-            <div className="flex flex-col items-center bg-orange-500/10 border border-orange-500/20 rounded-2xl px-4 py-2">
+            <div className={`flex flex-col items-center rounded-2xl px-4 py-2 ${streak >= 7 ? 'bg-orange-500/20 border border-orange-500/40 shadow-[0_0_20px_rgba(249,115,22,0.2)]' : 'bg-orange-500/10 border border-orange-500/20'}`}>
               <Flame size={20} className="text-orange-400"/>
               <span className="text-orange-400 font-bold text-lg leading-none">{streak}</span>
               <span className="text-orange-400/60 text-[10px]">streak</span>

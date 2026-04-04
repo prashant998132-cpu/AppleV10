@@ -104,11 +104,10 @@ function getQuickStarters(personality) {
     { t:'Ek dark joke sunao yaar',         i:'😈' },
   ];
   if (h < 12) return [
-    { t:'Aaj ka plan banao',      i:'📋' },
+    { t:'Aaj ka plan banao',               i:'📋' },
     { t:'Morning motivation chahiye',      i:'🔥' },
-    
     { t:'Aaj ka mausam kaisa hai?',        i:'🌤️' },
-    { t:'Kuch interesting batao', i:'🧠' },
+    { t:'Code review chahiye',             i:'🔧' },
   ];
   if (h < 17) return [
     { t:'Focus nahi ho raha',              i:'😵' },
@@ -123,10 +122,10 @@ function getQuickStarters(personality) {
     { t:'Stress hai, baat karni hai',      i:'💙' },
   ];
   return [
-    { t:'Goals check karo',       i:'🎯' },
-    { t:'Kal ke liye goal set karo',       i:'🎯' },
-    { t:'Neend se pehle motivation',       i:'✨' },
-    { t:'Din review karo mera',            i:'🌙' },
+    { t:'Din ka review karo',              i:'📊' },
+    { t:'Kal ke liye kya plan hai?',       i:'🎯' },
+    { t:'Koi relaxing baat karo',          i:'🌙' },
+    { t:'Random interesting fact batao',   i:'✨' },
   ];
 }
 
@@ -463,6 +462,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
 function HistorySidebar({ open, onClose, onLoad, onDelete }) {
   const [convs, setConvs] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [hSearch, setHSearch] = useState('');
 
   useEffect(()=>{
     if(!open) return;
@@ -479,10 +479,14 @@ function HistorySidebar({ open, onClose, onLoad, onDelete }) {
           <p className="font-bold text-white text-sm">Chat History</p>
           <button onClick={onClose}><X size={16} className="text-slate-600"/></button>
         </div>
+        <div className="px-3 py-2 border-b border-white/[0.04]">
+          <input value={hSearch} onChange={e=>setHSearch(e.target.value)}
+            placeholder="Search chats..." className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-600 outline-none focus:border-blue-500/30 transition-colors"/>
+        </div>
         <div className="flex-1 overflow-y-auto py-2 no-scrollbar">
           {loading && <p className="text-center text-slate-700 text-xs py-8">Loading...</p>}
           {!loading && convs.length===0 && <p className="text-center text-slate-700 text-xs py-8">Koi conversation nahi hai abhi</p>}
-          {convs.map(c=>(
+          {convs.filter(cv=>!hSearch||cv.title?.toLowerCase().includes(hSearch.toLowerCase())).map(c=>(
             <div key={c.id} className="group flex items-center gap-2 px-3 py-2 hover:bg-white/5 cursor-pointer transition-colors mx-2 rounded-xl">
               <MessageSquare size={13} className="text-slate-700 shrink-0"/>
               <button onClick={()=>{onLoad(c.id);onClose();}} className="flex-1 text-left min-w-0">

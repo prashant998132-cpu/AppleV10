@@ -28,8 +28,8 @@ const TABS = [
   { id:'ai',    icon:Sparkles,label:'AI Chat',emoji:'🤖' },
 ];
 
-const IMAGE_STYLES = ['realistic','anime','indian','cinematic','watercolor','thumbnail','instagram','logo','portrait','landscape'];
-const MUSIC_GENRES = ['hindi_film','hindi_happy','hindi_sad','motivational','lofi','meditation','classical_indian','party','folk','background'];
+const IMAGE_STYLES = ['realistic','anime','indian','cinematic','watercolor','thumbnail','instagram','logo','portrait','landscape','3d_render','pixel_art','sketch','oil_painting','neon_cyberpunk'];
+const MUSIC_GENRES = ['hindi_film','hindi_happy','hindi_sad','motivational','lofi','meditation','classical_indian','party','folk','background','hip_hop','indie','jazz','ambient','workout'];
 
 // ─── PUTER.JS HOOK ───────────────────────────────────────────
 function usePuter() {

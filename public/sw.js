@@ -13,7 +13,7 @@ const CACHE_API    = `${VERSION}-api`;
 const CACHE_MEDIA  = `${VERSION}-media`;
 
 const SHELL_URLS = ['/', '/chat', '/voice', '/analytics', '/goals', '/memory',
-  '/knowledge', '/settings', '/offline', '/studio', '/profile'];
+  '/knowledge', '/settings', '/offline', '/studio', '/profile', '/automation'];
 
 // Daily Productivity Schedule (generic — customizable)
 const STUDY_SCHEDULE = [

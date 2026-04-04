@@ -99,7 +99,10 @@ export default function MemoryPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-black text-white">🧠 JARVIS ki Yaadein</h1>
-            <p className="text-xs text-slate-500">JARVIS ko {memories.length} baatein yaad hain tumhari</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              <p className="text-xs text-slate-500">JARVIS ko yaad hai:</p>
+              <span className="text-xs font-bold text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full">{memories.length} memories</span>
+            </div>
           </div>
           <div className="flex gap-2">
             <button onClick={exportData} disabled={exporting}

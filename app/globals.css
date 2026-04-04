@@ -224,3 +224,64 @@ input:-webkit-autofill:focus {
   font-size:11px; font-weight:600;
   backdrop-filter:blur(8px);
 }
+
+/* ── JARVIS scan line (HUD aesthetic) ── */
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+.scanline::after {
+  content:''; position:fixed; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,rgba(26,86,219,0.4),transparent);
+  animation:scanline 4s linear infinite;
+  pointer-events:none; z-index:9998;
+}
+
+/* ── Typing indicator dots ── */
+.typing-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:currentColor; display:inline-block;
+  animation:typing-bounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay:0.2s; }
+.typing-dot:nth-child(3) { animation-delay:0.4s; }
+@keyframes typing-bounce {
+  0%,60%,100% { transform:translateY(0); opacity:0.5; }
+  30% { transform:translateY(-6px); opacity:1; }
+}
+
+/* ── Active nav item glow ── */
+.nav-active {
+  position:relative;
+}
+.nav-active::before {
+  content:''; position:absolute; left:0; top:20%; bottom:20%;
+  width:3px; border-radius:0 3px 3px 0;
+  background:var(--accent,#1A56DB);
+  box-shadow: 0 0 8px var(--accent,#1A56DB);
+}
+
+/* ── Message bubble polish ── */
+.msg-user {
+  background:linear-gradient(135deg,rgba(26,86,219,0.25),rgba(8,145,178,0.15));
+  border:1px solid rgba(26,86,219,0.2);
+}
+.msg-ai {
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+}
+
+/* ── Glow button ── */
+.btn-glow {
+  position:relative; overflow:hidden;
+}
+.btn-glow::after {
+  content:''; position:absolute; inset:-2px;
+  background:linear-gradient(45deg,#1A56DB,#0891B2,#1A56DB);
+  border-radius:inherit; z-index:-1; opacity:0;
+  transition:opacity 0.3s;
+  background-size:200%;
+  animation:gradient-shift 2s linear infinite;
+}
+.btn-glow:hover::after { opacity:0.5; }
+@keyframes gradient-shift { 0%{background-position:0%} 100%{background-position:200%} }

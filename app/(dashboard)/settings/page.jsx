@@ -381,6 +381,14 @@ export default function SettingsPage() {
                   🤖 AI Studio (Free)
                 </a>
               </div>
+              <div className="flex gap-2 mt-2">
+                <a href="/pusher.html" target="_blank" className="flex-1 text-center py-2 text-xs text-slate-400 bg-white/[0.04] border border-white/[0.08] rounded-xl hover:bg-white/[0.07] transition-all">
+                  ▲ GitHub Pusher
+                </a>
+                <div className="flex-1 text-center py-2 text-xs text-slate-600 bg-white/[0.02] border border-white/[0.05] rounded-xl">
+                  JARVIS v12.0 ✓
+                </div>
+              </div>
             </div>
           </div>
         )}
