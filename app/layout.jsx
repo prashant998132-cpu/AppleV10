@@ -4,10 +4,20 @@ import Script from 'next/script';
 
 export const metadata = {
   title: 'JARVIS — Your Personal AI',
-  description: 'Aapka personal AI — chat, goals, analytics sab ek jagah. Hinglish mein.',
+  description: 'JARVIS — Tera personal AI assistant. Chat, voice, goals, analytics, memory. Hinglish mein. Free forever.',
   manifest: '/manifest.json',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'JARVIS' },
-  keywords: ['AI', 'personal assistant', 'Hinglish', 'JARVIS', 'chat'],
+  keywords: ['AI', 'personal assistant', 'Hinglish', 'JARVIS', 'chat', 'voice AI', 'free AI', 'India AI'],
+  openGraph: {
+    title: 'JARVIS — Your Personal AI',
+    description: 'Free AI assistant in Hinglish. Chat, voice, goals, analytics, memory.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'JARVIS AI',
+    description: 'Free personal AI in Hinglish',
+  },
 };
 
 export const viewport = {

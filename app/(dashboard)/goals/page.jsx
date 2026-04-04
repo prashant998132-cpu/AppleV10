@@ -69,7 +69,7 @@ function GoalCard({ goal, onUpdate }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <p className={`text-sm font-semibold ${done ? 'text-slate-500 line-through' : 'text-white'}`}>{goal.title}</p>
-            <span className={`text-[10px] border px-1.5 py-0.5 rounded-full ${catStyle}`}>{goal.category || 'general'}</span>
+            <span className={`text-[10px] border px-1.5 py-0.5 rounded-full ${catStyle}`}>{CAT_EMOJI[goal.category] || '📌'} {goal.category || 'general'}</span>
             {done   && <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-1.5 py-0.5 rounded-full">Done</span>}
             {paused && <span className="text-[10px] bg-slate-500/10 text-slate-500 border border-slate-500/20 px-1.5 py-0.5 rounded-full">Paused</span>}
           </div>
@@ -274,9 +274,11 @@ export default function GoalsPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
-            <Flag size={32} className="text-slate-700 mx-auto mb-3"/>
-            <p className="text-slate-500 text-sm">Koi goal nahi</p>
-            <p className="text-slate-600 text-xs mt-1">Upar Add karo, ya chat mein bol do</p>
+            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-3">
+              <Flag size={24} className="text-blue-400"/>
+            </div>
+            <p className="text-white font-semibold text-sm mb-1">Koi goal nahi</p>
+            <p className="text-slate-500 text-xs">Add karo — AI se ya manually</p>
           </div>
         ) : (
           <div className="space-y-3">

@@ -43,6 +43,11 @@ export default function AnalyticsPage() {
       setData(d);
       setMoodAI(d.moodAnalysis);
       setLlmStats(d.llmStats || null); // llmStats now from localStorage
+      // Compute best day
+      if (d.logs?.length) {
+        const best = d.logs.reduce((a, b) => ((a.mood_score||0) + (a.productivity||0)) > ((b.mood_score||0) + (b.productivity||0)) ? a : b);
+        setBestDay(best);
+      }
     } finally { setLoad(false); }
   }
 
@@ -141,6 +146,20 @@ export default function AnalyticsPage() {
                 </div>
               ))}
             </div>
+
+            {/* Best Day Card */}
+            {bestDay && (
+              <div className="glass-card p-4 border border-green-500/20" style={{background:'linear-gradient(135deg,rgba(16,185,129,0.07),rgba(6,182,212,0.04))'}}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] text-green-400 font-semibold uppercase tracking-wider mb-1">🏆 Best Day</p>
+                    <p className="text-white font-bold text-sm">{new Date(bestDay.log_date).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'})}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Mood {bestDay.mood_score}/10 · Energy {bestDay.energy || bestDay.productivity}/10</p>
+                  </div>
+                  <div className="text-3xl">⭐</div>
+                </div>
+              </div>
+            )}
 
             {/* Radar */}
             <div className="glass-card p-4">

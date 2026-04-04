@@ -2021,8 +2021,9 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             <textarea ref={taRef} value={input} onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}
               placeholder={profilePersonality === "girlfriend" ? "Aira se kuch bolo..." : profilePersonality === "study" ? "Kuch poochho, kuch seekhna hai..." : profilePersonality === "roast" ? "Roast ke liye ready ho? 😈" : "Kuch poocho ya batao..."}
-              rows={1} style={{resize:'none',minHeight:'24px',maxHeight:'96px',overflowY:'auto'}}
+              rows={1} maxLength={4000} style={{resize:'none',minHeight:'24px',maxHeight:'96px',overflowY:'auto'}}
               className="w-full bg-transparent text-white text-[15px] placeholder-slate-600 outline-none leading-relaxed"/>
+            {input.length > 3000 && <span className="absolute bottom-1 right-2 text-[9px] text-orange-400/70">{4000-input.length}</span>}
           </div>
 
           {/* Bottom toolbar */}

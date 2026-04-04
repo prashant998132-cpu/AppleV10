@@ -9,6 +9,7 @@ const PHASE = { IDLE:'idle', LISTENING:'listening', THINKING:'thinking', SPEAKIN
 // ── Dot colors per phase ──────────────────────────────────────
 const COLORS = {
   idle:      { base:'#1d4ed8', bright:'#60a5fa', glow:'rgba(96,165,250,0.15)' },
+  aria:      { base:'#9d174d', bright:'#f472b6', glow:'rgba(244,114,182,0.2)'  },
   listening: { base:'#7c3aed', bright:'#c084fc', glow:'rgba(192,132,252,0.2)' },
   thinking:  { base:'#0e7490', bright:'#22d3ee', glow:'rgba(34,211,238,0.2)'  },
   speaking:  { base:'#065f46', bright:'#34d399', glow:'rgba(52,211,153,0.2)'  },
@@ -23,6 +24,7 @@ export default function VoicePage() {
   const [ariaMemory, setAM]    = useState('{}');
   const [error, setError]      = useState('');
   const [label, setLabel]      = useState('Hold to speak');
+  const [wpm, setWpm]          = useState(0);
   const [showHist, setShowHist]= useState(false);
 
   const canvasRef   = useRef(null);
