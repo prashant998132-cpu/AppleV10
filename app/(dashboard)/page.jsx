@@ -103,6 +103,20 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* What's New — v12.1 (dismiss once) */}
+        {showWhatsNew && (
+          <div className="glass border border-cyan-500/20 rounded-2xl p-3.5 relative"
+            style={{background:'linear-gradient(135deg,rgba(6,182,212,0.07),rgba(26,86,219,0.05))'}}>
+            <button onClick={dismissWhatsNew} className="absolute top-2.5 right-2.5 text-slate-600 hover:text-slate-400 transition-colors text-xs">✕</button>
+            <p className="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider mb-1.5">✨ What's New — v12.1</p>
+            <div className="space-y-0.5">
+              {['🔍 History search in chat','🎨 10 theme color swatches','↺ Quote refresh button','📊 AI models usage tab','🏆 Best day analytics'].map(t => (
+                <p key={t} className="text-[11px] text-slate-400">{t}</p>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Quick actions — 3 cards */}
         <div className="grid grid-cols-3 gap-2.5">
           <Link href="/chat" className="glass border border-white/[0.06] rounded-2xl p-3.5 flex flex-col items-center gap-2 hover:border-blue-500/30 active:scale-95 transition-all">

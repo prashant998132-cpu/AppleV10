@@ -1385,6 +1385,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
 
     setMsgs(p=>[...p,userMsg]);
     setLoading(true);
+    try { Sounds.thinking?.(); } catch {}
     const phaseMessages = {
       flash: ['⚡ Already pata hai...', '⚡ Instant reply aa raha hai...', '⚡ Chal deta hoon...'][Math.floor(Math.random()*3)],
       think: ['🧠 Seriously soch raha hoon...', '🧠 Ek second, achi tarah sochu...', '🧠 DeepSeek activate...'][Math.floor(Math.random()*3)],

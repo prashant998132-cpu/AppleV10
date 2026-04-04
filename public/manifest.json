@@ -1,7 +1,7 @@
 {
   "name": "JARVIS — Personal AI",
   "short_name": "JARVIS",
-  "description": "JARVIS — Aapka personal AI assistant. Chat, voice, goals, studio, phone control. Free forever.",
+  "description": "JARVIS — Tera personal AI. Chat, voice, goals, analytics. Hinglish mein. Free forever.",
   "start_url": "/?source=pwa",
   "id": "jarvis-personal-ai",
   "display": "standalone",
@@ -62,54 +62,54 @@
   "categories": [
     "productivity",
     "utilities",
-    "lifestyle"
+    "personalization"
   ],
   "shortcuts": [
     {
       "name": "Chat",
       "short_name": "Chat",
-      "url": "/chat",
       "description": "JARVIS se baat karo",
+      "url": "/chat",
       "icons": [
         {
-          "src": "/icons/icon-96.png",
-          "sizes": "96x96"
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
         }
       ]
     },
     {
       "name": "Voice",
       "short_name": "Voice",
+      "description": "Voice mode",
       "url": "/voice",
-      "description": "Bolkar baat karo",
       "icons": [
         {
-          "src": "/icons/icon-96.png",
-          "sizes": "96x96"
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
         }
       ]
     },
     {
       "name": "Goals",
       "short_name": "Goals",
-      "url": "/goals",
       "description": "Goals track karo",
+      "url": "/goals",
       "icons": [
         {
-          "src": "/icons/icon-96.png",
-          "sizes": "96x96"
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
         }
       ]
     },
     {
       "name": "Studio",
       "short_name": "Studio",
+      "description": "AI image/music",
       "url": "/studio",
-      "description": "Image, Video, Music",
       "icons": [
         {
-          "src": "/icons/icon-96.png",
-          "sizes": "96x96"
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
         }
       ]
     }

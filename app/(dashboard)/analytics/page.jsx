@@ -120,7 +120,7 @@ export default function AnalyticsPage() {
 
         {/* Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {['overview','trends','habits','insights','usage'].map(t => (
+          {['overview','trends','habits','insights','usage','models'].map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all capitalize ${tab===t ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' : 'text-slate-500 bg-white/4 hover:text-slate-300'}`}>
               {t}
@@ -349,6 +349,35 @@ export default function AnalyticsPage() {
             </div>
           </div>
         )}
+        {tab === 'models' && (
+          <div className="space-y-3">
+            <div className="glass-card p-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">🤖 AI Models Used</p>
+              {llmStats ? (
+                <div className="space-y-2">
+                  {Object.entries(llmStats.byProvider || {}).sort((a,b) => b[1].count - a[1].count).map(([prov, stats]) => (
+                    <div key={prov} className="flex items-center gap-3 py-2 border-b border-white/[0.04] last:border-0">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white font-medium truncate">{prov}</p>
+                        <p className="text-[11px] text-slate-500">{stats.count} calls · avg {stats.count > 0 ? Math.round(stats.totalLatency / stats.count) : 0}ms</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-xs font-bold text-blue-400">{stats.count}</div>
+                        {stats.errors > 0 && <div className="text-[10px] text-red-400">{stats.errors} err</div>}
+                      </div>
+                    </div>
+                  ))}
+                  {Object.keys(llmStats.byProvider || {}).length === 0 && (
+                    <p className="text-slate-600 text-sm text-center py-4">Chat karo — model usage yahan dikhega</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-slate-600 text-sm text-center py-4">Data load ho raha hai...</p>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
