@@ -195,7 +195,10 @@ export default function DashboardClient({ children, user, profile }) {
             })}
           </nav>
           <div className="p-3 border-t border-white/5">
-            <div className="text-xs text-slate-600 text-center">JARVIS v12.0</div>
+            <div className="flex items-center justify-center gap-2">
+            <div className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-green-500 shadow-[0_0_6px_#22c55e]' : 'bg-red-500'}`}/>
+            <span className="text-xs text-slate-600">JARVIS v12.0 · {time}</span>
+          </div>
           </div>
         </aside>
 
@@ -224,7 +227,13 @@ export default function DashboardClient({ children, user, profile }) {
           <div className="absolute inset-0 bg-black/70" onClick={() => setSidebar(false)}/>
           <div className="absolute left-0 top-0 bottom-0 w-64 glass border-r border-white/5 flex flex-col p-4">
             <div className="flex justify-between items-center mb-6">
-              <span className="font-black text-lg bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">JARVIS</span>
+              <div>
+                <span className="font-black text-lg bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">JARVIS</span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-green-500 shadow-[0_0_6px_#22c55e]' : 'bg-red-500'}`}/>
+                  <span className="text-[10px] text-slate-500">{online ? 'Online' : 'Offline'} · {time}</span>
+                </div>
+              </div>
               <button onClick={() => setSidebar(false)}><X size={18} className="text-slate-400"/></button>
             </div>
             <nav className="space-y-1 flex-1">

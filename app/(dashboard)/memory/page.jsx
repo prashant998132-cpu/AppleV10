@@ -149,9 +149,12 @@ export default function MemoryPage() {
           <div className="py-12 flex justify-center"><div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"/></div>
         ) : filtered.length === 0 ? (
           <div className="glass-card p-10 text-center">
-            <Brain size={36} className="text-slate-700 mx-auto mb-3"/>
-            <p className="text-slate-400 text-sm">No memories found</p>
-            <p className="text-slate-600 text-xs mt-1">Chat with JARVIS — it automatically saves important info</p>
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-4">
+              <Brain size={28} className="text-purple-400"/>
+            </div>
+            <p className="text-white font-semibold text-sm mb-1">Koi memory nahi mili</p>
+            <p className="text-slate-500 text-xs">JARVIS chat mein baat karo — woh automatically yaad rakhega</p>
+            <button onClick={()=>{setSearch('');setCat('all');load();}} className="mt-3 text-xs text-blue-400 hover:text-blue-300 transition-colors">↺ Filter clear karo</button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -165,7 +168,8 @@ export default function MemoryPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${CAT_COLOR[m.category] || CAT_COLOR.general}`}>{m.category}</span>
                           <p className="text-sm font-medium text-white truncate">{m.key}</p>
-                          {m.importance >= 8 && <span className="text-[10px] text-yellow-400">★ High</span>}
+                          {m.importance >= 8 && <span className="text-[10px] text-yellow-400 bg-yellow-500/10 px-1.5 py-0.5 rounded-full">★ Important</span>}
+                          {m.importance <= 3 && <span className="text-[10px] text-slate-600 bg-white/5 px-1.5 py-0.5 rounded-full">Low</span>}
                         </div>
                         <p className="text-xs text-slate-400 mt-1 line-clamp-2">{m.value}</p>
                         {m.tags?.length > 0 && (

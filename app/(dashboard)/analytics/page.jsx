@@ -31,6 +31,7 @@ export default function AnalyticsPage() {
     } catch {}
   }
   const [llmStats, setLlmStats] = useState(null);
+  const [bestDay, setBestDay] = useState(null);
 
   useEffect(() => { load(); }, []);
 

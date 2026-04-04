@@ -12,8 +12,38 @@ export default function FloatingJarvis() {
   const [loading, setLoading] = useState(false);
   const [personality, setPersonality] = useState('normal');
   const [listening, setListening] = useState(false);
+  const [pos, setPos]         = useState({ bottom: 88, right: 16 });
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef(null);
   const endRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Drag to reposition FAB
+  function onTouchStart(e) {
+    if (open) return;
+    const t = e.touches[0];
+    dragStart.current = { x: t.clientX, y: t.clientY, pos: { ...pos }, time: Date.now() };
+  }
+  function onTouchMove(e) {
+    if (!dragStart.current || open) return;
+    const t = e.touches[0];
+    const dx = t.clientX - dragStart.current.x;
+    const dy = t.clientY - dragStart.current.y;
+    if (Math.abs(dx) + Math.abs(dy) > 8) {
+      setDragging(true);
+      const winW = window.innerWidth, winH = window.innerHeight;
+      const newRight = Math.max(8, Math.min(winW - 56, dragStart.current.pos.right - dx));
+      const newBottom = Math.max(72, Math.min(winH - 80, dragStart.current.pos.bottom + dy));
+      setPos({ right: newRight, bottom: newBottom });
+      e.preventDefault();
+    }
+  }
+  function onTouchEnd() {
+    const wasDrag = dragging;
+    setDragging(false);
+    dragStart.current = null;
+    return wasDrag;
+  }
 
   // Load personality
   useEffect(() => {
@@ -132,20 +162,23 @@ export default function FloatingJarvis() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button — draggable */}
       {!open && (
         <button
-          onClick={() => setOpen(true)}
-          className={`fixed bottom-6 right-4 z-[9999] w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all active:scale-95 ${
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={(e) => { if (onTouchEnd()) return; setOpen(true); }}
+          onClick={() => { if (!dragging) setOpen(true); }}
+          style={{ position:'fixed', bottom: pos.bottom, right: pos.right, zIndex:9999 }}
+          className={`w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-transform ${dragging?'scale-110 cursor-grabbing':'active:scale-95'} ${
             isAria
               ? 'bg-gradient-to-br from-pink-500 to-rose-400 shadow-[0_0_25px_rgba(236,72,153,0.5)]'
               : 'bg-gradient-to-br from-blue-600 to-cyan-500 shadow-[0_0_25px_rgba(26,86,219,0.5)]'
           }`}
-          title="JARVIS se baat karo"
+          title="JARVIS se baat karo (drag to move)"
         >
           <span className="text-white font-black text-xl">{isAria ? 'A' : 'J'}</span>
-          {/* Pulse ring */}
-          <span className="absolute inset-0 rounded-full animate-ping opacity-20 bg-white"/>
+          {!dragging && <span className="absolute inset-0 rounded-full animate-ping opacity-15 bg-white"/>}
         </button>
       )}
 

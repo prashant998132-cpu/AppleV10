@@ -38,13 +38,23 @@ export default function DashboardPage() {
       setMood(logs.slice(-7).map(l=>l.mood_score||5));
     } catch {}
 
-    // Motivational quote (random)
+    // Motivational quotes — large pool
     const quotes = [
       'Jo kal possible nahi laga, aaj possible hai.',
       'Teri consistency hi teri superpower hai.',
       'Chota step bhi aage ka step hai.',
       'Progress > Perfection.',
       'Ek din ka kaam ek din mein. Bas.',
+      'Mehnat kabhi bekar nahi hoti — waqt lagta hai bas.',
+      'Duniya tujhe tab samjhegi jab tu khud ko samjhe.',
+      'Shuru karna hi sabse mushkil hota hai. Shuru kar.',
+      'Har din ek naya mauka hai khud ko prove karne ka.',
+      'Teri story abhi khatam nahi hui — agle chapter pe jaa.',
+      'Jo cheez daraye, wahi karne layak hoti hai.',
+      'Slow progress is still progress — mat ruk.',
+      'Teri life ka director tu hai — script bhi tu likhega.',
+      'Aaj ka effort kal ka result ban jaata hai.',
+      'Failure ek event hai, identity nahi.',
     ];
     setQuote(quotes[Math.floor(Math.random()*quotes.length)]);
     setLoad(false);
@@ -127,11 +137,21 @@ export default function DashboardPage() {
         {/* Today's focus — JARVIS quote */}
         <div className="glass border border-blue-500/15 rounded-2xl p-4"
           style={{background:'linear-gradient(135deg,rgba(26,86,219,0.08),rgba(6,182,212,0.05))'}}>
-          <div className="flex items-center gap-2 mb-2">
-            <Zap size={14} className="text-blue-400"/>
-            <span className="text-blue-400 text-xs font-medium tracking-wide uppercase">JARVIS says</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Zap size={14} className="text-blue-400"/>
+              <span className="text-blue-400 text-xs font-medium tracking-wide uppercase">JARVIS says</span>
+            </div>
+            <button onClick={()=>{
+              const q=['Jo kal possible nahi laga, aaj possible hai.','Teri consistency hi teri superpower hai.','Shuru karna hi sabse mushkil hota hai. Shuru kar.','Har din ek naya mauka hai.','Aaj ka effort kal ka result ban jaata hai.','Failure ek event hai, identity nahi.','Slow progress is still progress — mat ruk.'];
+              import('react').then(({useState:_})=>{});
+              const el=document.getElementById('jarvis-quote');
+              if(el){el.style.opacity='0';setTimeout(()=>{el.textContent='"'+q[Math.floor(Math.random()*q.length)]+'"';el.style.opacity='1';},200);}
+            }} className="text-slate-600 hover:text-blue-400 transition-colors" title="New quote">
+              <RefreshCw size={12}/>
+            </button>
           </div>
-          <p className="text-slate-300 text-sm leading-relaxed italic">"{quote}"</p>
+          <p id="jarvis-quote" className="text-slate-300 text-sm leading-relaxed italic" style={{transition:'opacity 0.2s'}}>"{quote}"</p>
         </div>
 
         {/* Mood mini chart */}

@@ -277,12 +277,13 @@ function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
   async function copy() {
     await navigator.clipboard.writeText(text).catch(()=>{});
+    navigator.vibrate?.([30]);
     setCopied(true);
     setTimeout(()=>setCopied(false), 2000);
   }
   return (
-    <button onClick={copy} className={`text-[10px] flex items-center gap-0.5 transition-colors ${copied?'text-green-400':'text-slate-700 hover:text-slate-400'}`}>
-      {copied?<Check size={9}/>:<Copy size={9}/>}{copied?'Copied':'Copy'}
+    <button onClick={copy} className={`text-[10px] flex items-center gap-0.5 transition-all active:scale-90 ${copied?'text-green-400':'text-slate-600 hover:text-slate-300'}`}>
+      {copied?<Check size={10}/>:<Copy size={10}/>}<span className="ml-0.5">{copied?'Copied!':'Copy'}</span>
     </button>
   );
 }

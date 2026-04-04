@@ -301,6 +301,41 @@ export default function SettingsPage() {
               </button>
             </div>
 
+            {/* Quick Theme Switcher */}
+            <div className="glass-card p-4">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">🎨 Theme</p>
+              <div className="grid grid-cols-5 gap-2">
+                {[
+                  {id:'dark',    color:'#1A56DB', label:'Blue'},
+                  {id:'amoled',  color:'#3b82f6', label:'AMOLED'},
+                  {id:'green',   color:'#00cc44', label:'Green'},
+                  {id:'purple',  color:'#9333ea', label:'Purple'},
+                  {id:'sunset',  color:'#f97316', label:'Sunset'},
+                  {id:'ocean',   color:'#0ea5e9', label:'Ocean'},
+                  {id:'rose',    color:'#f43f5e', label:'Rose'},
+                  {id:'gold',    color:'#eab308', label:'Gold'},
+                  {id:'soft',    color:'#6366f1', label:'Soft'},
+                  {id:'cyan',    color:'#06b6d4', label:'Cyan'},
+                ].map(th => {
+                  const cur = typeof localStorage !== 'undefined' ? (localStorage.getItem('jarvis_theme') || 'dark') : 'dark';
+                  return (
+                    <button key={th.id} onClick={()=>{
+                      localStorage.setItem('jarvis_theme', th.id);
+                      const bgs={dark:'#050810',amoled:'#000000',soft:'#1a1a2e',green:'#020d05',purple:'#0a0010',sunset:'#0f0a00',ocean:'#00080f',rose:'#0f0008',gold:'#0a0800',cyan:'#000d10'};
+                      document.documentElement.style.setProperty('--bg', bgs[th.id]||'#050810');
+                      document.documentElement.style.setProperty('--accent', th.color);
+                      document.documentElement.style.backgroundColor = bgs[th.id]||'#050810';
+                      window.dispatchEvent(new CustomEvent('jarvis-theme-change',{detail:{theme:th.id}}));
+                    }} title={th.label}
+                    className={`aspect-square rounded-xl flex items-center justify-center transition-all active:scale-90 ${cur===th.id?'ring-2 ring-white/40 scale-105':''}`}
+                    style={{background:`${th.color}22`,border:`1.5px solid ${th.color}55`}}>
+                      <div className="w-4 h-4 rounded-full" style={{background:th.color, boxShadow:`0 0 8px ${th.color}80`}}/>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="glass-card p-4">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Notifications</p>
               <div className="flex items-center justify-between">

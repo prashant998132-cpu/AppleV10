@@ -7,7 +7,7 @@
 // 5. Smart schedule notifications
 // ═══════════════════════════════════════════════════════════════
 
-const VERSION = 'jarvis-v12.0';
+const VERSION = 'jarvis-v12.1';
 const CACHE_SHELL  = `${VERSION}-shell`;
 const CACHE_API    = `${VERSION}-api`;
 const CACHE_MEDIA  = `${VERSION}-media`;
@@ -34,6 +34,24 @@ const MOTIVATIONAL = [
 ];
 
 function getDaysLeft() { return 0; } // Legacy — no longer used
+
+// ─── OFFLINE MESSAGE QUEUE ────────────────────────────────────
+const OFFLINE_QUEUE_KEY = 'jarvis_offline_queue';
+
+self.addEventListener('sync', e => {
+  if (e.tag === 'jarvis-offline-messages') {
+    e.waitUntil(flushOfflineQueue());
+  }
+});
+
+async function flushOfflineQueue() {
+  try {
+    const clients = await self.clients.matchAll({ type:'window' });
+    if (clients.length > 0) {
+      clients[0].postMessage({ type:'FLUSH_OFFLINE_QUEUE' });
+    }
+  } catch {}
+}
 
 // ─── INSTALL ──────────────────────────────────────────────────
 self.addEventListener('install', e => {

@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { Target, Plus, Trash2, CheckCircle, Circle, ChevronDown, ChevronUp, Zap, RefreshCw, Flag } from 'lucide-react';
 
 const CATEGORIES = ['career','health','learning','finance','personal','project'];
+const CAT_EMOJI = {
+  career:'💼', health:'💪', learning:'📖', finance:'💰', personal:'🌱', project:'🚀'
+};
 const CAT_BG = {
   career:'bg-blue-500/10 text-blue-400 border-blue-500/20',
   health:'bg-green-500/10 text-green-400 border-green-500/20',
@@ -95,13 +98,22 @@ function GoalCard({ goal, onUpdate }) {
             <div>
               <p className="text-[11px] text-slate-500 mb-1.5">Progress</p>
               <div className="flex gap-1.5 flex-wrap">
+                <div className="flex items-center gap-2 mb-2">
+                    <input type="range" min="0" max="100" step="10"
+                      value={goal.progress||0}
+                      onChange={e => setProgress(parseInt(e.target.value))}
+                      className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer accent-blue-500"
+                      style={{background:`linear-gradient(to right, #3b82f6 ${goal.progress||0}%, rgba(255,255,255,0.08) ${goal.progress||0}%)`}}
+                    />
+                    <span className="text-xs font-bold text-blue-400 w-8 text-right shrink-0">{goal.progress||0}%</span>
+                  </div>
                 {[0,25,50,75,100].map(v => (
                   <button key={v} onClick={() => setProgress(v)}
-                    className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all ${(goal.progress||0)===v ? 'bg-blue-500/20 border-blue-500/40 text-blue-400' : 'border-white/10 text-slate-500 hover:text-white hover:border-white/20'}`}>
+                    className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all active:scale-95 ${(goal.progress||0)===v ? 'bg-blue-500/20 border-blue-500/40 text-blue-400' : 'border-white/10 text-slate-500 hover:text-white hover:border-white/20'}`}>
                     {v}%
                   </button>
                 ))}
-                {updating && <span className="text-[11px] text-slate-600 self-center">saving...</span>}
+                {updating && <span className="text-[11px] text-slate-600 self-center ml-1">saving...</span>}
               </div>
             </div>
           )}
