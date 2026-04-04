@@ -195,7 +195,7 @@ export default function DashboardClient({ children, user, profile }) {
             })}
           </nav>
           <div className="p-3 border-t border-white/5">
-            <div className="text-xs text-slate-600 text-center">JARVIS v11.0</div>
+            <div className="text-xs text-slate-600 text-center">JARVIS v12.0</div>
           </div>
         </aside>
 
@@ -245,6 +245,25 @@ export default function DashboardClient({ children, user, profile }) {
         </div>
       )}
     </div>
+      {/* ── Mobile Bottom Tab Bar ─────────────────────── */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-white/[0.07]"
+        style={{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
+        <div className="flex items-stretch">
+          {MOBILE_NAV.map(({ href, icon: Icon, label }) => {
+            const active = href === '/' ? path === '/' : path.startsWith(href);
+            return (
+              <Link key={href} href={href}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-all active:scale-90 ${active ? 'text-blue-400' : 'text-slate-600 hover:text-slate-300'}`}>
+                <div className={`relative ${active ? 'after:absolute after:-bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-blue-400' : ''}`}>
+                  <Icon size={20} strokeWidth={active ? 2.2 : 1.8}/>
+                </div>
+                <span className={`text-[10px] font-medium ${active ? 'text-blue-400' : 'text-slate-600'}`}>{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
       <FloatingJarvis/>
     </ErrorBoundary>
   );

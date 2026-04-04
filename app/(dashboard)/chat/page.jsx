@@ -52,16 +52,16 @@ const MODES = [
 
 // JARVIS Quick Commands — chat se directly karo
 const JARVIS_QUICK_CMDS = [
-  { emoji:'📸', label:'Instagram', cmd:'Instagram kholo' },
-  { emoji:'💬', label:'WhatsApp',  cmd:'WhatsApp kholo' },
-  { emoji:'▶️', label:'YouTube',  cmd:'YouTube kholo' },
-  { emoji:'🎵', label:'Spotify',   cmd:'Spotify kholo' },
-  { emoji:'🟢', label:'Green',     cmd:'Theme green karo' },
-  { emoji:'⚫', label:'AMOLED',    cmd:'Theme AMOLED karo' },
-  { emoji:'📋', label:'Routine',   cmd:'Mera daily routine dikhao' },
-  { emoji:'🔦', label:'Torch',     cmd:'Torch on karo' },
-  { emoji:'📚', label:'Study',     cmd:'Study mode on karo' },
-  { emoji:'🔍', label:'Help',      cmd:'commands dikhao' },
+  { emoji:'🌤️', label:'Weather',   cmd:'Aaj ka weather kaisa hai mere city mein' },
+  { emoji:'😂', label:'Joke',       cmd:'Ek mast Hinglish joke sunao — dark humor bhi chalega' },
+  { emoji:'📰', label:'News',       cmd:'Aaj ki top 5 India news kya hai' },
+  { emoji:'💡', label:'Motivate',   cmd:'Mujhe genuinely motivate karo — bina generic quotes ke' },
+  { emoji:'🎬', label:'Movie',      cmd:'Koi achhi movie recommend karo — thoda hatke wali' },
+  { emoji:'💬', label:'Roast me',   cmd:'Mujhe pyaar se roast karo' },
+  { emoji:'🎵', label:'Music',      cmd:'Aaj ke mood ke hisaab se koi song recommend karo' },
+  { emoji:'🔮', label:'Predict',    cmd:'Meri aaj ki energy dekh ke ek fun prediction do' },
+  { emoji:'🔦', label:'Torch',      cmd:'Torch on karo' },
+  { emoji:'🔍', label:'Help',       cmd:'JARVIS ke saare commands dikhao' },
 ];
 
 // Time-aware quick starters — evaluated at render time
