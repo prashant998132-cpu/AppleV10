@@ -293,6 +293,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
   const [compressed, setCompressed] = useState(null);
   const [compressing, setCompressing] = useState(false);
   const [feedback, setFeedback] = useState(null); // null | 'up' | 'down'
+  const wordCount = msg.content ? msg.content.split(/\s+/).filter(Boolean).length : 0;
   const [showActions, setShowActions] = useState(false); // tap to show
   const text = compressed || msg.content;
 
@@ -384,6 +385,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
           {!isUser && !msg.streaming && (
             <>
               <CopyButton text={msg.content}/>
+              {wordCount > 80 && <span className="text-[9px] text-slate-700 shrink-0">{wordCount}w</span>}
 
 
               {!isUser && (

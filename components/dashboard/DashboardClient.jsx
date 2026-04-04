@@ -264,7 +264,7 @@ export default function DashboardClient({ children, user, profile }) {
             const active = href === '/' ? path === '/' : path.startsWith(href);
             return (
               <Link key={href} href={href}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-all active:scale-90 ${active ? 'text-blue-400' : 'text-slate-600 hover:text-slate-300'}`}>
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-all active:scale-90 relative ${active ? 'text-blue-400' : 'text-slate-600 hover:text-slate-300'}`}>
                 <div className={`relative ${active ? 'after:absolute after:-bottom-1.5 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:rounded-full after:bg-blue-400' : ''}`}>
                   <Icon size={20} strokeWidth={active ? 2.2 : 1.8}/>
                 </div>

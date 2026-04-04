@@ -24,6 +24,7 @@ export default function VoicePage() {
   const [ariaMemory, setAM]    = useState('{}');
   const [error, setError]      = useState('');
   const [label, setLabel]      = useState('Hold to speak');
+  const personalityLabel = { normal:'JARVIS', girlfriend:'ARIA', motivational:'Hype JARVIS', fun:'Fun JARVIS', coach:'Coach JARVIS', study:'Study JARVIS', sarcastic:'Roast JARVIS', executive:'Executive JARVIS', roast:'Roast JARVIS' };
   const [wpm, setWpm]          = useState(0);
   const [showHist, setShowHist]= useState(false);
 
