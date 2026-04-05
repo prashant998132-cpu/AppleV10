@@ -537,6 +537,25 @@ export default function SettingsPage() {
               />
               <p className="text-[10px] text-slate-700 mt-1 text-right">{customInstr.length}/500</p>
               
+              {/* Font Size */}
+              <div className="mt-4 pt-4 border-t border-white/5">
+                <p className="text-white text-sm font-medium mb-2">Font Size</p>
+                <div className="flex gap-2">
+                  {[{id:'small',l:'S',px:'13px'},{id:'normal',l:'M',px:'14px'},{id:'large',l:'L',px:'16px'},{id:'xlarge',l:'XL',px:'18px'}].map(f => {
+                    const cur = typeof localStorage !== 'undefined' ? (localStorage.getItem('jarvis_font_size') || 'normal') : 'normal';
+                    return (
+                      <button key={f.id} onClick={()=>{
+                        localStorage.setItem('jarvis_font_size', f.id);
+                        document.documentElement.style.fontSize = f.px;
+                      }}
+                      className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${cur===f.id ? 'bg-blue-500/20 border border-blue-500/40 text-blue-300' : 'bg-white/[0.04] border border-white/[0.08] text-slate-500 hover:text-white'}`}>
+                        {f.l}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Custom Accent Color */}
               <div className="mt-4 pt-4 border-t border-white/5">
                 <p className="text-white text-sm font-medium mb-2">Custom Accent Color</p>

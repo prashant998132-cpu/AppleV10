@@ -92,25 +92,29 @@ export default function AnalyticsPage() {
         {/* Mood Logger */}
         <div className="glass-card p-4 border border-white/[0.06]">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Aaj kaisa tha? Log karo</p>
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            <div>
-              <p className="text-[11px] text-slate-500 mb-1.5">Mood 😊</p>
-              <div className="flex gap-1">
-                {[1,2,3,4,5,6,7,8,9,10].map(v => (
-                  <button key={v} onClick={()=>setTodayMood(v)}
-                    className={`flex-1 h-7 rounded text-[10px] font-bold transition-all ${todayMood===v ? 'bg-blue-500 text-white' : 'bg-white/5 text-slate-600 hover:text-white'}`}>{v}</button>
-                ))}
-              </div>
+          {/* Mood — emoji picker */}
+          <div className="mb-3">
+            <p className="text-[11px] text-slate-500 mb-2">Aaj ka mood? 😊</p>
+            <div className="flex justify-between gap-1">
+              {[{v:1,e:'😞',l:'Bahut bura'},{v:3,e:'😔',l:'Thoda bura'},{v:5,e:'😐',l:'Theek hai'},{v:7,e:'😊',l:'Achha'},{v:9,e:'🤩',l:'Mast!'}].map(m => (
+                <button key={m.v} onClick={()=>setTodayMood(m.v)}
+                  className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl transition-all active:scale-90 ${todayMood===m.v ? 'bg-blue-500/20 border border-blue-500/40' : 'bg-white/[0.03] border border-transparent hover:bg-white/[0.06]'}`}>
+                  <span className="text-2xl">{m.e}</span>
+                  <span className="text-[9px] text-slate-600 leading-tight text-center">{m.l}</span>
+                </button>
+              ))}
             </div>
-            <div>
-              <p className="text-[11px] text-slate-500 mb-1.5">Energy ⚡</p>
-              <div className="flex gap-1">
-                {[1,2,3,4,5,6,7,8,9,10].map(v => (
-                  <button key={v} onClick={()=>setTodayEnergy(v)}
-                    className={`flex-1 h-7 rounded text-[10px] font-bold transition-all ${todayEnergy===v ? 'bg-orange-500 text-white' : 'bg-white/5 text-slate-600 hover:text-white'}`}>{v}</button>
-                ))}
-              </div>
+          </div>
+          {/* Energy slider */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[11px] text-slate-500">Energy ⚡</p>
+              <span className="text-[11px] font-bold text-orange-400">{todayEnergy}/10</span>
             </div>
+            <input type="range" min="1" max="10" step="1" value={todayEnergy||5}
+              onChange={e=>setTodayEnergy(parseInt(e.target.value))}
+              className="w-full h-1.5 rounded-full accent-orange-500 cursor-pointer"
+              style={{background:`linear-gradient(to right, #f97316 ${(todayEnergy||5)*10}%, rgba(255,255,255,0.08) ${(todayEnergy||5)*10}%)`}}/>
           </div>
           <button onClick={saveToday} disabled={!todayMood}
             className={`w-full py-2 rounded-xl text-sm font-semibold transition-all ${logSaved ? 'bg-green-600 text-white' : 'bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30'} disabled:opacity-40`}>

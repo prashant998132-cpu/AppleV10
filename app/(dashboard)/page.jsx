@@ -20,7 +20,9 @@ export default function DashboardPage() {
       const now = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
       const h = now.getHours(), m = now.getMinutes();
       setTime(`${String(h%12||12).padStart(2,'0')}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`);
-      setGreet(h<5?'🌙 Raat ho gayi':h<12?'☀️ Good Morning':h<17?'⛅ Kya chal raha hai':h<21?'🌆 Shaam ho gayi':'🌙 Raat ho gayi');
+      const day = ['Aaj Raviwar hai ☀️','Aaj Somwar hai 💪','Aaj Mangalwar hai 🔥','Aaj Budhwar hai ⚡','Aaj Guruwar hai 🎯','Aaj Shukrawar hai 🎉','Aaj Shaniwaar hai 😎'][now.getDay()];
+      const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+      setGreet(h<5?'🌙 Raat ho gayi':h<12?`☀️ Good Morning — ${day}`:h<17?`⛅ ${isWeekend ? 'Weekend enjoy karo!' : 'Kya chal raha hai?'}`:h<21?'🌆 Shaam ho gayi':'🌙 Raat ho gayi');
     };
     tick(); const iv = setInterval(tick, 30000);
 

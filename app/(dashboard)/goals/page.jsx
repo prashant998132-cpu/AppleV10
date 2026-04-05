@@ -57,6 +57,9 @@ function GoalCard({ goal, onUpdate }) {
   const catStyle = CAT_BG[goal.category] || 'bg-slate-500/10 text-slate-400 border-slate-500/20';
   const done = goal.status === 'completed';
   const paused = goal.status === 'paused';
+  const daysLeft = goal.deadline ? Math.ceil((new Date(goal.deadline) - new Date()) / 86400000) : null;
+  const isUrgent = daysLeft !== null && daysLeft <= 3 && !done;
+  const isNear   = daysLeft !== null && daysLeft <= 7 && !done;
 
   return (
     <div className={`bg-white/[0.03] border rounded-2xl p-4 transition-all ${done ? 'border-green-500/30' : paused ? 'border-white/[0.04]' : 'border-white/[0.07] hover:border-white/[0.12]'}`}>
@@ -78,7 +81,7 @@ function GoalCard({ goal, onUpdate }) {
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-[11px] text-slate-500">{goal.progress || 0}%</span>
-                {goal.deadline && <span className="text-[11px] text-slate-600">📅 {new Date(goal.deadline).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</span>}
+                {goal.deadline && <span className={`text-[11px] ${isUrgent?'text-red-400 font-bold':isNear?'text-orange-400':'text-slate-600'}`}>{isUrgent?'🔥':isNear?'⏰':'📅'} {daysLeft!==null?`${daysLeft}d bacha`:new Date(goal.deadline).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}</span>}
               </div>
               <ProgressBar value={goal.progress || 0} />
             </div>

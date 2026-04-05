@@ -563,25 +563,32 @@ function LiveClock() {
   const [time, setTime] = useState('');
   const [ampm, setAmpm] = useState('');
   const [date, setDate] = useState('');
+  const [sec, setSec]   = useState(0);
   useEffect(() => {
     function update() {
       const now = new Date(new Date().toLocaleString('en-US', {timeZone:'Asia/Kolkata'}));
-      const h = now.getHours(), m = now.getMinutes();
+      const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
       const h12 = h % 12 || 12;
       setTime(String(h12).padStart(2,'0') + ':' + String(m).padStart(2,'0'));
       setAmpm(h >= 12 ? 'pm' : 'am');
-      setDate(new Date().toLocaleDateString('hi-IN', {timeZone:'Asia/Kolkata', weekday:'short', day:'numeric', month:'long'}));
+      setSec(Math.round((s/60)*100));
+      setDate(new Date().toLocaleDateString('en-IN', {timeZone:'Asia/Kolkata', weekday:'long', day:'numeric', month:'short'}));
     }
     update();
-    const t = setInterval(update, 30000);
+    const t = setInterval(update, 1000);
     return () => clearInterval(t);
   }, []);
   return (
     <div className="flex flex-col items-center">
-      <div className="text-[64px] font-black text-white tracking-tight leading-none tabular-nums">
-        {time}<span className="text-2xl font-light text-white/40 ml-2">{ampm}</span>
+      <div className="text-[60px] font-black text-white tracking-tight leading-none tabular-nums select-none">
+        {time}<span className="text-xl font-light text-white/35 ml-1.5">{ampm}</span>
       </div>
-      <p className="text-slate-500 text-sm mt-0.5">{date}</p>
+      <p className="text-slate-500 text-xs mt-1">{date}</p>
+      {/* Seconds progress bar */}
+      <div className="w-24 h-0.5 bg-white/5 rounded-full mt-2 overflow-hidden">
+        <div className="h-full bg-blue-500/50 rounded-full transition-all duration-1000"
+          style={{width:`${sec}%`}}/>
+      </div>
     </div>
   );
 }

@@ -25,14 +25,17 @@ export default function KnowledgePage() {
   async function load() {
     setLoad(true);
     try {
-      const r = await fetch('/api/memory?category=knowledge_list');
-      // Use knowledge endpoint
-      const resp = await fetch('/api/upload', { method: 'GET' }).catch(() => null);
-      // Fallback - search memories for knowledge items
+      // Fetch memories tagged as knowledge
       const mr = await fetch('/api/memory');
       const md = await mr.json();
-      setItems((md.memories || []).filter(m => m.category === 'general' && m.tags?.includes('knowledge')));
-    } finally { setLoad(false); }
+      const knowledgeItems = (md.memories || []).filter(m =>
+        m.category === 'knowledge_list' ||
+        m.tags?.includes('knowledge') ||
+        m.category === 'knowledge'
+      );
+      setItems(knowledgeItems);
+    } catch { setItems([]); }
+    finally { setLoad(false); }
   }
 
   async function handleUpload(e) {
@@ -99,7 +102,7 @@ export default function KnowledgePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-black text-white">📚 Tera Knowledge Base</h1>
+            <h1 className="text-xl font-black text-white flex items-center gap-2">📚 Knowledge Base {items.length > 0 && <span className="text-sm font-normal text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">{items.length}</span>}</h1>
             <p className="text-xs text-slate-500">PDF · Images · Notes · Voice · URLs</p>
           </div>
           <button onClick={() => setAddOpen(true)}
