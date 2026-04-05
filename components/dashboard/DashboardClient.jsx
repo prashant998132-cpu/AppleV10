@@ -198,7 +198,7 @@ export default function DashboardClient({ children, user, profile }) {
           <div className="p-3 border-t border-white/5">
             <div className="flex items-center justify-center gap-2">
             <div className={`w-1.5 h-1.5 rounded-full ${online ? 'bg-green-500 shadow-[0_0_6px_#22c55e]' : 'bg-red-500'}`}/>
-            <span className="text-xs text-slate-600">v12.0 · {time}</span>
+            <span className="text-xs text-slate-600">v12.2 · {time}</span>
           </div>
           <p className="text-[9px] text-slate-700 text-center mt-1">Ctrl+K → Chat</p>
           </div>

@@ -110,16 +110,16 @@ function getQuickStarters(personality) {
     { t:'Code review chahiye',             i:'🔧' },
   ];
   if (h < 17) return [
-    { t:'Focus nahi ho raha',              i:'😵' },
-    { t:'Quick calculation karo', i:'🧮' },
-    { t:'Kuch naya seekhna hai',  i:'💡' },
+    { t:'Gold aaj ka rate kya hai?',       i:'🥇' },
+    { t:'Koi interesting fact batao',      i:'💡' },
+    { t:'Focus nahi ho raha — help karo',  i:'😵' },
     { t:'Thoda entertain karo',            i:'😄' },
   ];
   if (h < 21) return [
-    { t:'Aaj ka review karo',     i:'📖' },
-    { t:'Kal ke liye plan banao',          i:'🎯' },
-    { t:'Aaj ka din kaisa raha?',          i:'📊' },
-    { t:'Stress hai, baat karni hai',      i:'💙' },
+    { t:'Aaj ka din review karo',          i:'📊' },
+    { t:'Kal ke liye solid plan banao',    i:'🎯' },
+    { t:'IPL/cricket score kya hai?',      i:'🏏' },
+    { t:'Koi achha movie suggest karo',    i:'🎬' },
   ];
   return [
     { t:'Din ka review karo',              i:'📊' },

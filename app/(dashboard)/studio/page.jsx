@@ -29,6 +29,14 @@ const TABS = [
 ];
 
 const IMAGE_STYLES = ['realistic','anime','indian','cinematic','watercolor','thumbnail','instagram','logo','portrait','landscape','3d_render','pixel_art','sketch','oil_painting','neon_cyberpunk'];
+const IMAGE_PROMPTS = {
+  realistic: ['Beautiful Indian girl in traditional lehenga', 'Sunrise over Himalayan mountains', 'Old Delhi street market, cinematic'],
+  anime: ['Anime hero with glowing sword', 'Cute anime girl with sakura flowers', 'Cyberpunk Tokyo anime style'],
+  indian: ['Rajasthani folk dancer with colorful costume', 'Taj Mahal at sunset golden hour', 'Indian wedding ceremony'],
+  cinematic: ['Epic battle scene dramatic lighting', 'Lonely astronaut on alien planet', 'Noir detective in rainy city'],
+  logo: ['Minimalist tech startup logo', 'Gaming clan logo neon style', 'Luxury brand logo gold black'],
+  thumbnail: ['YouTube gaming thumbnail neon', 'Motivational video thumbnail bold text', 'Vlog thumbnail lifestyle'],
+};
 const MUSIC_GENRES = ['hindi_film','hindi_happy','hindi_sad','motivational','lofi','meditation','classical_indian','party','folk','background','hip_hop','indie','jazz','ambient','workout'];
 
 // ─── PUTER.JS HOOK ───────────────────────────────────────────

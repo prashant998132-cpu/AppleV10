@@ -241,14 +241,33 @@ export default function DashboardPage() {
 
         {/* Empty state — new user */}
         {goals.length === 0 && memories.length === 0 && (
-          <div className="glass border border-white/5 rounded-2xl p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 mx-auto mb-3 flex items-center justify-center">
-              <span className="text-white font-black">J</span>
+          <div className="glass border border-blue-500/15 rounded-2xl p-5"
+            style={{background:'linear-gradient(135deg,rgba(26,86,219,0.08),rgba(6,182,212,0.04))'}}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-[0_0_20px_rgba(26,86,219,0.4)]">
+                <span className="text-white font-black text-sm">J</span>
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm">JARVIS ready hai!</p>
+                <p className="text-slate-500 text-xs">Tera personal AI — free forever</p>
+              </div>
             </div>
-            <p className="text-white font-medium mb-1">JARVIS ready hai!</p>
-            <p className="text-slate-500 text-sm mb-4">Chat shuru karo — main seekhunga, yaad rakhunga, aur actually help karunga.</p>
-            <Link href="/chat" className="inline-flex items-center gap-2 bg-blue-600/20 border border-blue-500/30 text-blue-400 text-sm px-4 py-2 rounded-xl hover:bg-blue-600/30 transition-all">
-              <MessageSquare size={14}/> Start chatting
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {[
+                {i:'💬',t:'Chat karo',s:'Weather, jokes, advice'},
+                {i:'🎯',t:'Goals banao',s:'AI milestones banayega'},
+                {i:'🎨',t:'AI Studio',s:'Image, music, voice'},
+                {i:'📊',t:'Analytics',s:'Mood + productivity track'},
+              ].map(c=>(
+                <div key={c.t} className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-2.5">
+                  <span className="text-lg">{c.i}</span>
+                  <p className="text-white text-xs font-medium mt-1">{c.t}</p>
+                  <p className="text-slate-600 text-[10px]">{c.s}</p>
+                </div>
+              ))}
+            </div>
+            <Link href="/chat" className="flex items-center justify-center gap-2 bg-blue-600/25 border border-blue-500/40 text-blue-400 text-sm px-4 py-2.5 rounded-xl hover:bg-blue-600/35 transition-all active:scale-95">
+              <MessageSquare size={14}/> Chat shuru karo
             </Link>
           </div>
         )}
