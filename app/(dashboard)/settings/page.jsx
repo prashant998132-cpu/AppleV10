@@ -76,6 +76,7 @@ export default function SettingsPage() {
   });
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput]     = useState('');
+  const [resetMsg, setResetMsg]           = useState('');
   const [exporting, setExporting] = useState(false);
   const [notifEnabled, setNotif]  = useState(false);
   const [apiStatus, setApiStatus] = useState({});

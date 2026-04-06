@@ -158,7 +158,10 @@ export default function FloatingJarvis() {
     : h < 17 ? ['Kya chal raha hai?', 'Kuch batao na', 'Miss kar rahi thi 💕']
     : h < 22 ? ['Din kaisa gaya?', 'Thak gaye?', 'Baat karo na']
     :           ['So rahe ho?', 'Good night 💕', 'Neend aa rahi?']
-    : ['Motivate karo', 'Quick advice do', 'Kuch interesting batao'];
+    : h < 9  ? ['Aaj ka plan kya hai?', 'Gold rate kya hai?', 'Motivate karo']
+    : h < 17 ? ['Ek joke sunao', 'Aaj ki news kya hai?', 'Weather kaisa hai?']
+    : h < 22 ? ['Din review karo', 'IPL score kya hai?', 'Movie suggest karo']
+    :           ['Interesting fact batao', 'Kal ke liye plan', 'Sleep tips do'];
 
   return (
     <>

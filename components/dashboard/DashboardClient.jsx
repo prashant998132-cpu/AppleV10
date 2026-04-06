@@ -101,7 +101,7 @@ export default function DashboardClient({ children, user, profile }) {
 
     // Start background services — completely wrapped, no crash
     try { startBackgroundAI(); } catch {}
-    setTimeout(() => { try { scheduleStudyNotifications(); } catch {} }, 2000);
+    setTimeout(() => { try { scheduleStudyNotifications(); } catch {} }, 2500); // productivity reminders
     setTimeout(() => { try { registerPeriodicSync(); } catch {} }, 3000);
 
     return () => {

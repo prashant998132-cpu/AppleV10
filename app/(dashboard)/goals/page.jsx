@@ -270,6 +270,26 @@ export default function GoalsPage() {
           ))}
         </div>
 
+        {/* Today's Focus — top active goal */}
+        {!loading && filtered.length > 0 && tab === 'active' && (() => {
+          const top = filtered.find(g => (g.progress||0) > 0 && (g.progress||0) < 100) || filtered[0];
+          if (!top) return null;
+          return (
+            <div className="glass border border-blue-500/20 rounded-2xl p-4 mb-1"
+              style={{background:'linear-gradient(135deg,rgba(26,86,219,0.08),rgba(6,182,212,0.04))'}}>
+              <p className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider mb-1.5">⚡ Today's Focus</p>
+              <p className="text-white font-bold text-sm truncate">{top.title}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400"
+                    style={{width:`${top.progress||0}%`}}/>
+                </div>
+                <span className="text-xs font-bold text-blue-400">{top.progress||0}%</span>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* List */}
         {loading ? (
           <div className="flex items-center justify-center py-16 text-slate-600">

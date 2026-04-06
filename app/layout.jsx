@@ -30,6 +30,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="hi" className="dark">
       <head>
+        {/* Preconnect — faster first API calls */}
+        <link rel="preconnect" href="https://api.groq.com"/>
+        <link rel="preconnect" href="https://generativelanguage.googleapis.com"/>
+        <link rel="preconnect" href="https://api.open-meteo.com"/>
+        <link rel="preconnect" href="https://api.coingecko.com"/>
         <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png"/>
         <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png"/>
         <meta name="mobile-web-app-capable" content="yes"/>

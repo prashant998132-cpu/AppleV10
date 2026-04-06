@@ -7,13 +7,13 @@
 // 5. Smart schedule notifications
 // ═══════════════════════════════════════════════════════════════
 
-const VERSION = 'jarvis-v12.1';
+const VERSION = 'jarvis-v12.4';
 const CACHE_SHELL  = `${VERSION}-shell`;
 const CACHE_API    = `${VERSION}-api`;
 const CACHE_MEDIA  = `${VERSION}-media`;
 
 const SHELL_URLS = ['/', '/chat', '/voice', '/analytics', '/goals', '/memory',
-  '/knowledge', '/settings', '/offline', '/studio', '/profile', '/automation'];
+  '/knowledge', '/settings', '/offline', '/studio', '/profile', '/automation', '/pwa-guide'];
 
 // Daily Productivity Schedule (generic — customizable)
 const STUDY_SCHEDULE = [
