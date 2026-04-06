@@ -428,7 +428,8 @@ export default function VoicePage() {
             letterSpacing:'0.04em',
             textShadow:`0 0 20px ${COLORS[phase].bright}88`,
             transition:'color 0.5s ease',
-          }}>{label}</p>
+          }}>{personalityLabel[personality] || 'JARVIS'}</p>
+          <p style={{color:'#475569',fontSize:11,marginTop:2}}>{label}</p>
           {transcript && (
             <p style={{
               color:'#64748b', fontSize:12, marginTop:6,

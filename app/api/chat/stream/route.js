@@ -400,6 +400,16 @@ export async function POST(req) {
       }
     }
 
+    // ── CRICKET LIVE SCORES (CricAPI — key optional, fallback free) ──
+    if (/cricket|ipl|match.*score|score.*match|india.*vs|t20|odi|test match|kya hua match/i.test(message)) {
+      if (keys.CRICKET_API_KEY) toolTasks.push(
+        fetch(`https://api.cricapi.com/v1/cricScore?apikey=${keys.CRICKET_API_KEY}`, { signal: AbortSignal.timeout(5000) })
+          .then(r=>r.ok?r.json():null)
+          .then(d=>{ const matches=d?.data?.slice(0,2); if(matches?.length){ toolCtx+=`
+[CRICKET: ${matches.map(m=>`${m.name}: ${m.status} — ${m.score?.map(s=>`${s.inning}: ${s.r}/${s.w} (${s.o}ov)`).join(', ')||'Score pending'}`).join(' | ')}]`; toolSources.push('🏏 CricAPI'); }})          .catch(()=>{})
+      );
+    }
+
     // ── MUSIC SEARCH (Deezer — free, no key) ──────────────────
     if (/song|gaana|music|playlist|kaunsa.*gaana|singer|artist.*song|latest.*song/i.test(message)) {
       const sq = message.replace(/song|gaana|music|playlist|singer|latest/gi,'').trim().slice(0,50);

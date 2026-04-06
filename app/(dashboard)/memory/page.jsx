@@ -131,8 +131,7 @@ export default function MemoryPage() {
         {/* Search */}
         <div className="flex items-center gap-2 bg-white/5 border border-white/8 rounded-xl px-3 py-2.5">
           <Search size={15} className="text-slate-500"/>
-          <input value={search} onChange={e => { setSearch(e.target.value); }}
-            onKeyDown={e => e.key === 'Enter' && load()}
+          <input value={search} onChange={e => { setSearch(e.target.value); load(); }}
             placeholder="Search memories..." className="bg-transparent text-sm text-white outline-none flex-1 placeholder-slate-600"/>
           {search && <button onClick={() => { setSearch(''); load(); }}><X size={14} className="text-slate-500"/></button>}
         </div>

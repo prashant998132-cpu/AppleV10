@@ -255,35 +255,52 @@ export default function AnalyticsPage() {
 
         {tab === 'habits' && (
           <div className="space-y-3">
-            {data?.habits?.length === 0 && (
+            {/* Streak summary */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label:'Avg Streak', val:`${data?.avgHabitStreak || 0}d`, color:'text-orange-400', icon:'🔥' },
+                { label:'Active Goals', val:data?.activeGoals || 0, color:'text-green-400', icon:'🎯' },
+                { label:'Consistency', val:`${data?.consistencyScore || 0}%`, color:'text-blue-400', icon:'📊' },
+              ].map(s => (
+                <div key={s.label} className="glass-card p-3 text-center">
+                  <div className="text-xl mb-1">{s.icon}</div>
+                  <div className={`text-lg font-black ${s.color}`}>{s.val}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">{s.label}</div>
+                </div>
+              ))}
+            </div>
+            {data?.habits?.length > 0 ? (
+              <div className="glass-card p-4">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Habit Streaks</p>
+                <div className="space-y-3">
+                  {data.habits.map((h, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="text-xl">{h.emoji || '✅'}</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-white font-medium truncate">{h.name || h.title}</p>
+                        <div className="h-1.5 bg-white/5 rounded-full mt-1 overflow-hidden">
+                          <div className="h-full bg-orange-500/70 rounded-full"
+                            style={{width:`${Math.min(100,(h.streak||0)/30*100)}%`}}/>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className={`text-sm font-bold ${(h.streak||0)>=7?'text-orange-400':(h.streak||0)>=3?'text-yellow-400':'text-slate-500'}`}>
+                          {h.streak || 0}d
+                        </span>
+                        {(h.streak||0) >= 7 && <p className="text-[9px] text-orange-400">🔥 On fire!</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
               <div className="glass-card p-8 text-center">
-                <p className="text-slate-500">Chat mein "new habit add karo — [habit name]" bol ke habits banao</p>
+                <p className="text-4xl mb-3">🎯</p>
+                <p className="text-white font-semibold text-sm mb-1">Habits track karo!</p>
+                <p className="text-slate-500 text-xs">Goals set karo — JARVIS automatically habits track karega</p>
               </div>
             )}
-            {data?.habits?.map(h => (
-              <div key={h.id} className="glass-card p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-semibold text-white">{h.name}</p>
-                    <p className="text-xs text-slate-500">{h.frequency} · {h.total_done} total done</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-orange-500/10 border border-orange-500/20 px-3 py-1 rounded-full">
-                    <Flame size={13} className="text-orange-400"/>
-                    <span className="text-sm font-bold text-orange-400">{h.streak}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-slate-500">
-                  <span>Best: <span className="text-blue-400 font-bold">{h.best_streak}d</span></span>
-                  <span>Success rate: <span className="text-green-400 font-bold">{h.total_done > 0 ? Math.round((h.streak / h.total_done) * 100) : 0}%</span></span>
-                </div>
-                <div className="mt-3 h-1.5 bg-white/8 rounded-full">
-                  <div className="h-1.5 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full transition-all"
-                    style={{ width:`${Math.min((h.streak / (h.target_days || 30)) * 100, 100)}%` }}/>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+          </div>      )}
 
         {tab === 'insights' && (
           <div className="space-y-3">
