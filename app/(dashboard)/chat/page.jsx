@@ -258,6 +258,112 @@ function SearchPanel({ msgs, onClose, onJump }) {
   );
 }
 
+// ─── Model Drawer ─────────────────────────────────────────────────
+// Slide-up drawer showing cascade order for each mode
+const DRAWER_MODES = {
+  flash: {
+    icon: '⚡', label: 'Flash Mode', color: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-500/10',
+    desc: 'Fastest response — cascade fallback',
+    cascade: [
+      { name: 'Groq · Llama 4 Scout 17B', speed: '~1s', note: 'Fastest. Server key', icon: '🚀' },
+      { name: 'Gemini 2.5 Flash-Lite',   speed: '~1s', note: '1000 RPD free',       icon: '⚡' },
+      { name: 'Together · Llama 4 Scout', speed: '~2s', note: 'Fallback',            icon: '🔁' },
+      { name: 'Gemini 2.5 Flash',        speed: '~3s', note: 'Google fallback',      icon: '✨' },
+      { name: 'Pollinations (OpenAI)',    speed: '~5s', note: 'No key, browser',      icon: '🌸' },
+      { name: 'Puter · GPT-4o-mini',     speed: '~6s', note: 'Last resort',          icon: '🛡️' },
+    ]
+  },
+  think: {
+    icon: '🧠', label: 'Think Mode', color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-500/10',
+    desc: 'Deep reasoning — step-by-step',
+    cascade: [
+      { name: 'Groq · Llama 3.3 70B',     speed: '~3s', note: 'Best reasoning',     icon: '🧠' },
+      { name: 'Gemini 2.5 Flash',          speed: '~4s', note: 'Google thinking',    icon: '✨' },
+      { name: 'DeepSeek V3.1 (OpenRouter)',speed: '~5s', note: 'Free fallback',      icon: '🔬' },
+      { name: 'Groq · Kimi K2',            speed: '~3s', note: '1T param MoE',       icon: '🌙' },
+      { name: 'Pollinations',              speed: '~5s', note: 'Browser fallback',   icon: '🌸' },
+      { name: 'Puter',                     speed: '~6s', note: 'Last resort',        icon: '🛡️' },
+    ]
+  },
+  deep: {
+    icon: '🔬', label: 'Deep Mode', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/10',
+    desc: 'Best quality + tools (weather/news)',
+    cascade: [
+      { name: 'Gemini 2.5 Flash + Tools', speed: '~4s', note: 'Weather/news/image', icon: '🔬' },
+      { name: 'Groq · Kimi K2',           speed: '~3s', note: '1T param, high qual',icon: '🌙' },
+      { name: 'Groq · GPT-OSS 120B',      speed: '~3s', note: 'Premium fallback',   icon: '⚙️' },
+      { name: 'Pollinations',             speed: '~5s', note: 'No key needed',       icon: '🌸' },
+      { name: 'Puter',                    speed: '~6s', note: 'Last resort',         icon: '🛡️' },
+    ]
+  },
+  auto: {
+    icon: '🤖', label: 'Auto Mode', color: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-500/10',
+    desc: 'Smart routing by message complexity',
+    cascade: [
+      { name: 'Groq · Kimi K2',           speed: '~2s', note: 'Normal queries',     icon: '🌙' },
+      { name: 'Groq · Llama 4 Scout',     speed: '~1s', note: 'Simple/fast',        icon: '🚀' },
+      { name: 'Gemini 2.5 Flash',         speed: '~3s', note: 'Complex queries',    icon: '✨' },
+      { name: 'Groq · GPT-OSS 120B',      speed: '~3s', note: 'Quality fallback',   icon: '⚙️' },
+      { name: 'Pollinations',             speed: '~5s', note: 'Zero-key fallback',   icon: '🌸' },
+      { name: 'Puter · GPT-4o-mini',      speed: '~6s', note: 'Last resort',        icon: '🛡️' },
+    ]
+  }
+};
+
+function ModelDrawer({ open, onClose, activeMode, onSetMode }) {
+  if (!open) return null;
+  const selected = DRAWER_MODES[activeMode] || DRAWER_MODES.auto;
+  return (
+    <div className="fixed inset-0 z-[9990] flex flex-col justify-end" onClick={onClose}>
+      <div className="bg-[#090d1a] border-t border-white/[0.09] rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden flex flex-col"
+        onClick={e=>e.stopPropagation()}>
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-white/20"/>
+        </div>
+        {/* Header */}
+        <div className="px-5 pb-3 pt-1">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-xl">{selected.icon}</span>
+            <span className={`text-base font-bold ${selected.color}`}>{selected.label}</span>
+          </div>
+          <p className="text-[11px] text-slate-500">{selected.desc}</p>
+        </div>
+        {/* Mode tabs */}
+        <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto no-scrollbar">
+          {Object.entries(DRAWER_MODES).map(([id, dm]) => (
+            <button key={id} onClick={()=>{ onSetMode(id); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border text-[11px] font-semibold shrink-0 transition-all active:scale-95 ${
+                activeMode===id ? `${dm.bg} ${dm.border} ${dm.color}` : 'bg-white/[0.04] border-white/[0.07] text-slate-500 hover:text-white'
+              }`}>
+              <span>{dm.icon}</span><span>{dm.label.split(' ')[0]}</span>
+            </button>
+          ))}
+        </div>
+        {/* Cascade list */}
+        <div className="overflow-y-auto px-4 pb-6">
+          <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2">Cascade Order</p>
+          <div className="space-y-1.5">
+            {selected.cascade.map((m, i) => (
+              <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl border ${i===0 ? selected.bg+' '+selected.border : 'bg-white/[0.03] border-white/[0.06]'}`}>
+                <span className="text-base shrink-0">{m.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[12px] font-semibold truncate ${i===0 ? selected.color : 'text-slate-300'}`}>{m.name}</p>
+                  <p className="text-[10px] text-slate-600">{m.note}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className={`text-[11px] font-mono ${i===0 ? 'text-green-400' : 'text-slate-600'}`}>{m.speed}</span>
+                  {i===0 && <div className="w-1.5 h-1.5 rounded-full bg-green-400 ml-auto mt-0.5 animate-pulse"/>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Sub-components ───────────────────────────────────────────
 function ThinkBubble({ tokens }) {
   const [open, setOpen] = useState(false);
@@ -287,7 +393,7 @@ function CopyButton({ text }) {
   );
 }
 
-function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, setPinnedMsgs, msgs, exportChat, titleGenerated, setTitleGenerated, convId, reactions, setReactions, lastUserMsg, profilePersonality }) {
+function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, setPinnedMsgs, msgs, exportChat, titleGenerated, setTitleGenerated, convId, reactions, setReactions, lastUserMsg, profilePersonality, onModelDrawer }) {
   const isUser = msg.role === 'user';
   const [showC, setShowC] = useState(false);
   const [compressed, setCompressed] = useState(null);
@@ -413,8 +519,12 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
               )}
             </>
           )}
-          {msg.modelUsed && !isUser && (msg.modelUsed === 'offline' || msg.modelUsed === 'keyword-fallback') && (
-            <span className="text-[9px] text-orange-400/80 border border-orange-500/20 bg-orange-500/5 px-1.5 py-0 rounded-full shrink-0">⚠️ offline</span>
+          {msg.modelUsed && !isUser && (
+            msg.modelUsed === 'offline' || msg.modelUsed === 'keyword-fallback'
+              ? <span className="text-[9px] text-orange-400/80 border border-orange-500/20 bg-orange-500/5 px-1.5 py-0 rounded-full shrink-0">⚠️ offline</span>
+              : <button onClick={()=>onModelDrawer?.(msg.mode)} className="text-[9px] text-slate-600 border border-white/[0.07] bg-white/[0.03] px-1.5 py-0 rounded-full shrink-0 hover:text-slate-400 hover:border-white/20 transition-all active:scale-95 max-w-[120px] truncate">
+                  🤖 {msg.modelUsed.replace('Groq · ','').replace('Groq ','').replace('Gemini ','G·').replace('Together ','T·')} ▾
+                </button>
           )}
           <span className="text-[9px] text-slate-700 shrink-0 flex items-center gap-0.5">
             {new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
@@ -1567,6 +1677,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
   const QUICK = getQuickStarters(profilePersonality); // personality-aware
   const [showCmdChips, setShowCmdChips] = useState(false);
   const [showWallpaper, setShowWallpaper]   = useState(false);
+  const [modelDrawer, setModelDrawer]       = useState(false); // Model cascade drawer
   const curM  = MODES.find(m=>m.id===mode)||MODES[0];
   const showM = mode==='auto'&&detected ? MODES.find(m=>m.id===detected)||curM : curM;
   const isEmpty = msgs.length===0;
@@ -1617,19 +1728,20 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             {/* MODE section */}
             <div className="px-4 pt-4 pb-3">
               <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Mode</p>
-              <div className="grid grid-cols-2 gap-2">
-                {MODES.filter(m=>m.id!=='auto'?true:true).map(m=>(
-                  <button key={m.id} onClick={()=>{setMode(m.id);setPlusOpen(false);}}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-2xl border transition-all active:scale-95 ${
-                      mode===m.id
-                        ? 'bg-blue-600/20 border-blue-500/40 text-white'
-                        : 'bg-white/[0.04] border-white/[0.07] text-slate-400 hover:text-white'
-                    }`}>
-                      <span className="text-[13px] font-semibold">{m.id.charAt(0).toUpperCase()+m.id.slice(1)}</span>
-                    {mode===m.id && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400"/>}
-                  </button>
-                ))}
-              </div>
+              <button onClick={()=>{setPlusOpen(false);setModelDrawer(true);}}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl border transition-all active:scale-95 ${
+                  mode==='flash' ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400' :
+                  mode==='think' ? 'bg-purple-500/15 border-purple-500/30 text-purple-400' :
+                  mode==='deep'  ? 'bg-blue-500/15 border-blue-500/30 text-blue-400' :
+                                   'bg-cyan-500/15 border-cyan-500/30 text-cyan-400'
+                }`}>
+                <span className="text-lg">{mode==='flash'?'⚡':mode==='think'?'🧠':mode==='deep'?'🔬':'🤖'}</span>
+                <div className="flex-1 text-left">
+                  <p className="text-[13px] font-semibold">{mode==='auto'?'Auto Mode':mode.charAt(0).toUpperCase()+mode.slice(1)+' Mode'}</p>
+                  <p className="text-[10px] opacity-60">Tap to see cascade & switch</p>
+                </div>
+                <span className="text-slate-600 text-xs">›</span>
+              </button>
             </div>
 
             {/* Divider */}
@@ -1951,7 +2063,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             {msgs.map(m=>(
               m.streaming&&m.content===''
                 ? <TypingDots key={m.id} mode={m.mode}/>
-                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId} reactions={reactions} setReactions={setReactions} lastUserMsg={lastUserMsg} profilePersonality={profilePersonality}/></div>
+                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId} reactions={reactions} setReactions={setReactions} lastUserMsg={lastUserMsg} profilePersonality={profilePersonality} onModelDrawer={(m)=>{if(m)setMode(m);setModelDrawer(true);}}/></div>
             ))}
             {loading&&(
               profilePersonality==='girlfriend'
@@ -2050,16 +2162,19 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
               <Plus size={16}/>
             </button>
 
-            {/* Mode pill - center */}
+            {/* Mode badge → opens Model Drawer */}
             <div className="flex-1 flex items-center justify-center">
-              <div className="flex items-center gap-1 bg-white/[0.04] rounded-full px-1 py-0.5">
-                {MODES.map(m => (
-                  <button key={m.id} onClick={() => setMode(m.id)}
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-all ${mode===m.id ? m.bg+' '+m.text+' border' : 'text-slate-600 hover:text-slate-400'}`}>
-                    {m.label.split(' ')[0]}
-                  </button>
-                ))}
-              </div>
+              <button onClick={()=>setModelDrawer(true)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-semibold transition-all active:scale-95 ${
+                  mode==='flash' ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400' :
+                  mode==='think' ? 'bg-purple-500/15 border-purple-500/30 text-purple-400' :
+                  mode==='deep'  ? 'bg-blue-500/15 border-blue-500/30 text-blue-400' :
+                                   'bg-cyan-500/15 border-cyan-500/30 text-cyan-400'
+                }`}>
+                <span>{mode==='flash'?'⚡':mode==='think'?'🧠':mode==='deep'?'🔬':'🤖'}</span>
+                <span>{mode==='auto'?'Auto':mode.charAt(0).toUpperCase()+mode.slice(1)}</span>
+                <span className="text-[9px] opacity-60">▾</span>
+              </button>
             </div>
 
             {/* Voice */}
@@ -2088,6 +2203,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
         }}
       />
     )}
+    <ModelDrawer open={modelDrawer} onClose={()=>setModelDrawer(false)} activeMode={mode} onSetMode={(m)=>{setMode(m);setModelDrawer(false);}}/>
     </>
   );
 }
