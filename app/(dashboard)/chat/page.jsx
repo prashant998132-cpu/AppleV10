@@ -152,6 +152,34 @@ function relativeTime(ts) {
 // ─── Markdown renderer (no external library needed) ──────────
 function MdContent({ text }) {
   if (!text) return null;
+
+  // ── Math rendering helper ─────────────────────────────────
+  function renderMath(str) {
+    // Block math: $$...$$
+    const blockParts = str.split(/\$\$(.+?)\$\$/s);
+    if (blockParts.length > 1) {
+      return blockParts.map((p, i) =>
+        i % 2 === 1
+          ? <div key={i} className="my-3 py-2 px-3 bg-blue-500/8 border border-blue-500/15 rounded-xl text-center overflow-x-auto">
+              <span className="text-blue-300 font-mono text-[13px] italic">{p.trim()}</span>
+            </div>
+          : <span key={i}>{renderInlineMath(p)}</span>
+      );
+    }
+    return renderInlineMath(str);
+  }
+
+  function renderInlineMath(str) {
+    // Inline math: $...$
+    const parts = str.split(/\$([^$\n]+?)\$/);
+    if (parts.length === 1) return inlineFormat(str);
+    return parts.map((p, i) =>
+      i % 2 === 1
+        ? <span key={i} className="text-blue-300 font-mono italic text-[13px] bg-blue-500/10 px-1 rounded">{p}</span>
+        : <span key={i}>{inlineFormat(p)}</span>
+    );
+  }
+
   const lines = text.split('\n');
   const out = [];
   let codeBlock = false, codeLang = '', codeLines = [];
@@ -164,7 +192,7 @@ function MdContent({ text }) {
         {listItems.map((item, i) => (
           <li key={i} className="flex gap-2 items-start">
             <span className="text-blue-400 mt-0.5 shrink-0">•</span>
-            <span className="text-slate-200">{inlineFormat(item)}</span>
+            <span className="text-slate-200">{renderInlineMath(item)}</span>
           </li>
         ))}
       </ul>
@@ -173,7 +201,6 @@ function MdContent({ text }) {
   }
 
   function inlineFormat(str) {
-    // Bold **text**, Code `text`, italic *text*
     const parts = [];
     let rem = str, key = 0;
     while (rem) {
@@ -191,11 +218,9 @@ function MdContent({ text }) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // Code block
     if (line.startsWith('```')) {
       if (!codeBlock) {
-        flushList();
-        codeBlock = true; codeLang = line.slice(3).trim(); codeLines = [];
+        flushList(); codeBlock = true; codeLang = line.slice(3).trim(); codeLines = [];
       } else {
         const code = codeLines.join('\n');
         out.push(
@@ -209,19 +234,25 @@ function MdContent({ text }) {
       continue;
     }
     if (codeBlock) { codeLines.push(line); continue; }
-    // Headings
     if (line.startsWith('### ')) { flushList(); out.push(<h3 key={out.length} className="font-bold text-white text-sm mt-2 mb-1">{line.slice(4)}</h3>); continue; }
     if (line.startsWith('## '))  { flushList(); out.push(<h2 key={out.length} className="font-bold text-white mt-3 mb-1">{line.slice(3)}</h2>); continue; }
     if (line.startsWith('# '))   { flushList(); out.push(<h1 key={out.length} className="font-bold text-white text-base mt-3 mb-1">{line.slice(2)}</h1>); continue; }
-    // Lists
     if (/^[-*•] /.test(line))    { listItems.push(line.replace(/^[-*•] /,'')); continue; }
-    if (/^\d+\.\s/.test(line)) { listItems.push(line.replace(/^\d+\.\s/,'')); continue; }
-    // Horizontal rule
+    if (/^\d+\.\s/.test(line))   { listItems.push(line.replace(/^\d+\.\s/,'')); continue; }
     if (/^---+$/.test(line.trim())) { flushList(); out.push(<hr key={out.length} className="border-white/10 my-2"/>); continue; }
-    // Normal line
     flushList();
     if (!line.trim()) { out.push(<div key={out.length} className="h-1.5"/>); continue; }
-    out.push(<p key={out.length} className="text-slate-100 leading-relaxed">{inlineFormat(line)}</p>);
+    // Check for block math $$...$$ spanning single line
+    if (line.trim().startsWith('$$') && line.trim().endsWith('$$') && line.trim().length > 4) {
+      const math = line.trim().slice(2,-2).trim();
+      out.push(
+        <div key={out.length} className="my-3 py-2.5 px-4 bg-blue-500/8 border border-blue-500/15 rounded-xl text-center overflow-x-auto">
+          <span className="text-blue-300 font-mono text-[14px] italic">{math}</span>
+        </div>
+      );
+      continue;
+    }
+    out.push(<p key={out.length} className="text-slate-100 leading-relaxed">{renderMath(line)}</p>);
   }
   flushList();
   return <div className="space-y-0.5">{out}</div>;
@@ -310,54 +341,173 @@ const DRAWER_MODES = {
   }
 };
 
-function ModelDrawer({ open, onClose, activeMode, onSetMode }) {
+function ModelDrawer({ open, onClose, activeMode, onSetMode, activePersonality, onSetPersonality, forcedProvider, onSetForcedProvider, onAttach }) {
+  const [tab, setTab] = useState('mode'); // 'attach' | 'mode' | 'persona'
   if (!open) return null;
-  const selected = DRAWER_MODES[activeMode] || DRAWER_MODES.auto;
+
+  const FORCE_PROVIDERS = {
+    flash: [
+      { id: 'groq_llama4_scout', label: 'Groq · Llama 4', color: 'text-green-400', border: 'border-green-500/30', bg: 'bg-green-500/10' },
+      { id: 'together_llama4',   label: 'Together',        color: 'text-orange-400', border: 'border-orange-500/30', bg: 'bg-orange-500/10' },
+      { id: 'gemini_flash',      label: 'Gemini 2.5',      color: 'text-blue-400',   border: 'border-blue-500/30', bg: 'bg-blue-500/10' },
+      { id: 'pollinations_text', label: 'Pollinations',    color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-500/10' },
+    ],
+    think: [
+      { id: 'groq_deepseek_r1',    label: 'Llama 3.3 70B',  color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-500/10' },
+      { id: 'gemini_flash',        label: 'Gemini 2.5',      color: 'text-blue-400',   border: 'border-blue-500/30', bg: 'bg-blue-500/10' },
+      { id: 'openrouter_deepseek', label: 'DeepSeek V3',     color: 'text-cyan-400',   border: 'border-cyan-500/30', bg: 'bg-cyan-500/10' },
+      { id: 'pollinations_text',   label: 'Pollinations',    color: 'text-pink-400',   border: 'border-pink-500/30', bg: 'bg-pink-500/10' },
+    ],
+    deep: [
+      { id: 'gemini_flash',      label: 'Gemini + Tools',  color: 'text-blue-400',   border: 'border-blue-500/30', bg: 'bg-blue-500/10' },
+      { id: 'groq_kimi_k2',      label: 'Kimi K2',         color: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-500/10' },
+      { id: 'pollinations_text', label: 'Pollinations',    color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-500/10' },
+    ],
+    auto: [
+      { id: 'groq_kimi_k2',      label: 'Kimi K2',         color: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-500/10' },
+      { id: 'groq_llama4_scout', label: 'Groq · Llama 4',  color: 'text-green-400',  border: 'border-green-500/30', bg: 'bg-green-500/10' },
+      { id: 'gemini_flash',      label: 'Gemini 2.5',      color: 'text-blue-400',   border: 'border-blue-500/30', bg: 'bg-blue-500/10' },
+      { id: 'pollinations_text', label: 'Pollinations',    color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-500/10' },
+    ],
+  };
+
+  const MODE_CARDS = [
+    { id:'auto',  icon:'🤖', label:'Auto',  color:'text-cyan-400',   border:'border-cyan-500/25',   bg:'bg-cyan-500/8',    desc:'Smart routing', cascade:['Kimi K2','Llama 4','Gemini','Pollinations'] },
+    { id:'flash', icon:'⚡', label:'Flash', color:'text-yellow-400', border:'border-yellow-500/25', bg:'bg-yellow-500/8',  desc:'Fastest response', cascade:['Llama 4 Scout','Together','Gemini 2.5','Pollinations'] },
+    { id:'think', icon:'🧠', label:'Think', color:'text-purple-400', border:'border-purple-500/25', bg:'bg-purple-500/8',  desc:'Deep reasoning', cascade:['Llama 3.3 70B','Gemini 2.5','DeepSeek','Pollinations'] },
+    { id:'deep',  icon:'🔬', label:'Deep',  color:'text-blue-400',   border:'border-blue-500/25',   bg:'bg-blue-500/8',    desc:'Live data + tools', cascade:['Gemini+Tools','Kimi K2','Pollinations'] },
+  ];
+
+  const PERSONAS = [
+    {id:'normal',emoji:'🤝',label:'Normal'},{id:'girlfriend',emoji:'💕',label:'ARIA'},
+    {id:'motivational',emoji:'🔥',label:'Hype'},{id:'fun',emoji:'😄',label:'Fun'},
+    {id:'sarcastic',emoji:'😏',label:'Roast'},{id:'study',emoji:'📚',label:'Study'},
+    {id:'coach',emoji:'🎯',label:'Coach'},{id:'executive',emoji:'💼',label:'Pro'},
+  ];
+
+  const ATTACH_ITEMS = [
+    { icon:'📷', label:'Camera',     sub:'Photo lena',         action: ()=>{ onClose(); onAttach?.('camera'); } },
+    { icon:'🖼️', label:'Image',     sub:'Gallery se upload',  action: ()=>{ onClose(); document.getElementById('img-upload')?.click(); } },
+    { icon:'📄', label:'PDF',        sub:'Document analyze',   action: ()=>{ onClose(); document.getElementById('pdf-upload')?.click(); } },
+    { icon:'🎙️', label:'Voice Mode',sub:'Orb voice interface', action: ()=>{ onClose(); window.location.href='/voice'; } },
+  ];
+
+  const providers = FORCE_PROVIDERS[activeMode] || FORCE_PROVIDERS.auto;
+
   return (
     <div className="fixed inset-0 z-[9990] flex flex-col justify-end" onClick={onClose}>
-      <div className="bg-[#090d1a] border-t border-white/[0.09] rounded-t-3xl shadow-2xl max-h-[80vh] overflow-hidden flex flex-col"
+      <div className="bg-[#080c18] border-t border-white/[0.08] rounded-t-3xl shadow-2xl max-h-[82vh] overflow-hidden flex flex-col"
+        style={{boxShadow:'0 -20px 60px rgba(0,0,0,0.6)'}}
         onClick={e=>e.stopPropagation()}>
+
         {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-white/20"/>
+        <div className="flex justify-center pt-3 pb-2 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-white/15"/>
         </div>
-        {/* Header */}
-        <div className="px-5 pb-3 pt-1">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-xl">{selected.icon}</span>
-            <span className={`text-base font-bold ${selected.color}`}>{selected.label}</span>
-          </div>
-          <p className="text-[11px] text-slate-500">{selected.desc}</p>
-        </div>
-        {/* Mode tabs */}
-        <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto no-scrollbar">
-          {Object.entries(DRAWER_MODES).map(([id, dm]) => (
-            <button key={id} onClick={()=>{ onSetMode(id); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border text-[11px] font-semibold shrink-0 transition-all active:scale-95 ${
-                activeMode===id ? `${dm.bg} ${dm.border} ${dm.color}` : 'bg-white/[0.04] border-white/[0.07] text-slate-500 hover:text-white'
+
+        {/* Tabs */}
+        <div className="flex gap-1 px-4 pb-3 shrink-0 border-b border-white/[0.06]">
+          {[
+            { id:'attach', icon:'🔗', label:'Attach' },
+            { id:'mode',   icon:'⚡', label:'Mode'   },
+            { id:'persona',icon:'🎭', label:'Persona' },
+          ].map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[12px] font-semibold transition-all ${
+                tab===t.id ? 'bg-white/[0.09] text-white border border-white/[0.12]' : 'text-slate-500 hover:text-slate-300'
               }`}>
-              <span>{dm.icon}</span><span>{dm.label.split(' ')[0]}</span>
+              <span>{t.icon}</span><span>{t.label}</span>
             </button>
           ))}
         </div>
-        {/* Cascade list */}
-        <div className="overflow-y-auto px-4 pb-6">
-          <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2">Cascade Order</p>
-          <div className="space-y-1.5">
-            {selected.cascade.map((m, i) => (
-              <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-2xl border ${i===0 ? selected.bg+' '+selected.border : 'bg-white/[0.03] border-white/[0.06]'}`}>
-                <span className="text-base shrink-0">{m.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-[12px] font-semibold truncate ${i===0 ? selected.color : 'text-slate-300'}`}>{m.name}</p>
-                  <p className="text-[10px] text-slate-600">{m.note}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className={`text-[11px] font-mono ${i===0 ? 'text-green-400' : 'text-slate-600'}`}>{m.speed}</span>
-                  {i===0 && <div className="w-1.5 h-1.5 rounded-full bg-green-400 ml-auto mt-0.5 animate-pulse"/>}
+
+        {/* Content */}
+        <div className="overflow-y-auto px-4 py-3 flex-1">
+
+          {/* ── ATTACH TAB ── */}
+          {tab==='attach' && (
+            <div className="space-y-2">
+              {ATTACH_ITEMS.map(item=>(
+                <button key={item.label} onClick={item.action}
+                  className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.07] active:scale-98 transition-all text-left">
+                  <span className="text-2xl w-9 text-center">{item.icon}</span>
+                  <div>
+                    <p className="text-[13px] font-semibold text-white">{item.label}</p>
+                    <p className="text-[11px] text-slate-500">{item.sub}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── MODE TAB ── */}
+          {tab==='mode' && (
+            <div className="space-y-2.5">
+              {/* Force Provider section */}
+              <div className="mb-3">
+                <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2">🔒 Lock Provider (optional)</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button onClick={()=>onSetForcedProvider(null)}
+                    className={`px-3 py-1.5 rounded-xl border text-[11px] font-medium transition-all ${!forcedProvider?'bg-white/[0.1] border-white/20 text-white':'bg-transparent border-white/[0.07] text-slate-500'}`}>
+                    🔄 Auto
+                  </button>
+                  {providers.map(p=>(
+                    <button key={p.id} onClick={()=>onSetForcedProvider(p.id)}
+                      className={`px-3 py-1.5 rounded-xl border text-[11px] font-medium transition-all ${forcedProvider===p.id ? p.bg+' '+p.border+' '+p.color : 'bg-transparent border-white/[0.07] text-slate-500 hover:text-slate-300'}`}>
+                      {forcedProvider===p.id?'🔒 ':''}{p.label}
+                    </button>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="border-t border-white/[0.05] mb-3"/>
+              {/* Mode cards */}
+              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2">Select Mode</p>
+              {MODE_CARDS.map(m=>(
+                <button key={m.id} onClick={()=>{ onSetMode(m.id); onClose(); }}
+                  className={`w-full text-left px-4 py-3.5 rounded-2xl border transition-all ${
+                    activeMode===m.id ? m.bg+' '+m.border : 'bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.05]'
+                  }`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{m.icon}</span>
+                      <span className={`text-[14px] font-bold ${activeMode===m.id?m.color:'text-slate-300'}`}>{m.label}</span>
+                      <span className="text-[11px] text-slate-500">{m.desc}</span>
+                    </div>
+                    {activeMode===m.id && <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">ACTIVE</span>}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.cascade.map((c,i)=>(
+                      <span key={i} className={`text-[10px] px-2 py-0.5 rounded-full border ${i===0?m.bg+' '+m.border+' '+m.color:'bg-white/[0.03] border-white/[0.06] text-slate-600'}`}>
+                        {i===0?'':'→ '}{c}
+                      </span>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── PERSONA TAB ── */}
+          {tab==='persona' && (
+            <div className="grid grid-cols-2 gap-2 pb-2">
+              {PERSONAS.map(p=>(
+                <button key={p.id} onClick={()=>{ onSetPersonality(p.id); onClose(); }}
+                  className={`flex items-center gap-2.5 px-4 py-3.5 rounded-2xl border transition-all text-left ${
+                    activePersonality===p.id
+                      ? p.id==='girlfriend'
+                        ? 'bg-pink-500/15 border-pink-500/30 text-pink-300'
+                        : 'bg-blue-500/15 border-blue-500/30 text-blue-300'
+                      : 'bg-white/[0.03] border-white/[0.06] text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                  }`}>
+                  <span className="text-xl">{p.emoji}</span>
+                  <div>
+                    <p className="text-[13px] font-semibold">{p.label}</p>
+                    {activePersonality===p.id && <p className="text-[10px] opacity-70">Active ✓</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -532,6 +682,9 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
                   🤖 {msg.modelUsed.replace('Groq · ','').replace('Groq ','').replace('Gemini ','G·').replace('Together ','T·')} ▾
                 </button>
           )}
+          {msg.timing && !isUser && (
+            <span className="text-[9px] text-slate-700 font-mono shrink-0">⚡{(msg.timing/1000).toFixed(1)}s</span>
+          )}
           <span className="text-[9px] text-slate-700 shrink-0 flex items-center gap-0.5">
             {new Date(msg.ts||Date.now()).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}
             {msg.role==='user' && <span className="text-blue-400/60 text-[10px]">✓</span>}
@@ -559,14 +712,30 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
 
         {/* Follow-up chips — tiny horizontal scroll */}
         {!isUser && !msg.streaming && msg.followUps?.length > 0 && (
-          <div className="flex gap-1 mt-0.5 overflow-x-scroll no-scrollbar" style={{maxWidth:"90%",flexWrap:"nowrap"}}>
-            {msg.followUps.slice(0,3).map(q=>(
+          <div className="flex gap-1.5 mt-1.5 flex-wrap" style={{maxWidth:"100%"}}>
+            {msg.followUps.slice(0,4).map(q=>(
               <button key={q} onClick={()=>onFollowUp(q)}
-                style={{flexShrink:0,whiteSpace:"nowrap"}}
-                className="text-[9px] text-slate-500 border border-white/8 px-1.5 py-0.5 rounded-md transition-all active:bg-white/5">
-                {q.length > 20 ? q.slice(0,18)+'…' : q}
+                className="text-[11px] text-slate-400 border border-white/[0.09] bg-white/[0.03] px-2.5 py-1 rounded-xl transition-all active:scale-95 hover:bg-white/[0.07] hover:text-white hover:border-white/20">
+                {q.length > 22 ? q.slice(0,20)+'…' : q}
               </button>
             ))}
+            {/* Regenerate button — only on last AI message */}
+            {msgs && msgs.filter(m=>m.role==='assistant').slice(-1)[0]?.id === msg.id && (
+              <button onClick={()=>onFollowUp('__regenerate__')}
+                className="text-[11px] text-slate-500 border border-white/[0.07] bg-white/[0.02] px-2.5 py-1 rounded-xl transition-all active:scale-95 hover:text-white hover:border-white/15 flex items-center gap-1">
+                <span>↺</span><span>Regenerate</span>
+              </button>
+            )}
+          </div>
+        )}
+        {/* Regenerate — even without follow-ups, show on last AI msg */}
+        {!isUser && !msg.streaming && (!msg.followUps?.length) &&
+          msgs && msgs.filter(m=>m.role==='assistant').slice(-1)[0]?.id === msg.id && (
+          <div className="mt-1.5">
+            <button onClick={()=>onFollowUp('__regenerate__')}
+              className="text-[11px] text-slate-600 border border-white/[0.06] px-2.5 py-1 rounded-xl transition-all active:scale-95 hover:text-slate-400 hover:border-white/12 flex items-center gap-1">
+              <span>↺</span><span>Regenerate</span>
+            </button>
           </div>
         )}
       </div>
@@ -1569,6 +1738,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
           message:msg, history, conversationId:convId, imageBase64:b64,
           mode:finalMode, userLocation:userLoc,
           personality:profilePersonality||'normal',
+          forcedProvider: forcedProvider || undefined,
           ariaMemory: profilePersonality==='girlfriend' ? (() => { try { return localStorage.getItem('aria_ultra')||'{}'; } catch { return '{}'; } })() : undefined,
         }),
       });
@@ -1684,6 +1854,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
   const [showCmdChips, setShowCmdChips] = useState(false);
   const [showWallpaper, setShowWallpaper]   = useState(false);
   const [modelDrawer, setModelDrawer]       = useState(false); // Model cascade drawer
+  const [forcedProvider, setForcedProvider] = useState(null);  // null = auto cascade
   const curM  = MODES.find(m=>m.id===mode)||MODES[0];
   const showM = mode==='auto'&&detected ? MODES.find(m=>m.id===detected)||curM : curM;
   const isEmpty = msgs.length===0;
@@ -2060,7 +2231,13 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             {msgs.map(m=>(
               m.streaming&&m.content===''
                 ? <TypingDots key={m.id} mode={m.mode}/>
-                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>send(t)} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId} reactions={reactions} setReactions={setReactions} lastUserMsg={lastUserMsg} profilePersonality={profilePersonality} onModelDrawer={(m)=>{if(m)setMode(m);setModelDrawer(true);}}/></div>
+                : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>{
+                    if(t==='__regenerate__'){
+                      // Re-send last user message
+                      const lastUser = [...msgs].reverse().find(x=>x.role==='user');
+                      if(lastUser) send(lastUser.content);
+                    } else { send(t); }
+                  }} pinnedIds={pinnedIds} setPinnedIds={setPinnedIds} setPinnedMsgs={setPinnedMsgs} msgs={msgs} exportChat={exportChat} titleGenerated={titleGenerated} setTitleGenerated={setTitleGenerated} convId={convId} reactions={reactions} setReactions={setReactions} lastUserMsg={lastUserMsg} profilePersonality={profilePersonality} onModelDrawer={(m)=>{if(m)setMode(m);setModelDrawer(true);}}/></div>
             ))}
             {loading&&(
               profilePersonality==='girlfriend'
@@ -2150,7 +2327,17 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
               className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${plusOpen?'bg-blue-500/20 text-blue-400 rotate-45':'text-slate-500 hover:text-slate-300 hover:bg-white/[0.06]'}`}>
               <Plus size={17}/>
             </button>
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center gap-1.5">
+              {forcedProvider && (
+                <button onClick={()=>setForcedProvider(null)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-xl border border-orange-500/30 bg-orange-500/10 text-orange-400 text-[10px] font-semibold transition-all active:scale-95 shrink-0">
+                  <span>🔒</span>
+                  <span className="max-w-[72px] truncate">
+                    {forcedProvider.includes('groq_llama4')?'Llama 4':forcedProvider.includes('gemini')?'Gemini':forcedProvider.includes('together')?'Together':forcedProvider.includes('pollinations')?'Pollinations':forcedProvider.includes('kimi')?'Kimi K2':forcedProvider.includes('deepseek')?'DeepSeek':'locked'}
+                  </span>
+                  <span className="opacity-60 ml-0.5">✕</span>
+                </button>
+              )}
               <button onClick={()=>setModelDrawer(true)}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-semibold transition-all active:scale-95 ${
                   mode==='flash'?'bg-yellow-500/10 border-yellow-500/20 text-yellow-400':
@@ -2184,7 +2371,24 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
         }}
       />
     )}
-    <ModelDrawer open={modelDrawer} onClose={()=>setModelDrawer(false)} activeMode={mode} onSetMode={(m)=>{setMode(m);setModelDrawer(false);}}/>
+    <ModelDrawer
+      open={modelDrawer}
+      onClose={()=>setModelDrawer(false)}
+      activeMode={mode}
+      onSetMode={(m)=>{setMode(m);}}
+      activePersonality={profilePersonality}
+      onSetPersonality={(p)=>{
+        setProfilePersonality(p);
+        try {
+          localStorage.setItem('jarvis_personality', p);
+          const prof = JSON.parse(localStorage.getItem('jarvis_profile')||'{}');
+          localStorage.setItem('jarvis_profile', JSON.stringify({...prof, personality: p}));
+        } catch {}
+      }}
+      forcedProvider={forcedProvider}
+      onSetForcedProvider={setForcedProvider}
+      onAttach={(type)=>{ if(type==='camera') startCamera(); }}
+    />
     </>
   );
 }

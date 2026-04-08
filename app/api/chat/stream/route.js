@@ -21,7 +21,7 @@ export async function POST(req) {
   const reqStart = Date.now(); // LLM latency tracking
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
 
-  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto', userLocation, personality: clientPersonality, ariaMemory: clientAriaMemory } = await req.json();
+  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto', userLocation, personality: clientPersonality, ariaMemory: clientAriaMemory, forcedProvider } = await req.json();
   if (!message?.trim() && !imageBase64) return new Response('Empty', { status: 400 });
 
   const keys = getKeys();
@@ -514,7 +514,11 @@ export async function POST(req) {
       try {
         // ── v10.1 SMART ROUTER — Auto pick best provider ─────────
         // Gets ordered list based on: mode + complexity + daily usage + available keys
-        const providerOrder = getProviderOrder(mode, message, history, keys);
+        // If forcedProvider is set, put it first (lock/pin feature)
+        let providerOrder = getProviderOrder(mode, message, history, keys);
+        if (forcedProvider && PROVIDERS[forcedProvider]) {
+          providerOrder = [forcedProvider, ...providerOrder.filter(p => p !== forcedProvider)];
+        }
         let usedProvider = 'offline';
         let streamSuccess = false;
 
