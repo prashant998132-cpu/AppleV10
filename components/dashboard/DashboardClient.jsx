@@ -215,7 +215,7 @@ export default function DashboardClient({ children, user, profile }) {
           </button>
         )}
 
-        <main className="flex-1 overflow-hidden h-full page-enter">
+        <main className={`flex-1 overflow-hidden h-full page-enter ${path !== '/chat' ? 'lg:pb-0 pb-16' : ''}`}>
           {children}
         </main>
       </div>
@@ -256,7 +256,8 @@ export default function DashboardClient({ children, user, profile }) {
         </div>
       )}
     </div>
-      {/* ── Mobile Bottom Tab Bar ─────────────────────── */}
+      {/* ── Mobile Bottom Tab Bar — hidden on /chat ─────────────────── */}
+      {path !== '/chat' && (
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-white/[0.07]"
         style={{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
         <div className="flex items-stretch">
@@ -274,6 +275,7 @@ export default function DashboardClient({ children, user, profile }) {
           })}
         </div>
       </nav>
+      )}
 
       <FloatingJarvis/>
     </ErrorBoundary>
