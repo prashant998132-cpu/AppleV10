@@ -447,32 +447,38 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
   }
 
   return (
-    <div className={`flex ${isUser?'justify-end':'justify-start'} mb-1 px-0.5 msg-in`}>
+    <div className={`flex ${isUser?'justify-end':'justify-start'} mb-3 px-1 msg-in`}>
+      {/* AI Avatar — left side */}
       {!isUser && (
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 mt-0.5 shrink-0 ${
-          profilePersonality === 'girlfriend'
-            ? 'bg-gradient-to-br from-pink-500 to-rose-400'
-            : 'bg-gradient-to-br from-blue-600 to-cyan-500'
-        }`}>
-          <span className="text-white font-black text-[10px]">{profilePersonality === 'girlfriend' ? 'A' : 'J'}</span>
+        <div className="shrink-0 mr-2.5 mt-0.5">
+          <div className={`w-7 h-7 rounded-xl flex items-center justify-center shadow-lg ${
+            profilePersonality === 'girlfriend'
+              ? 'bg-gradient-to-br from-pink-500 to-rose-500 shadow-pink-500/20'
+              : 'bg-gradient-to-br from-blue-500 to-cyan-400 shadow-blue-500/20'
+          }`}>
+            <span className="text-white font-black text-[11px]">{profilePersonality === 'girlfriend' ? 'A' : 'J'}</span>
+          </div>
         </div>
       )}
-      <div className={`max-w-[86%] flex flex-col ${isUser?'items-end':'items-start'} gap-0.5`}>
-        {msg.cameraPreview && <img src={msg.cameraPreview} alt="" className="rounded-2xl max-w-[110px] border border-white/10 mb-1"/>}
-        {msg.imageUrl && <div className="rounded-2xl overflow-hidden border border-white/10 mb-1 shadow-xl"><img src={msg.imageUrl} alt="" className="w-full max-w-[260px]"/></div>}
+
+      <div className={`flex flex-col ${isUser?'items-end max-w-[82%]':'items-start w-full max-w-[calc(100%-42px)]'} gap-1`}>
+        {msg.cameraPreview && <img src={msg.cameraPreview} alt="" className="rounded-2xl max-w-[120px] border border-white/10 mb-1 shadow-xl"/>}
+        {msg.imageUrl && <div className="rounded-2xl overflow-hidden border border-white/10 mb-1 shadow-2xl"><img src={msg.imageUrl} alt="" className="w-full max-w-[280px]"/></div>}
         {!isUser && <ThinkBubble tokens={msg.thinking}/>}
 
-        <div onClick={()=>setShowActions(v=>!v)} className={`px-3 py-2 text-[13px] leading-snug cursor-pointer select-none ${
+        {/* Message content */}
+        <div onClick={()=>setShowActions(v=>!v)} className={`cursor-pointer select-none ${
           isUser
-            ? 'bg-gradient-to-br from-blue-600 to-blue-500 text-white font-medium rounded-[20px_20px_5px_20px] shadow-[0_4px_20px_rgba(59,130,246,0.22)]'
-            : profilePersonality === 'girlfriend'
-              ? 'bg-rose-950/40 border border-rose-500/15 text-slate-100 rounded-[20px_20px_20px_5px]'
-              : 'bg-white/[0.06] border border-white/[0.08] text-slate-100 rounded-[20px_20px_20px_5px]'
+            ? 'px-4 py-2.5 text-[14px] leading-relaxed font-medium text-white rounded-[18px_18px_4px_18px] shadow-lg ' +
+              (profilePersonality==='girlfriend'
+                ? 'bg-gradient-to-br from-pink-500 to-rose-500 shadow-pink-500/20'
+                : 'bg-gradient-to-br from-blue-600 to-blue-500 shadow-blue-500/20')
+            : 'text-[14px] leading-relaxed text-slate-100 w-full'
         }`}>
           {compressing
-            ? <span className="text-slate-400 text-xs animate-pulse">Compress ho raha hai...</span>
+            ? <span className="text-slate-400 text-sm animate-pulse">Compress ho raha hai...</span>
             : isUser ? text
-            : <><MdContent text={text}/>{msg.streaming && <span className="inline-block w-0.5 h-4 bg-blue-400 ml-0.5 animate-pulse align-middle"/>}</>
+            : <><MdContent text={text}/>{msg.streaming && <span className="inline-block w-[2px] h-[15px] bg-blue-400 ml-0.5 animate-pulse align-middle rounded-full"/>}</>
           }
         </div>
 
@@ -1903,104 +1909,95 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       )}
 
       {/* Header */}
-      {/* ── Chat Header — Image 2 style ──────────────────────── */}
-      <div className="px-3 py-2 flex items-center gap-2 border-b border-white/10 shrink-0 bg-black/20">
-        {/* Left: History + Avatar + Name */}
-        <button onClick={()=>setHistoryOpen(true)} className="text-slate-600 hover:text-slate-400 transition-colors shrink-0">
-          <History size={16}/>
+      {/* ── Premium Chat Header ─────────────────────────────── */}
+      <div className="px-4 py-2.5 flex items-center gap-3 shrink-0 border-b border-white/[0.06]" style={{background:'rgba(5,8,16,0.85)',backdropFilter:'blur(20px)'}}>
+        {/* History */}
+        <button onClick={()=>setHistoryOpen(true)} className="text-slate-500 hover:text-slate-300 transition-colors shrink-0 p-1">
+          <History size={17}/>
         </button>
-        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-          profilePersonality === 'girlfriend'
-            ? 'bg-gradient-to-br from-pink-500 to-rose-400'
-            : 'bg-gradient-to-br from-blue-600 to-cyan-500'
-          } ${loading||msgs.some(m=>m.streaming)?'animate-pulse shadow-[0_0_15px_rgba(236,72,153,0.5)]':''}`}>
-          <span className="text-white font-black text-sm">{profilePersonality === 'girlfriend' ? 'A' : 'J'}</span>
+
+        {/* Avatar + Status */}
+        <div className="relative shrink-0">
+          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shadow-lg ${
+            profilePersonality === 'girlfriend'
+              ? 'bg-gradient-to-br from-pink-500 to-rose-500 shadow-pink-500/25'
+              : 'bg-gradient-to-br from-blue-500 to-cyan-400 shadow-blue-500/25'
+          } ${(loading||msgs.some(m=>m.streaming)) ? 'ring-2 ring-blue-400/40' : ''}`}>
+            <span className="text-white font-black text-[11px]">{profilePersonality === 'girlfriend' ? 'A' : 'J'}</span>
+          </div>
+          {/* Online dot */}
+          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#050810] bg-emerald-400"/>
         </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-black text-white tracking-wide">JARVIS</p>
-            <div className="flex items-center gap-1.5">
-              <p className="text-[10px] text-slate-500">
-                {profileName && <span className="text-slate-400">{profileName} · </span>}
-                <span className="text-blue-400/80">{PERSONALITY_LABELS[profilePersonality] || '🤖 JARVIS'}</span>
-                <span className="text-slate-600"> · {mode}</span>
-              </p>
-              {typeof navigator !== 'undefined' && !navigator.onLine && (
-                <span className="text-[9px] bg-orange-500/20 text-orange-400 border border-orange-500/30 px-1.5 py-0.5 rounded-full">Offline</span>
-              )}
-              {(loading || msgs.some(m=>m.streaming)) && (
-                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"/>
-              )}
-            </div>
-            {newBadge && (
-              <div className="absolute top-14 left-1/2 -translate-x-1/2 z-50 bg-yellow-500/90 text-black text-xs font-bold px-4 py-2 rounded-full shadow-lg animate-bounce whitespace-nowrap">
-                {newBadge.emoji} Badge Mila: {newBadge.name}! 🎉
+
+        {/* Name + subtitle */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-[14px] font-bold text-white tracking-tight">
+              {profilePersonality === 'girlfriend' ? 'ARIA' : 'JARVIS'}
+            </p>
+            {(loading || msgs.some(m=>m.streaming)) && (
+              <span className="text-[10px] text-blue-400/80 animate-pulse font-medium">typing...</span>
+            )}
+          </div>
+          <p className="text-[11px] text-slate-500 truncate">
+            {profileName && <span className="text-slate-400">{profileName} · </span>}
+            <span className="text-slate-500">{PERSONALITY_LABELS[profilePersonality] || '🤖 JARVIS'}</span>
+          </p>
+        </div>
+
+        {/* Right actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Voice toggle */}
+          <button onClick={()=>{stopCurrentAudio();setSpeaking(false);setVoiceOn(v=>!v);}}
+            className={`p-2 rounded-xl transition-all text-sm ${voiceOn||speaking?'text-blue-400 bg-blue-500/10':'text-slate-600 hover:text-slate-300 hover:bg-white/[0.05]'}`}>
+            {voiceOn||speaking?<Volume2 size={16}/>:<VolumeX size={16}/>}
+          </button>
+          {/* ⋯ More menu */}
+          <div className="relative">
+            <button onClick={()=>setMoreOpen(v=>!v)}
+              className={`p-2 rounded-xl transition-all text-[18px] leading-none font-bold ${moreOpen?'text-white bg-white/[0.08]':'text-slate-500 hover:text-white hover:bg-white/[0.05]'}`}>
+              ···
+            </button>
+            {moreOpen && (
+              <div className="absolute right-0 top-10 z-50 bg-[#0d1117] border border-white/[0.08] rounded-2xl shadow-2xl p-1.5 flex flex-col gap-0.5 min-w-[150px]"
+                onClick={()=>setMoreOpen(false)}>
+                <button onClick={()=>{ Sounds.toggleMute(); navigator.vibrate?.([5]); }}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-slate-400 hover:text-white text-[13px]">
+                  🔈 Sounds
+                </button>
+                <button onClick={()=>setSearchOpen(true)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-slate-400 hover:text-white text-[13px]">
+                  <Search size={14}/> Search Chat
+                </button>
+                <button onClick={()=>setPinsOpen(true)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-[13px] ${pinnedMsgs.length>0?'text-yellow-400':'text-slate-400 hover:text-white'}`}>
+                  📌 Pinned {pinnedMsgs.length>0&&<span className="ml-auto text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 rounded-full">{pinnedMsgs.length}</span>}
+                </button>
+                <button onClick={()=>setWakeWordOn(w=>!w)}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-[13px] ${wakeWordOn?'text-blue-400':'text-slate-400 hover:text-white'}`}>
+                  {wakeWordOn?(wakeDetected?'🎤':'👂'):'🔕'} Hey JARVIS
+                </button>
               </div>
             )}
           </div>
-
-          {/* Weather + Battery info */}
-          {timeCtx?.weather && (
-            <div className="flex items-center gap-1 shrink-0">
-              <span className="text-[11px] text-slate-500">{timeCtx.weather}</span>
-            </div>
-          )}
-
-          {/* Right action buttons — compact */}
-          <div className="flex items-center gap-0.5 shrink-0 relative">
-
-            {/* UI Sound toggle */}
-            <button onClick={()=>{ Sounds.toggleMute(); navigator.vibrate?.([5]); }}
-              title="UI sounds"
-              className="p-1.5 rounded-full text-slate-600 hover:text-slate-300 transition-all text-[13px]">
-              🔈
-            </button>
-            {/* Voice/TTS sound */}
-            <button onClick={()=>{stopCurrentAudio();setSpeaking(false);setVoiceOn(v=>!v);}}
-              className={`p-1.5 rounded-full transition-all ${voiceOn||speaking?'text-blue-400':'text-slate-600'}`}>
-              {voiceOn||speaking?<Volume2 size={15}/>:<VolumeX size={15}/>}
-            </button>
-            {/* ⋯ More — Search, Pin, Wake */}
-            <div className="relative">
-              <button onClick={()=>setMoreOpen(v=>!v)}
-                className={`p-1.5 rounded-full transition-all text-base leading-none ${moreOpen?'text-white':'text-slate-600 hover:text-white'}`}>
-                ···
-              </button>
-              {moreOpen && (
-                <div className="absolute right-0 top-9 z-50 bg-[#0d1117] border border-white/10 rounded-2xl shadow-2xl p-1.5 flex flex-col gap-0.5 min-w-[140px]"
-                  onClick={()=>setMoreOpen(false)}>
-                  <button onClick={()=>setSearchOpen(true)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-slate-400 hover:text-white text-[13px]">
-                    <Search size={14}/> Chat Search
-                  </button>
-                  <button onClick={()=>setPinsOpen(true)}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-[13px] ${pinnedMsgs.length>0?'text-yellow-400':'text-slate-400 hover:text-white'}`}>
-                    📌 Pinned {pinnedMsgs.length>0&&<span className="ml-auto text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 rounded-full">{pinnedMsgs.length}</span>}
-                  </button>
-                  <button onClick={()=>setWakeWordOn(w=>!w)}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/5 transition-colors text-[13px] ${wakeWordOn?'text-blue-400':'text-slate-400 hover:text-white'}`}>
-                    {wakeWordOn?(wakeDetected?'🎤':'👂'):'🔕'} Hey JARVIS
-                  </button>
-                </div>
-              )}
-            </div>
-            {/* New chat */}
-            <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}}
-              className="p-1.5 rounded-full text-slate-600 hover:text-white transition-all">
-              <Plus size={15}/>
-            </button>
-            {/* Menu */}
-            <button onClick={()=>window.dispatchEvent(new CustomEvent("jarvis-open-sidebar"))}
-              className="flex flex-col gap-[3px] items-center justify-center p-1.5 rounded-full text-slate-500 hover:text-white transition-all lg:hidden">
-              <span className="block w-3.5 h-[1.5px] bg-current rounded-full"/>
-              <span className="block w-3.5 h-[1.5px] bg-current rounded-full"/>
-              <span className="block w-2.5 h-[1.5px] bg-current rounded-full"/>
-            </button>
-          </div>
+          {/* New chat */}
+          <button onClick={()=>{setMsgs([]);setConvId(null);setTitleGenerated(false);}}
+            className="p-2 rounded-xl text-slate-600 hover:text-white hover:bg-white/[0.05] transition-all">
+            <Plus size={16}/>
+          </button>
+          {/* Sidebar menu */}
+          <button onClick={()=>window.dispatchEvent(new CustomEvent("jarvis-open-sidebar"))}
+            className="flex flex-col gap-[3.5px] items-center justify-center p-2 rounded-xl text-slate-500 hover:text-white hover:bg-white/[0.05] transition-all lg:hidden">
+            <span className="block w-3.5 h-[1.5px] bg-current rounded-full"/>
+            <span className="block w-3.5 h-[1.5px] bg-current rounded-full"/>
+            <span className="block w-2.5 h-[1.5px] bg-current rounded-full"/>
+          </button>
+        </div>
       </div>
 
 
       {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-2 py-1 no-scrollbar jarvis-scroll">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 no-scrollbar jarvis-scroll">
         {isEmpty ? (
           <div className="flex flex-col h-full overflow-y-auto no-scrollbar">
 
@@ -2129,65 +2126,49 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       {/* Remote typing indicator */}
       <RemoteTypingIndicator isTyping={remoteTyping}/>
       {/* Input */}
-      {/* ── Chat Input — Image 2 Style ─────────────────── */}
-      <div className="shrink-0 safe-bottom">
-        {/* Image preview */}
+      {/* ── Premium Input Bar — Gemini Style ─────────── */}
+      <div className="shrink-0 safe-bottom px-3 pb-3 pt-1">
         {preview && (
-          <div className="px-4 pb-2 flex items-center gap-2">
-            <img src={preview} alt="" className="h-10 w-10 rounded-xl object-cover border border-white/10"/>
+          <div className="px-1 pb-2 flex items-center gap-2">
+            <img src={preview} alt="" className="h-12 w-12 rounded-xl object-cover border border-white/10 shadow-lg"/>
             <span className="text-xs text-slate-500 flex-1">Image ready</span>
-            <button onClick={()=>{setPreview(null);setImgB64(null);}}><X size={14} className="text-slate-600"/></button>
+            <button onClick={()=>{setPreview(null);setImgB64(null);}} className="p-1 rounded-lg hover:bg-white/10 transition-colors"><X size={14} className="text-slate-500"/></button>
           </div>
         )}
-
-        {/* Main input container */}
-        <div className="mx-3 mb-3 bg-white/[0.05] border border-white/[0.09] rounded-[26px] focus-within:border-blue-500/30 transition-all overflow-hidden">
-          {/* Textarea */}
-          <div className="px-4 pt-3 pb-1">
+        <div className="rounded-[22px] border border-white/[0.08] overflow-hidden transition-all duration-200 focus-within:border-white/[0.16]"
+          style={{background:'rgba(255,255,255,0.04)',backdropFilter:'blur(20px)',boxShadow:'0 2px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)'}}>
+          <div className="px-4 pt-3.5 pb-2">
             <textarea ref={taRef} value={input} onChange={e=>setInput(e.target.value)}
               onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}}
-              placeholder={profilePersonality === "girlfriend" ? "Aira se kuch bolo..." : profilePersonality === "study" ? "Kuch poochho, kuch seekhna hai..." : profilePersonality === "roast" ? "Roast ke liye ready ho? 😈" : "Kuch poocho ya batao..."}
-              rows={1} maxLength={4000} style={{resize:'none',minHeight:'24px',maxHeight:'96px',overflowY:'auto'}}
+              placeholder={profilePersonality==="girlfriend"?"Aira se kuch bolo...":profilePersonality==="study"?"Kuch poochho, kuch seekhna hai...":"JARVIS se kuch poochho..."}
+              rows={1} maxLength={4000} style={{resize:'none',minHeight:'22px',maxHeight:'120px',overflowY:'auto'}}
               className="w-full bg-transparent text-white text-[15px] placeholder-slate-600 outline-none leading-relaxed"/>
-            {input.length > 3000 && <span className="absolute bottom-1 right-2 text-[9px] text-orange-400/70">{4000-input.length}</span>}
+            {input.length > 3000 && <span className="text-[9px] text-orange-400/70">{4000-input.length}</span>}
           </div>
-
-          {/* Bottom toolbar */}
-          <div className="flex items-center px-3 pb-2.5 pt-1 gap-2">
-            {/* + Button → popup */}
+          <div className="flex items-center px-2.5 pb-2.5 pt-0 gap-1.5">
             <button onClick={()=>setPlusOpen(v=>!v)}
-              className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all border ${
-                plusOpen ? 'bg-blue-600 border-blue-500 text-white rotate-45' : 'bg-white/[0.06] border-white/[0.09] text-slate-400 hover:text-white'
-              }`}>
-              <Plus size={16}/>
+              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${plusOpen?'bg-blue-500/20 text-blue-400 rotate-45':'text-slate-500 hover:text-slate-300 hover:bg-white/[0.06]'}`}>
+              <Plus size={17}/>
             </button>
-
-            {/* Mode badge → opens Model Drawer */}
             <div className="flex-1 flex items-center justify-center">
               <button onClick={()=>setModelDrawer(true)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-semibold transition-all active:scale-95 ${
-                  mode==='flash' ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400' :
-                  mode==='think' ? 'bg-purple-500/15 border-purple-500/30 text-purple-400' :
-                  mode==='deep'  ? 'bg-blue-500/15 border-blue-500/30 text-blue-400' :
-                                   'bg-cyan-500/15 border-cyan-500/30 text-cyan-400'
-                }`}>
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[11px] font-semibold transition-all active:scale-95 ${
+                  mode==='flash'?'bg-yellow-500/10 border-yellow-500/20 text-yellow-400':
+                  mode==='think'?'bg-purple-500/10 border-purple-500/20 text-purple-400':
+                  mode==='deep'?'bg-blue-500/10 border-blue-500/20 text-blue-400':
+                  'bg-white/[0.04] border-white/[0.08] text-slate-400'}`}>
                 <span>{mode==='flash'?'⚡':mode==='think'?'🧠':mode==='deep'?'🔬':'🤖'}</span>
                 <span>{mode==='auto'?'Auto':mode.charAt(0).toUpperCase()+mode.slice(1)}</span>
-                <span className="text-[9px] opacity-60">▾</span>
+                <span className="opacity-40 text-[9px]">▾</span>
               </button>
             </div>
-
-            {/* Voice */}
             <button onClick={startVoice}
-              className={`flex items-center gap-1 px-2 py-1 rounded-full transition-all shrink-0 ${listening?'bg-red-500/20 text-red-400 border border-red-500/30':'text-slate-500 hover:text-slate-300'}`}>
-              {listening?<MicOff size={15}/>:<Mic size={15}/>}
-              {listening && <span className="text-[10px] font-medium">Bol...</span>}
+              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all shrink-0 ${listening?'bg-red-500/20 text-red-400':'text-slate-500 hover:text-slate-300 hover:bg-white/[0.06]'}`}>
+              {listening?<MicOff size={16}/>:<Mic size={16}/>}
             </button>
-
-            {/* Send */}
             <button onClick={()=>send()} disabled={(!input.trim()&&!preview)||loading}
-              className={`w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-25 transition-all active:scale-95 shrink-0 ${profilePersonality==="girlfriend" ? "bg-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.4)]" : "bg-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.35)]"}`}>
-              <Send size={13} className="text-white ml-0.5"/>
+              className={`w-9 h-9 rounded-xl flex items-center justify-center disabled:opacity-20 transition-all active:scale-90 shrink-0 ${profilePersonality==="girlfriend"?"bg-gradient-to-br from-pink-500 to-rose-500 shadow-[0_0_14px_rgba(236,72,153,0.3)]":"bg-gradient-to-br from-blue-600 to-blue-500 shadow-[0_0_14px_rgba(59,130,246,0.25)]"}`}>
+              <Send size={14} className="text-white ml-0.5"/>
             </button>
           </div>
         </div>
