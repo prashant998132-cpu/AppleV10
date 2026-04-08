@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [quote, setQuote]     = useState('');
   const [weekMood, setMood]   = useState([]);
   const [loading, setLoad]    = useState(true);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
 
   useEffect(() => {
     // Clock
