@@ -21,7 +21,7 @@ export async function POST(req) {
   const reqStart = Date.now(); // LLM latency tracking
   const user = { id: 'local-user-jarvis', email: 'local@jarvis.app' };
 
-  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto', userLocation, personality: clientPersonality, ariaMemory: clientAriaMemory, forcedProvider } = await req.json();
+  const { message, history = [], conversationId: convIdInput, imageBase64, mode = 'auto', userLocation, personality: clientPersonality, ariaMemory: clientAriaMemory, forcedProvider, autoMemories } = await req.json();
   if (!message?.trim() && !imageBase64) return new Response('Empty', { status: 400 });
 
   const keys = getKeys();
@@ -126,7 +126,11 @@ export async function POST(req) {
   // Load feedback patterns (self-learning) — loads from localStorage memories
   const feedbackMems = await searchKnowledge(user.id, 'feedback').catch(() => []);
   const learningCtx = buildLearningContext(feedbackMems);
-  const system  = buildSystemPrompt(profile, memCtx + (learningCtx ? '\n' + learningCtx : ''), profile.personality, quickEmotion);
+  // Inject auto-extracted client memories (name, age, NEET context etc)
+  const autoMemCtx = autoMemories?.length
+    ? '\n━━━ AUTO-EXTRACTED USER FACTS ━━━\n' + autoMemories.map(m => `• ${m.key}: ${m.val}`).join('\n')
+    : '';
+  const system  = buildSystemPrompt(profile, memCtx + (learningCtx ? '\n' + learningCtx : '') + autoMemCtx, profile.personality, quickEmotion);
 
   // ── Dynamic temperature based on message intent ─────────────
   const msgLow = message.toLowerCase();

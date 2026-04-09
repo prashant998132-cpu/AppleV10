@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic';
 import { startAriaAutoMessages, updateLastActivity } from '@/lib/aria-auto-msg';
 import { getAriaMemory, saveAriaMemory } from '@/lib/aria-memory';
-import { getConversationMemorySummary, getPendingFollowUps } from '@/lib/ai/proactive-memory';
+import { getConversationMemorySummary, getPendingFollowUps, extractConversationFacts, saveConversationFact } from '@/lib/ai/proactive-memory';
 import { WeatherWidget, TimerWidget, CalculatorWidget, DashboardWidget, PriceWidget, ReminderWidget, detectWidget, parseTimerSeconds } from '@/components/chat/InlineWidgets';
 import Sounds from '@/lib/sound/sounds';
 import Link from 'next/link';
@@ -160,8 +160,8 @@ function MdContent({ text }) {
     if (blockParts.length > 1) {
       return blockParts.map((p, i) =>
         i % 2 === 1
-          ? <div key={i} className="my-3 py-2 px-3 bg-blue-500/8 border border-blue-500/15 rounded-xl text-center overflow-x-auto">
-              <span className="text-blue-300 font-mono text-[13px] italic">{p.trim()}</span>
+          ? <div key={i} className="my-3 py-3 px-4 bg-blue-500/8 border border-blue-500/20 rounded-2xl text-center overflow-x-auto">
+              <span className="text-cyan-300 font-mono text-[15px] italic tracking-wide">{p.trim()}</span>
             </div>
           : <span key={i}>{renderInlineMath(p)}</span>
       );
@@ -170,12 +170,12 @@ function MdContent({ text }) {
   }
 
   function renderInlineMath(str) {
-    // Inline math: $...$
-    const parts = str.split(/\$([^$\n]+?)\$/);
+    // Inline math: $...$  (not $$)
+    const parts = str.split(/(?<!\$)\$([^$\n]+?)\$(?!\$)/);
     if (parts.length === 1) return inlineFormat(str);
     return parts.map((p, i) =>
       i % 2 === 1
-        ? <span key={i} className="text-blue-300 font-mono italic text-[13px] bg-blue-500/10 px-1 rounded">{p}</span>
+        ? <span key={i} className="text-cyan-300 font-mono italic text-[13px] bg-blue-500/10 px-1.5 py-0.5 rounded-lg border border-blue-500/15">{p}</span>
         : <span key={i}>{inlineFormat(p)}</span>
     );
   }
@@ -1370,32 +1370,52 @@ export default function ChatPage() {
 
   // ── Generate follow-up suggestions ───────────────────────────
   function generateFollowUps(reply, question) {
-    // Local generation — no API call (prevents system prompt leaking in chat)
     const q = (question || '').toLowerCase();
     const r = (reply || '').toLowerCase();
-    if (/weather|mausam|temp|barish|rain/.test(q+r))
-      return ['7-day forecast batao', 'Kal ka weather?', 'Rain aayegi kya?'];
-    if (/news|khabar|headline|india|world/.test(q+r))
-      return ['Aur news batao', 'India mein kya hua?', 'Global updates?'];
-    if (/time|samay|baje|kitne/.test(q+r))
-      return ['Aaj ka schedule?', 'Timer set karo', 'Reminder laga do'];
-    if (/location|kahan|city|jagah|ghar/.test(q+r))
-      return ['Nearby places?', 'Weather yahan ka?', 'Maps kholo'];
-    if (/study|padhai|exam/.test(q+r))
-      return ['Practice questions do', 'Topic explain karo', 'Study plan banao'];
-    if (/code|python|javascript|error|bug/.test(q+r))
-      return ['Example dikhao', 'Optimize karo', 'Debug karo'];
-    if (/instagram|insta|reels|post/.test(q+r))
-      return ['Caption ideas do', 'Best posting time?', 'Instagram kholo'];
-    if (/recipe|khana|food|cook/.test(q+r))
-      return ['Ingredients list?', 'Quick version?', 'Healthy option?'];
-    if (/song|music|gaana|playlist/.test(q+r))
-      return ['Similar songs?', 'Spotify mein add', 'Artist ke baare mein'];
-    if (/goal|plan|future|career/.test(q+r))
-      return ['Step by step plan', 'Timeline set karo', 'Progress track karo'];
-    // Generic — context aware
-    if (reply.length > 200) return ['Summarize karo', 'Key points?', 'Aur detail mein?'];
-    return [];
+    const combined = q + ' ' + r;
+
+    // ── NEET/Study specific ────────────────────────────────
+    if (/neet|physics|chemistry|biology|ncert|formula|chapter|theory|concept|mcq|question/i.test(combined))
+      return ['Practice questions do', 'Diagram explain karo', 'Short notes banao', 'Weak points identify karo'];
+    // ── Math/Calculations ─────────────────────────────────
+    if (/calculate|math|formula|equation|solve|integral|derivative|theorem|proof/i.test(combined))
+      return ['Step by step dikhao', 'Similar example do', 'Formula yaad karne ka trick?', 'Aur practice problems?'];
+    // ── Code/Tech ─────────────────────────────────────────
+    if (/code|python|javascript|react|error|bug|function|api|database|git/i.test(combined))
+      return ['Example dikhao', 'Optimize karo', 'Edge cases kya hain?', 'Test kaise likhein?'];
+    // ── Weather ───────────────────────────────────────────
+    if (/weather|mausam|temp|barish|rain|humidity|forecast/i.test(combined))
+      return ['7-day forecast?', 'Kal kaisa rahega?', 'Kya pehenna chahiye?'];
+    // ── News ──────────────────────────────────────────────
+    if (/news|khabar|headline|india|world|politics|election/i.test(combined))
+      return ['Aur detail mein?', 'India mein impact?', 'Background kya hai?', 'Expert opinion?'];
+    // ── Health ────────────────────────────────────────────
+    if (/health|beemar|doctor|exercise|diet|protein|calories|gym|fitness/i.test(combined))
+      return ['Daily routine kya ho?', 'Kya avoid karein?', 'Doctor se poochna chahiye?'];
+    // ── Goals/Productivity ────────────────────────────────
+    if (/goal|plan|future|career|productivity|time|schedule|priority/i.test(combined))
+      return ['Step by step breakdown?', 'Timeline set karo', 'Roadblocks kya hain?', 'Progress kaise track karein?'];
+    // ── Money/Finance ─────────────────────────────────────
+    if (/money|paise|invest|stock|crypto|bitcoin|gold|savings|bank/i.test(combined))
+      return ['Risk kitna hai?', 'Long term vs short term?', 'Alternatives kya hain?'];
+    // ── Food/Recipe ───────────────────────────────────────
+    if (/recipe|khana|food|cook|ingredient|biryani|dal|sabzi/i.test(combined))
+      return ['Ingredients list?', 'Healthy version?', 'Kitna time lagega?'];
+    // ── Music/Entertainment ───────────────────────────────
+    if (/song|music|movie|web series|netflix|spotify|gaana/i.test(combined))
+      return ['Similar recommendations?', 'Best scene/song kaunsa hai?', 'Rating kya hai?'];
+    // ── Long reply — summarize ────────────────────────────
+    if (reply.length > 400) return ['Key points summarize karo', 'Simplify karo', 'Ek line mein?', 'Hindi mein batao'];
+    // ── Emotional/Personal ────────────────────────────────
+    if (/sad|dukhi|pareshan|stress|anxious|lonely|bura|tension|feel/i.test(combined))
+      return ['Aur baat karo', 'Kya help kar sakta hoon?', 'Relax karne ke tips?'];
+    // ── Generic smart defaults ────────────────────────────
+    const defaults = [
+      ['Aur detail mein?', 'Example do', 'Doubt clear karo'],
+      ['Summarize karo', 'Practical tips?', 'Next step kya hai?'],
+      ['Interesting! Aur?', 'Related topic?', 'Real world example?'],
+    ];
+    return defaults[Math.floor(Math.random() * defaults.length)];
   }
 
 
@@ -1763,10 +1783,11 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       const res = await fetch('/api/chat/stream',{
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
-          message:msg, history, conversationId:convId, imageBase64:b64,
+          message:msg, history, conversationId:newConvId, imageBase64:b64,
           mode:finalMode, userLocation:userLoc,
           personality:profilePersonality||'normal',
           forcedProvider: forcedProvider || undefined,
+          autoMemories: (() => { try { return JSON.parse(localStorage.getItem('jarvis_auto_memories')||'[]').slice(0,10); } catch { return []; } })(),
           ariaMemory: profilePersonality==='girlfriend' ? (() => { try { return localStorage.getItem('aria_ultra')||'{}'; } catch { return '{}'; } })() : undefined,
         }),
       });
@@ -1864,6 +1885,32 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       if(fullText && newConvId) {
         csSaveMessage(newConvId, 'assistant', fullText, {mode:finalMode});
         csUpdateTitle(newConvId, msg.slice(0,50));
+      }
+      // ── Auto-extract memory facts from conversation ────────
+      if(msg && fullText) {
+        try {
+          const facts = extractConversationFacts(msg);
+          facts.forEach(f => saveConversationFact(msg, f.topic, f.type));
+          // Also save important info mentioned by user to memory
+          const importantPatterns = [
+            { re: /mera naam (.+?)[\s.,!?]|main (.+?) hoon|I am (.+?)[\s.,!?]/i, key: 'name' },
+            { re: /(\d+)\s*(saal|year) ka/i, key: 'age' },
+            { re: /([\w\s]+) mein rehta|live in ([\w\s]+)|city[\s:]+(\w+)/i, key: 'location' },
+            { re: /neet|jee|board exam|class (10|11|12)/i, key: 'student_context' },
+          ];
+          const savedMems = JSON.parse(localStorage.getItem('jarvis_auto_memories') || '[]');
+          importantPatterns.forEach(({re, key}) => {
+            if (re.test(msg)) {
+              const match = msg.match(re);
+              const val = (match?.[1] || match?.[2] || match?.[3] || '').trim().slice(0,40);
+              if (val && !savedMems.find(m => m.key === key)) {
+                savedMems.unshift({ key, val, ts: Date.now(), src: msg.slice(0,60) });
+                if (savedMems.length > 50) savedMems.splice(50);
+                localStorage.setItem('jarvis_auto_memories', JSON.stringify(savedMems));
+              }
+            }
+          });
+        } catch {}
       }
       // Save to client cache for repeat queries
       if(fullText && msg.length > 8 && !imgB64) {
