@@ -753,15 +753,19 @@ function HistorySidebar({ open, onClose, onLoad, onDelete }) {
 
   useEffect(()=>{
     if(!open) return;
-    setLoading(true);
-    fetch('/api/conversations').then(r=>r.json()).then(d=>{setConvs(d.conversations||[]);setLoading(false);}).catch(()=>setLoading(false));
+    try {
+      const convs = JSON.parse(localStorage.getItem('jarvis_conversations') || '[]').slice().reverse();
+      setConvs(convs);
+    } catch { setConvs([]); }
+    setLoading(false);
   },[open]);
 
   if(!open) return null;
   return (
     <>
       <div className="fixed inset-0 z-40 bg-black/60" onClick={onClose}/>
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-72 bg-[#080c14] border-l border-white/[0.06] flex flex-col">
+      <div className="fixed right-0 top-0 bottom-0 z-50 w-72 bg-[#080c14] border-l border-white/[0.06] flex flex-col" style={{paddingTop:'env(safe-area-inset-top, 0px)'}}>
+        <div style={{height:'env(safe-area-inset-top, 0px)', background:'#080c14', position:'absolute', top:0, left:0, right:0}}/>
         <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between">
           <p className="font-bold text-white text-sm">Chat History</p>
           <button onClick={onClose}><X size={16} className="text-slate-600"/></button>
@@ -987,29 +991,67 @@ export default function ChatPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [msgs]);
 
-  // ── AUTO-RESUME last conversation on mount ────────────────
+  // ── CLIENT-SIDE conversation helpers (bypass server — _mem resets on serverless) ──
+  function csGetConversations() {
+    try { return JSON.parse(localStorage.getItem('jarvis_conversations') || '[]'); } catch { return []; }
+  }
+  function csGetMessages(cId) {
+    try { return JSON.parse(localStorage.getItem(`jarvis_msgs_${cId}`) || '[]'); } catch { return []; }
+  }
+  function csSaveConversation(title, cId) {
+    try {
+      const convs = csGetConversations();
+      const existing = convs.find(c => c.id === cId);
+      if (!existing) {
+        convs.push({ id: cId, title: title || 'Naya Chat', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), message_count: 0 });
+        if (convs.length > 60) convs.splice(0, convs.length - 60);
+        localStorage.setItem('jarvis_conversations', JSON.stringify(convs));
+      }
+    } catch {}
+  }
+  function csSaveMessage(cId, role, content, meta = {}) {
+    try {
+      if (!cId) return;
+      const msgs = csGetMessages(cId);
+      msgs.push({ id: `msg_${Date.now()}`, role, content, metadata: meta, created_at: new Date().toISOString() });
+      if (msgs.length > 120) msgs.splice(0, msgs.length - 120);
+      localStorage.setItem(`jarvis_msgs_${cId}`, JSON.stringify(msgs));
+      // update conv
+      const convs = csGetConversations();
+      const ci = convs.findIndex(c => c.id === cId);
+      if (ci >= 0) { convs[ci].message_count = (convs[ci].message_count || 0) + 1; convs[ci].updated_at = new Date().toISOString(); localStorage.setItem('jarvis_conversations', JSON.stringify(convs)); }
+    } catch {}
+  }
+  function csDeleteConversation(cId) {
+    try {
+      const convs = csGetConversations().filter(c => c.id !== cId);
+      localStorage.setItem('jarvis_conversations', JSON.stringify(convs));
+      localStorage.removeItem(`jarvis_msgs_${cId}`);
+    } catch {}
+  }
+  function csUpdateTitle(cId, title) {
+    try {
+      const convs = csGetConversations();
+      const ci = convs.findIndex(c => c.id === cId);
+      if (ci >= 0) { convs[ci].title = title; localStorage.setItem('jarvis_conversations', JSON.stringify(convs)); }
+    } catch {}
+  }
+
+  // ── AUTO-RESUME last conversation on mount (client localStorage) ─
   useEffect(()=>{
-    (async()=>{
-      try {
-        const r = await fetch('/api/conversations');
-        const d = await r.json();
-        const last = d.conversations?.[0];
-        if (last) {
-          const r2 = await fetch(`/api/conversations?id=${last.id}`);
-          const d2 = await r2.json();
-          const loaded = (d2.messages||[]).map(m=>({
-            id:`m${m.id}`, role:m.role, content:m.content,
-            modelUsed:m.metadata?.modelUsed, agentsUsed:m.metadata?.agentsUsed,
-            ts: new Date(m.created_at).getTime(),
-          }));
-          if (loaded.length) {
-            setMsgs(loaded);
-            setConvId(last.id);
-          }
-        }
-      } catch {}
-      setResuming(false);
-    })();
+    try {
+      const convs = csGetConversations().slice().reverse();
+      const last = convs[0];
+      if (last) {
+        const loaded = csGetMessages(last.id).map(m=>({
+          id:`m${m.id||Date.now()}`, role:m.role, content:m.content,
+          modelUsed:m.metadata?.modelUsed,
+          ts: new Date(m.created_at).getTime(),
+        }));
+        if (loaded.length) { setMsgs(loaded); setConvId(last.id); }
+      }
+    } catch {}
+    setResuming(false);
   }, []);
 
   // Get userId safely — from cookie or guest fallback
@@ -1312,19 +1354,17 @@ export default function ChatPage() {
     setMsgs([]); setConvId(id);
     if(!id) return;
     try {
-      const r = await fetch(`/api/conversations?id=${id}`);
-      const d = await r.json();
-      const loaded = (d.messages||[]).map(m=>({
-        id:`m${m.id}`, role:m.role, content:m.content,
-        modelUsed:m.metadata?.modelUsed, agentsUsed:m.metadata?.agentsUsed,
+      const msgs = csGetMessages(id).map(m=>({
+        id:`m${m.id||Date.now()}`, role:m.role, content:m.content,
+        modelUsed:m.metadata?.modelUsed,
         ts: new Date(m.created_at).getTime(),
       }));
-      setMsgs(loaded);
+      setMsgs(msgs);
     } catch{}
   }
 
   async function deleteConversation(id) {
-    await fetch('/api/conversations',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})}).catch(()=>{});
+    csDeleteConversation(id);
     if(convId===id){setMsgs([]);setConvId(null);}
   }
 
@@ -1652,6 +1692,11 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
     setMsgError(null);
     const userMsg = {id:`u${Date.now()}`,role:'user',content:pdfText?`📄 ${pdfName}${msg?' — '+msg:''}`:msg,cameraPreview:prev,ts:Date.now()};
     const aiId    = `a${Date.now()}`;
+    // Create conv in localStorage if not exists
+    const newConvId = convId || `conv_${Date.now()}`;
+    if (!convId) setConvId(newConvId);
+    csSaveConversation(msg.slice(0,50), newConvId);
+    csSaveMessage(newConvId, 'user', userMsg.content, {mode:finalMode});
     // ARIA: human-like delay if girlfriend mode
     const isAriaMode = typeof localStorage !== 'undefined' && localStorage.getItem('jarvis_profile') && JSON.parse(localStorage.getItem('jarvis_profile') || '{}')?.personality === 'girlfriend';
     if (isAriaMode) {
@@ -1815,6 +1860,11 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
         setMsgs(p => p.map(m => m.id === aiId ? {...m, widget: widgetType, widgetData} : m));
       }
       if(voiceOn&&fullText) speak(fullText);
+      // ── Save AI reply to localStorage ─────────────────────
+      if(fullText && newConvId) {
+        csSaveMessage(newConvId, 'assistant', fullText, {mode:finalMode});
+        csUpdateTitle(newConvId, msg.slice(0,50));
+      }
       // Save to client cache for repeat queries
       if(fullText && msg.length > 8 && !imgB64) {
         cacheSet(msg, fullText).catch(()=>{});
@@ -1824,7 +1874,12 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       // Generate follow-up suggestions after short delay
       if(fullText&&msg.length>8) {
         // Auto-title (first message only)
-        if (!titleGenerated && convId) generateTitle(convId, msg, fullText);
+        if (!titleGenerated && newConvId) {
+          setTitleGenerated(true);
+          // Generate short title from first message
+          const shortTitle = msg.length > 40 ? msg.slice(0,38)+'…' : msg;
+          csUpdateTitle(newConvId, shortTitle);
+        }
         setTimeout(()=>{
           const fups = generateFollowUps(fullText, msg);
           if(fups.length>0) setMsgs(p=>p.map(m=>m.id===aiId?{...m,followUps:fups}:m));

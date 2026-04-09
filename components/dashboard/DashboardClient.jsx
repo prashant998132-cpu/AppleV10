@@ -147,7 +147,7 @@ export default function DashboardClient({ children, user, profile }) {
 
   return (
     <ErrorBoundary>
-    <div className="h-screen w-screen flex flex-col overflow-hidden safe-top" style={{background:"var(--bg, #050810)"}}>
+    <div className="w-screen flex flex-col overflow-hidden safe-top" style={{background:"var(--bg, #050810)", height:'100dvh'}}>
       {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-blue-600/6 rounded-full blur-[120px]"/>
