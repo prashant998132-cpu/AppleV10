@@ -598,7 +598,7 @@ function Bubble({ msg, onSpeak, voiceOn, onFollowUp, pinnedIds, setPinnedIds, se
 
   return (
     <div className={`flex ${isUser?'justify-end':'justify-start'} mb-3 px-1 msg-in`}>
-      {/* AI Avatar — left side */}
+      {/* AI Avatar — left side only */}
       {!isUser && (
         <div className="shrink-0 mr-2.5 mt-0.5">
           <div className={`w-7 h-7 rounded-xl flex items-center justify-center shadow-lg ${
@@ -791,25 +791,8 @@ function HistorySidebar({ open, onClose, onLoad, onDelete }) {
             </div>
           ))}
         </div>
-        <div className="p-3 border-t border-white/[0.06] space-y-2">
-          {/* Quick Nav */}
-          <div className="grid grid-cols-3 gap-1.5 mb-2">
-            {[
-              { href:'/phone',    icon:'📱', label:'Phone'   },
-              { href:'/studio',   icon:'🎨', label:'Studio'  },
-              { href:'/goals',    icon:'🎯', label:'Goals'   },
-              { href:'/analytics',icon:'📊', label:'Stats'   },
-              { href:'/memory',   icon:'🧠', label:'Memory'  },
-              { href:'/settings', icon:'⚙️', label:'Settings'},
-            ].map(({href,icon,label})=>(
-              <a key={href} href={href} onClick={onClose}
-                className="flex flex-col items-center gap-0.5 p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.07] transition-colors active:scale-95">
-                <span className="text-base">{icon}</span>
-                <span className="text-[9px] text-slate-500">{label}</span>
-              </a>
-            ))}
-          </div>
-          <button onClick={()=>{onLoad(null);onClose();}} className="w-full py-2.5 rounded-xl border border-white/10 text-xs text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-2">
+        <div className="p-3 border-t border-white/[0.06]">
+          <button onClick={()=>{onLoad(null);onClose();}} className="w-full py-2.5 rounded-xl border border-white/10 text-xs text-slate-400 hover:text-white hover:border-white/20 transition-colors flex items-center justify-center gap-2">
             <Plus size={13}/> Naya Chat
           </button>
         </div>
@@ -1897,108 +1880,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       {/* ── Daily Info Bar — Gold/Silver/Weather/Battery ───────── */}
 
       {/* ── Plus Menu Popup ───────────────────────────────────── */}
-      {plusOpen && (
-        <div className="fixed inset-0 z-[9980]" onClick={()=>setPlusOpen(false)}>
-          <div className="absolute bottom-24 left-3 right-3 bg-[#0e1420] border border-white/[0.09] rounded-3xl overflow-hidden shadow-2xl"
-            onClick={e=>e.stopPropagation()}>
 
-            {/* MODE section */}
-            <div className="px-4 pt-4 pb-3">
-              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Mode</p>
-              <button onClick={()=>{setPlusOpen(false);setModelDrawer(true);}}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl border transition-all active:scale-95 ${
-                  mode==='flash' ? 'bg-yellow-500/15 border-yellow-500/30 text-yellow-400' :
-                  mode==='think' ? 'bg-purple-500/15 border-purple-500/30 text-purple-400' :
-                  mode==='deep'  ? 'bg-blue-500/15 border-blue-500/30 text-blue-400' :
-                                   'bg-cyan-500/15 border-cyan-500/30 text-cyan-400'
-                }`}>
-                <span className="text-lg">{mode==='flash'?'⚡':mode==='think'?'🧠':mode==='deep'?'🔬':'🤖'}</span>
-                <div className="flex-1 text-left">
-                  <p className="text-[13px] font-semibold">{mode==='auto'?'Auto Mode':mode.charAt(0).toUpperCase()+mode.slice(1)+' Mode'}</p>
-                  <p className="text-[10px] opacity-60">Tap to see cascade & switch</p>
-                </div>
-                <span className="text-slate-600 text-xs">›</span>
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-white/[0.06] mx-4"/>
-
-            {/* PERSONALITY section */}
-            <div className="px-4 pt-3 pb-3">
-              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Personality</p>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  {id:'normal',       emoji:'🤝', label:'Normal'},
-                  {id:'girlfriend',   emoji:'💕', label:'ARIA'},
-                  {id:'motivational', emoji:'🔥', label:'Hype'},
-                  {id:'fun',          emoji:'😄', label:'Fun'},
-                  {id:'sarcastic',    emoji:'😏', label:'Roast'},
-                  {id:'study',        emoji:'📚', label:'Study'},
-                  {id:'coach',        emoji:'🎯', label:'Coach'},
-                  {id:'executive',    emoji:'💼', label:'Pro'},
-                ].map(p=>(
-                  <button key={p.id} onClick={()=>{
-                    setProfilePersonality(p.id);
-                    try {
-                      localStorage.setItem('jarvis_personality', p.id);
-                      const prof = JSON.parse(localStorage.getItem('jarvis_profile')||'{}');
-                      localStorage.setItem('jarvis_profile', JSON.stringify({...prof, personality: p.id}));
-                    } catch {}
-                    setPlusOpen(false);
-                  }}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-[11px] font-medium transition-all active:scale-95 ${
-                      profilePersonality===p.id
-                        ? p.id==='girlfriend'
-                          ? 'bg-pink-500/20 border-pink-500/40 text-pink-300'
-                          : 'bg-blue-500/20 border-blue-500/40 text-blue-300'
-                        : 'bg-white/[0.04] border-white/[0.07] text-slate-400 hover:text-white'
-                    }`}>
-                    <span>{p.emoji}</span><span>{p.label}</span>
-                    {profilePersonality===p.id && <span className="text-[8px] ml-0.5">✓</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-white/[0.06] mx-4"/>
-
-            {/* ATTACH section */}
-            <div className="px-4 pt-3 pb-4">
-              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Attach</p>
-              <div className="space-y-0.5">
-                {[
-                  { icon:'📷', label:'Camera',  action: ()=>{ setPlusOpen(false); startCamera(); } },
-                  { icon:'🖼️', label:'Image',  action: ()=>{ setPlusOpen(false); document.getElementById('img-upload')?.click(); } },
-                  { icon:'📄', label:'PDF',     action: ()=>{ setPlusOpen(false); document.getElementById('pdf-upload')?.click(); } },
-                  { icon:'🎙️', label:'Voice Mode',  action: ()=>{ setPlusOpen(false); window.location.href='/voice'; } },
-                ].map(item=>(
-                  <button key={item.label} onClick={item.action}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.05] active:bg-white/[0.08] transition-all text-left">
-                    <span className="text-[22px] w-8 text-center">{item.icon}</span>
-                    <span className="text-[14px] text-slate-300 font-medium">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* SHORTCUTS section */}
-            <div className="border-t border-white/[0.06] mx-4"/>
-            <div className="px-4 pt-3 pb-4">
-              <p className="text-[10px] text-slate-600 font-semibold tracking-widest uppercase mb-2.5">Shortcuts</p>
-              <div className="flex flex-wrap gap-1.5">
-                {JARVIS_QUICK_CMDS.slice(0,8).map(q=>(
-                  <button key={q.cmd} onClick={()=>{send(q.cmd);setPlusOpen(false);}}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white/[0.05] border border-white/[0.07] text-white/70 text-[11px] hover:bg-white/[0.09] hover:text-white active:scale-95 transition-all">
-                    <span>{q.emoji}</span><span>{q.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Slide-in Nav Menu — Image 3 Style ───────────────────── */}
 
@@ -2323,8 +2205,8 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             {input.length > 3000 && <span className="text-[9px] text-orange-400/70">{4000-input.length}</span>}
           </div>
           <div className="flex items-center px-2.5 pb-2.5 pt-0 gap-1.5">
-            <button onClick={()=>setPlusOpen(v=>!v)}
-              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${plusOpen?'bg-blue-500/20 text-blue-400 rotate-45':'text-slate-500 hover:text-slate-300 hover:bg-white/[0.06]'}`}>
+            <button onClick={()=>{ setModelDrawer(true); }}
+              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all text-slate-500 hover:text-slate-300 hover:bg-white/[0.06]`}>
               <Plus size={17}/>
             </button>
             <div className="flex-1 flex items-center justify-center gap-1.5">

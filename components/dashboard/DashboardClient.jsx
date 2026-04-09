@@ -206,7 +206,7 @@ export default function DashboardClient({ children, user, profile }) {
 
         {/* Page content */}
         {/* Floating hamburger for mobile — non-chat pages */}
-        {path !== '/chat' && (
+        {!path.startsWith('/chat') && (
           <button onClick={()=>setSidebar(true)}
             className="lg:hidden fixed top-2.5 right-3 z-40 w-9 h-9 bg-[#0a0f1a]/90 border border-white/10 rounded-xl flex flex-col gap-[3.5px] items-center justify-center shadow-lg backdrop-blur-sm">
             <span className="block w-4 h-[1.5px] bg-slate-400 rounded-full"/>
@@ -215,7 +215,7 @@ export default function DashboardClient({ children, user, profile }) {
           </button>
         )}
 
-        <main className={`flex-1 overflow-hidden h-full page-enter ${path !== '/chat' ? 'lg:pb-0 pb-16' : ''}`}>
+        <main className={`flex-1 overflow-hidden h-full page-enter ${!path.startsWith('/chat') ? 'lg:pb-0 pb-16' : ''}`}>
           {children}
         </main>
       </div>
@@ -257,7 +257,7 @@ export default function DashboardClient({ children, user, profile }) {
       )}
     </div>
       {/* ── Mobile Bottom Tab Bar — hidden on /chat ─────────────────── */}
-      {path !== '/chat' && (
+      {!path.startsWith('/chat') && (
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-white/[0.07]"
         style={{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
         <div className="flex items-stretch">
