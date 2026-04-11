@@ -1498,7 +1498,7 @@ export default function ChatPage() {
         const understood = d.understood ? `\n\nMain samajha: "${d.explain || d.understood}" — lekin MacroDroid se connected nahi hoon abhi.` : '';
         const setupMsg = {
           id: `setup${Date.now()}`, role: 'assistant',
-          content: `📱 **Phone control ke liye MacroDroid chahiye!**${understood}\n\n→ [Phone Control Setup](/phone) pe jaao — 2 min mein ready.`,
+          content: `📱 **Phone control ke liye MacroDroid chahiye!**${understood}\n\n→ Settings → Integrations mein jaao — 2 min mein ready.`,
           ts: Date.now(), mode: 'flash',
         };
         setMsgs(p => [...p, setupMsg]);

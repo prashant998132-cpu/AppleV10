@@ -31,6 +31,7 @@ async function backupMemoriesToPuter(memories) {
 
 export default function MemoryPage() {
   const [memories, setMemories]   = useState([]);
+  const [autoMems, setAutoMems]   = useState([]);
   const [loading, setLoad]        = useState(true);
   const [cat, setCat]             = useState('all');
   const [search, setSearch]       = useState('');
@@ -42,7 +43,14 @@ export default function MemoryPage() {
   const [puterDone, setPuterDone]     = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
-  useEffect(() => { load(); }, [cat]);
+  useEffect(() => {
+    load();
+    // Load auto-extracted memories from localStorage
+    try {
+      const am = JSON.parse(localStorage.getItem('jarvis_auto_memories') || '[]');
+      setAutoMems(am);
+    } catch {}
+  }, [cat]);
 
   async function load() {
     setLoad(true);
@@ -160,6 +168,29 @@ export default function MemoryPage() {
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Auto-extracted memories section */}
+            {autoMems.length > 0 && (
+              <div>
+                <p className="text-[10px] font-semibold text-purple-400 uppercase tracking-widest mb-2">⚡ Auto-Extracted (from conversations)</p>
+                <div className="space-y-1.5">
+                  {autoMems.map((m, i) => (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2.5 bg-purple-500/5 border border-purple-500/10 rounded-xl">
+                      <div className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0"/>
+                      <p className="text-slate-400 text-xs flex-1">
+                        <span className="text-slate-300 font-medium capitalize">{m.key}: </span>{m.val}
+                      </p>
+                      <button onClick={()=>{
+                        try {
+                          const am = JSON.parse(localStorage.getItem('jarvis_auto_memories')||'[]').filter((_,idx)=>idx!==i);
+                          localStorage.setItem('jarvis_auto_memories', JSON.stringify(am));
+                          setAutoMems(am);
+                        } catch {}
+                      }} className="text-slate-700 hover:text-red-400 transition-colors text-xs">✕</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {Object.entries(cat === 'all' ? grouped : { [cat]: filtered }).map(([category, items]) => (
               <div key={category}>
                 <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-2">{category.replace('_',' ')}</p>

@@ -442,16 +442,27 @@ export default function VoicePage() {
       {/* Bottom area */}
       <div style={{width:'100%',maxWidth:400,padding:'0 20px 32px',zIndex:10}}>
 
-        {/* Last reply */}
+        {/* Last reply — full card */}
         {reply && !showHist && (
           <div style={{
-            background:'rgba(255,255,255,0.03)',
-            border:'1px solid rgba(255,255,255,0.07)',
-            borderRadius:18, padding:'12px 16px',
-            color:'#94a3b8', fontSize:13, lineHeight:1.6,
-            marginBottom:14, backdropFilter:'blur(8px)',
+            background:'rgba(255,255,255,0.04)',
+            border:'1px solid rgba(255,255,255,0.09)',
+            borderRadius:20, padding:'14px 18px',
+            color:'#cbd5e1', fontSize:14, lineHeight:1.7,
+            marginBottom:14, backdropFilter:'blur(12px)',
+            boxShadow:'0 4px 24px rgba(0,0,0,0.3)',
+            maxHeight:180, overflowY:'auto',
           }}>
-            {reply.slice(0,180)}{reply.length>180?'…':''}
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+              <div style={{width:20,height:20,borderRadius:8,background:'linear-gradient(135deg,#2563eb,#06b6d4)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                <span style={{color:'white',fontWeight:900,fontSize:9}}>{personality==='girlfriend'?'A':'J'}</span>
+              </div>
+              <span style={{color:'#475569',fontSize:11,letterSpacing:'0.04em'}}>
+                {personalityLabel[personality]||'JARVIS'}
+              </span>
+              {wpm > 0 && <span style={{color:'#1e3a5f',fontSize:10,marginLeft:'auto'}}>{wpm} wpm</span>}
+            </div>
+            {reply}
           </div>
         )}
 
