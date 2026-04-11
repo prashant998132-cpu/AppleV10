@@ -915,6 +915,7 @@ export default function ChatPage() {
   const [convId, setConvId]     = useState(null);
   const [convs, setConvs]       = useState([]);  // conversation list
   const [phase, setPhase]       = useState('');
+  const [liveProvider, setLiveProvider] = useState(''); // shown during streaming
   const [historyOpen, setHistoryOpen] = useState(false);
   const [activeWidget, setActiveWidget] = useState(null); // {type, data}
   const [plusOpen, setPlusOpen]       = useState(false);
@@ -1805,6 +1806,9 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
             if(d.type==='token'){
               fullText+=d.token;
               setMsgs(p=>p.map(m=>m.id===aiId?{...m,content:m.content+d.token}:m));
+            } else if(d.type==='provider'){
+              // Live provider name during streaming
+              setLiveProvider(d.provider || '');
             } else if(d.type==='thinking'){
               thinkBuffer+=d.token;
               setMsgs(p=>p.map(m=>m.id===aiId?{...m,thinking:thinkBuffer}:m));
@@ -1863,6 +1867,7 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
       }
     } finally {
       setPhase('');
+    setLiveProvider('');
       // Detect and attach inline widget to AI response
       const widgetType = detectWidget(msg || '');
       if (widgetType) {
@@ -2214,7 +2219,17 @@ Sawaal: ${msg || 'Is PDF ka summary batao'}`
           <>
             {msgs.map(m=>(
               m.streaming&&m.content===''
-                ? <TypingDots key={m.id} mode={m.mode}/>
+                ? <div key={m.id}>
+                    <TypingDots mode={m.mode}/>
+                    {liveProvider && (
+                      <div className="flex items-center gap-1.5 px-3 pb-1 ml-9">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"/>
+                        <span className="text-[10px] text-slate-600 truncate max-w-[160px]">
+                          {liveProvider.replace('Groq · ','').replace('Gemini ','G·').replace('Together ','T·')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 : <div key={m.id} ref={el=>msgRefs.current[m.id]=el}><Bubble msg={m} onSpeak={speak} voiceOn={voiceOn} onFollowUp={t=>{
                     if(t==='__regenerate__'){
                       // Re-send last user message
